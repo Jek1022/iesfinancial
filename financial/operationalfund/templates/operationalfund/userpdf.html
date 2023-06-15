@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% load humanize %}
+    {% load pdf_filters %}
+    <meta charset="UTF-8">
+    <title>Operational Fund Request</title>
+    <style>
+        @page {
+            size: {{ pagesize }} {{ orientation }};
+            @frame header_frame {
+                -pdf-frame-content: header_content;
+                left: 1cm;
+                width: 19.5cm;
+                top: 1cm;
+                height: 2cm;
+            }
+            @frame content_frame {
+                left: 1cm;
+                width: 19.5cm;
+                top: 2.5cm;
+                height: 20cm;
+            }
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 1cm;
+                width: 19.5cm;
+                top: 22cm;
+                height: 6cm;
+            }
+        }
+        body{
+            font-size: 11px;
+            font-family: 'Arial';
+        }
+        .title{
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .center{
+            text-align: center;
+        }
+        .right{
+            text-align: right;
+        }
+        .number{
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .arial{
+            font-family: 'arial';
+        }
+        td{
+            vertical-align: top;
+        }
+        .sign_here{
+            width: 165px;
+            border-bottom: 1px solid black;
+            padding-bottom: -5px;
+            margin-bottom: -5px;
+        }
+        #watermark
+        {
+            width:400px;
+            height:180px;
+            margin:50px 50px;
+            font-size: 25px;
+            background-color:#ffffff;
+            border:1px solid;
+            border-color:#CD853F;
+            opacity:0.6;
+        }
+    </style>
+</head>
+<body>
+
+<div id="header_content">
+    <table>
+        <tr>
+            <td><img id="logo" src="{{ logo | get64 }}"/><br></td>
+            <td width="500px">
+                <p class="title center"><br>OPERATIONAL FUND</p>
+            </td>
+            <td>
+                <p class="number right">OF-{{ ofmain.oftype.code }}-{{ ofmain.ofnum }}</p>
+                <p class="number right">{{ ofmain.get_ofstatus_display }}</p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="footer_content">
+    <table>
+        <tr style="border-top: 2px solid black;border-left: 2px solid black;padding: 5px; padding-bottom: 0px;">
+            <td colspan="6" style="border-right: 2px solid black;"></td>
+        </tr>
+        <tr style="padding: 5px; padding-bottom: 0px;">
+            <td width="20%" style="border-left: 2px solid black;"><b>Approved by</b></td>
+            <td width="5%"><b>:</b></td>
+            <td align="center" style="margin-right: 20px;">
+                {% if ofmain.actualapprover and ofmain.approverresponse == 'A' and ofmain.ofstatus == 'A' %}
+                    <div class="sign_here">SGD {{ ofmain.actualapprover.firstname }}&nbsp;{{ ofmain.actualapprover.lastname }}</div>
+                    <div class="watermark"><i>Electronic Approved</i></div>
+                {% elif ofmain.actualapprover and ofmain.approverresponse == 'A' and ofmain.ofstatus == 'I' %}
+                    <div class="sign_here">SGD {{ ofmain.actualapprover.firstname }}&nbsp;{{ ofmain.actualapprover.lastname }}</div>
+                    <div class="watermark"><i>Electronic Approved</i></div>
+                {% elif ofmain.actualapprover and ofmain.approverresponse == 'A' and ofmain.ofstatus == 'R' and ofmain.hrstatus == 'A' %}
+                    <div class="sign_here">SGD {{ aemp.firstname }}&nbsp;{{ aemp.actualapprover.lastname }}</div>
+                    <div class="watermark"><i>Electronic Approved</i></div>
+                {% else %}
+                    <div class="sign_here">{{ ofmain.designatedapprover.firstname }}&nbsp;{{ ofmain.designatedapprover.lastname }}</div>
+                    <i>Signature over printed name</i>
+                {% endif %}
+            </td>
+            <td width="20%"><b>Received by</b></td>
+            <td width="5%"><b>:</b></td>
+            <td align="center" style="margin-right: 20px;border-right: 2px solid black;">
+                {% if ofmain.receiveby %}
+                    <div class="sign_here">{{ ofmain.receiveby.first_name }}&nbsp;{{ ofmain.receiveby.last_name }}</div>
+                {% else %}
+                    <div class="sign_here">&nbsp;</div>
+                {% endif %}
+                <i>Signature over printed name</i>
+            </td>
+        </tr>
+        <tr style="border-bottom: 2px solid black; padding: 5px; padding-top: 3px; padding-bottom: 2px;">
+            <td width="20%" style="border-left: 2px solid black;"><b>Date approved</b></td>
+            <td width="5%"><b>:</b></td>
+            <td align="center" style="margin-right: 20px;">
+                {% if ofmain.responsedate and ofmain.approverresponse == 'A' %}
+                    <div class="sign_here">{{ ofmain.responsedate|date:'Y-m-d' }}</div>
+                {% else %}
+                    <div class="sign_here">&nbsp;</div>
+                {% endif %}
+            </td>
+            <td width="20%"><b>Date received</b></td>
+            <td width="5%"><b>:</b></td>
+            <td align="center" style="margin-right: 20px;border-right: 2px solid black;">
+                {% if ofmain.receivedate %}
+                    <div class="sign_here">{{ ofmain.receivedate|date:'Y-m-d' }}</div>
+                {% else %}
+                    <div class="sign_here">&nbsp;</div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+    <table class="arial" style="font-size: 8.4px; margin-top: 10px;">
+        <tr>
+            <td>
+                {{ parameter.report_footer1 }}<br>
+                {{ parameter.report_footer2 }}<br>
+                {{ parameter.report_footer3 }}<br>
+                {{ parameter.report_footer4 }}<br>
+                <b>{{ parameter.report_footer5 }}</b><br>
+                <b>{{ parameter.report_footer6 }}</b><br>
+                {{ parameter.report_footer7 }}{{ request.user }} on {% now 'Y-m-d' %}
+            </td>
+            <td style="margin-left: 30px;width: 600px;">
+                {{ parameter.report_footer8 }}<br>
+                {{ parameter.report_footer9 }}<br>
+                {{ parameter.report_footer10 }}<br>
+                {{ parameter.report_footer11 }}<br>
+                {{ parameter.report_footer12 }}<br>
+                {{ parameter.report_footer13 }}<br>
+                {{ parameter.report_footer14 }}
+            </td>
+        </tr>
+    </table>
+    {%block page_foot%}
+        <div style="text-align: right; font-size: 8px;">
+            Page <pdf:pagenumber /> of <pdf:pagecount />
+        </div>
+    {%endblock%}
+</div>
+
+<table>
+    <tr><td colspan="3"></td></tr>
+    <tr>
+        <td colspan="3" style="line-height: 15px;">
+            <span class="title">{{ parameter.description|upper }}</span><br>
+            {{ parameter.address1 }}<br>
+            {{ parameter.address2 }}<br>
+            Tel: ({{ parameter.telno1 }}, {{ parameter.telno2 }}<br>
+            VAT REG TIN: {{ parameter.tinnum }}
+        </td>
+    </tr>
+    <tr><td colspan="3"></td></tr>
+    <tr>
+        <td colspan="3">
+            <br>
+            <table>
+                <tr>
+                    <td width="15%"><b>Name</b></td>
+                    <td width="10%"><b>:</b></td>
+                    <td>{{ ofmain.requestor_name }}</td>
+                    <td width="10%"><b>OF Date</b></td>
+                    <td width="10%"><b>:</b></td>
+                    <td>{{ ofmain.ofdate|date:'Y-m-d' }}</td>
+                </tr>
+                <tr>
+                    <td width="15%"><b>Department</b></td>
+                    <td width="10%"><b>:</b></td>
+                    <td>{{ ofmain.department_name }}</td>
+                    <td width="10%"><b>Type</b></td>
+                    <td width="10%"><b>:</b></td>
+                    <td>{{ ofmain.oftype.description }}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td></td></tr>
+    <tr><td><b>REQUEST DETAILS</b></td></tr>
+</table>
+<table>
+    <tr class="left" style="border-top: 2px solid black;border-bottom: 2px solid black;padding-top: 5px;">
+        <td style="border-left: 2px solid black;"><b><i></i></b></td>
+        <td><b><i>OF Subtype</i></b></td>
+        <td><b><i>Payee</i></b></td>
+        <td><b><i>Particulars</i></b></td>
+        {% if ofmain.oftype.code == 'CSV' %}
+            <td><b><i>Period From</i></b></td>
+            <td><b><i>Period To</i></b></td>
+        {% endif %}
+        <td style="border-right: 2px solid black; text-align: right; padding-right: 5px;"><b><i>Amount (PHP)</i></b></td>
+    </tr>
+    {% for data in items %}
+        <tr style="padding-top: 5px;">
+            <td width="5%">{{ data.item_counter }}</td>
+            <td>{{ data.ofsubtype.code }} - {{ data.ofsubtype.description }}</td>
+            <td width="50%">{% if data.supplier_name %}{{ data.supplier_name|upper }}{% else %}{{ data.payee_name|upper }}{% endif %}</td>
+            <td>{{ data.particulars }}</td>
+            {% if ofmain.oftype.code == 'CSV' %}
+                <td>{{ data.periodfrom|date:'Y-m-d' }}</td>
+                <td>{{ data.periodto|date:'Y-m-d' }}</td>
+            {% endif %}
+            <td align="right" style="padding-right: 5px;">{{ data.amount|floatformat:2|intcomma }}</td>
+        </tr>
+    {% endfor %}
+</table>
+<br>
+<div class="right" style="padding-right: 10px;">
+    <b>TOTAL AMOUNT: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ ofmain.amount|floatformat:2|intcomma }}</b>
+</div>
+</body>
+</html>

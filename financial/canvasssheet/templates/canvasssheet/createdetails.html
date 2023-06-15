@@ -1,0 +1,1063 @@
+<form class="form-horizontal" id="detailform" method="get" action="">
+{% csrf_token %}
+    <div class="row">
+        <div class="col-lg-12 form-group">
+            <label class="col-sm-3 control-label" for="item_name">Item</label>
+            <div class="col-sm-7">
+                <select class="form-control input-sm" required style="width: 100%" id="id_item_name" name="item_name">
+                    <!-- <option value="">-- Select Item --</option>
+                    {% for invitem in invitem %}
+                        <option value="{{ invitem.id }}" data-itemtype="{{ invitem.inventoryitemclass.inventoryitemtype.id }}">{{ invitem.code  }} - {{ invitem.description }}</option>
+                    {% endfor %} -->
+                </select>
+                <span class="help-block form-error">{{ form.item_name.errors.as_text }}</span>
+            </div>
+            <label class="col-sm-3 control-label" for="quantity">Quantity</label>
+            <div class="col-sm-3">
+                <input type="number" class="form-control input-sm" id="id_quantity" name="quantity">
+                <span class="help-block form-error">{{ form.quantity.errors.as_text }}</span>
+            </div>
+        </div>
+        <div class="col-sm-12 pull-left margin-bottom-10">
+            <button type="button" class="btn btn-round btn-dark waves-effect waves-light" id="btn_detailsubmit">Add Item</button>
+            <button type="button" class="btn btn-round btn-dark waves-effect waves-light" id="btn_detailclose">Close</button>
+        </div>
+    </div>
+</form>
+<script type="text/javascript">
+    $(document).ready(function() {
+        summary = $("#summary tbody");
+        temp_form_counter = 0;
+        temp_formradio_counter = 0;
+
+        //add manual supplier container
+        manual_item_counter = 0;
+        manual_item = 0;
+        manual_itemdetail_key = 0;
+        manual_supplierchecked = 0;
+        manual_duplicatesupplier = 0;
+        manual_prfmain = 0;
+        manual_prfdetail = 0;
+
+        //department list
+        department_list = "<select name='item_department_input' class='form-control input-sm item_department_input'>";
+        {% for data in department %}
+            department_list += "<option value='{{ data.id }}'>{{ data.code }} - {{ data.departmentname }}</option>";
+        {% endfor %}
+        department_list += "</select>";
+
+        //branch list
+        branch_list = "<select name='item_branch_input' class='form-control input-sm item_branch_input'>";
+        {% for data in branch %}
+            branch_list += "<option value='{{ data.id }}'>{{ data.code }} - {{ data.description }}</option>";
+        {% endfor %}
+        branch_list += "</select>";
+
+        //unitofmeasure list
+        unitofmeasure_list = "<select name='item_unitofmeasure_input' class='form-control input-sm item_unitofmeasure_input'>";
+        {% for data in unitofmeasure %}
+            unitofmeasure_list += "<option value='{{ data.id }}'>{{ data.description }} ({{ data.code }})</option>";
+        {% endfor %}
+        unitofmeasure_list += "</select>";
+
+        //vat list
+        vat_list = "<select name='item_vat_input' class='form-control input-sm item_vat_input pull-right' style='width:70px'>";
+        {% for data in vat %}
+            vat_list += "<option value='{{ data.id }}' data-rate='{{ data.rate }}' data-code='{{ data.code }}'>{{ data.description }}</option>";
+        {% endfor %}
+        vat_list += "</select>";
+
+        $('.remarks-editor').wysihtml5({
+            "font-styles": false, //Font styling, e.g. h1, h2, etc. Default true
+            "emphasis": false, //Italics, bold, etc. Default true
+            "lists": false, //(Un)ordered lists, e.g. Bullets, Numbers. Default true
+            "html": false, //Button which allows you to edit the generated HTML. Default false
+            "link": false, //Button to insert a link. Default true
+            "image": false, //Button to insert an image. Default true,
+            "color": false //Button to change color of font
+        });
+
+        separateRadio();
+
+        // *** Supplier Add Start ***
+
+        // open supplier options
+        $(document).on('click', '.search_supplier', function(){
+            manual_item_counter = $(this).index('.search_supplier');
+            manual_item = $(this).parent().parent().parent().find('.removeitem').data('item');
+            manual_itemdetail_key = $(this).parent().parent().parent().data('itemdetailkey');
+            manual_prfmain = $(this).closest('.item_container').data('prfmain');
+            manual_prfdetail = $(this).closest('.item_container').data('prfdetail');
+
+            if (manual_prfmain == null) manual_prfmain = 0;
+            if (manual_prfdetail == null) manual_prfdetail = 0;
+        });
+
+        // search supplier
+        $(document).on('click', '#imp_suppliersubmit', function(){
+            $('.shade').fadeIn();
+            $.ajax({
+                url: "{% url 'supplier:searchsupplier' %}",
+                type: "post",
+                data: {'suppliercode': $('#imp_suppliercode').val(),
+                       'suppliername': $('#imp_suppliername').val(),
+                       'suppliertype': $('#imp_suppliertype').val(),
+                       'industry': $('#imp_industry').val(),
+                },
+
+                success: function(response) {
+                    $('#imp_suppliertable tbody').html('');
+                    if(response.supplier != "[]") {
+                        for (var i = 0; i < response.supplier.length; i++) {
+                            $('#imp_suppliertable tbody').append("<tr class='small'> " +
+                                                                    "<td>" +
+                                                                        "<button class='add_supplier btn btn-xs' data-supplier='" + response.supplier[i][0] + "'><i class='icon fa-plus' aria-hidden='true'></i></button>&nbsp;&nbsp;" +
+                                                                        "<b>" + response.supplier[i][2] + "</b>" +
+                                                                        "<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + response.supplier[i][1] + "</td>" +
+                                                                    "<td>" + response.supplier[i][3] + "</td>" +
+                                                                    "<td><b>" + response.supplier[i][8] + "</b><br><b>Tel no.:</b> " + response.supplier[i][6] + "<br><b>Fax no.:</b> " + response.supplier[i][7] + "</td>" +
+                                                                 "</tr>");
+                        }
+                    }
+                    $('.shade').fadeOut();
+                }
+                , error: function(response) {
+                    console.debug(response);
+                    $('.shade').fadeOut();
+                }
+            });
+        });
+
+        // add supplier
+        $(document).on('click', '.add_supplier', function(){
+
+            current_container = $('.item_container:eq('+manual_item_counter+')');
+            current_container_next = current_container;
+            while(current_container_next.next().not('.item_container').length == 1){
+                current_container_next = current_container_next.next();
+                if($(this).data('supplier') == current_container_next.find('.supplier').data('supplier')){
+                    manual_duplicatesupplier = 1;
+                }
+            }
+
+            if(manual_duplicatesupplier == 0){
+                status_checked = '';
+                if(current_container.next().hasClass('item_container') || current_container.is(':last-child')){
+                    manual_supplierchecked = 1;
+                    status_checked = "checked='checked'";
+                }
+                else{
+                    manual_supplierchecked = 0;
+                }
+
+                $('.shade').fadeIn();
+                $.ajax({
+                    url: "{% url 'canvasssheet:getsupplier' %}",
+                    type: "post",
+                    data: {'supplier': $(this).data('supplier'),
+                           'item': manual_item,
+                           'itemdetailkey': manual_itemdetail_key,
+                           'csstatus': manual_supplierchecked,
+                           'prfmain': manual_prfmain,
+                           'prfdetail': manual_prfdetail,
+                            {% if pagetype == "update" %}
+                            'pagetype': "update",
+                            'csmain': {{ csmain }},
+                            {% else  %}
+                            'pagetype': "create",
+                            {% endif  %}
+                           'secretkey': $("#id_secretkey").val()
+                    },
+
+                    success: function(response) {
+
+                        current_container_next = current_container;
+                        while(current_container_next.next().not('.item_container').length == 1){
+                            current_container_next = current_container_next.next();
+                        }
+
+                        //vat list
+                        vat_list = "<select name='item_vat_input' class='form-control input-sm item_vat_input pull-right' style='width:70px'>";
+                        {% for data in vat %}
+                            if(response.suppliervat == '{{ data.id }}'){
+                                vat_list += "<option value='{{ data.id }}' data-rate='{{ data.rate }}' data-code='{{ data.code }}' selected='selected'>{{ data.description }}</option>";
+                            }
+                            else{
+                                vat_list += "<option value='{{ data.id }}' data-rate='{{ data.rate }}' data-code='{{ data.code }}'>{{ data.description }}</option>";
+                            }
+                        {% endfor %}
+                        vat_list += "</select>";
+
+                        current_container_next.after("<tr><td><input type='radio' name='supplier' class='radio radio-custom supplier' " + status_checked + " data-itemdetailkey='" + current_container.data('itemdetailkey') + "' data-item='" + current_container.attr('id') + "' data-supplier='" + response.supplierid + "' form='" + current_container.data('form') + "'></td>" +
+                                                "<td class='small'><span style='cursor:pointer;font-size:15px;' class='supplierdetails'><i class='icon fa-folder text-info' aria-hidden='true'></i></span> &nbsp;&nbsp;" + response.suppliername + "</td> " +
+                                                "<td class='small text-right' style='padding-right: 30px'>0.00</td> " +
+                                                "<td class='small'><input type='number' class='form-control item_cost input-sm' value='" + 0 + "'></td> " +
+                                                "<td class='small item_amount text-right'>0.00</td>" +
+                                                "<td class='small item_vat_rate text-right'>" + vat_list + "</td>" +
+                                                "<td class='small item_vatable text-right'>0.00</td>" +
+                                                "<td class='small item_vatexempt text-right'>0.00</td>" +
+                                                "<td class='small item_vatzero text-right'>0.00</td>" +
+                                                "<td class='small item_totalpurchase text-right'>0.00</td>" +
+                                                "<td class='small item_addvat text-right'>0.00</td>" +
+                                                "<td class='small item_total_amount text-right'>0.00</td></tr>"
+                                                 );
+
+                        current_container.removeClass('supplied');
+                        addSupplierManual();
+                        customAlert($('#supplier-success'));
+                        reorderItems();
+                        $('.shade').fadeOut();
+                    }
+                    , error: function(response) {
+                        console.debug(response);
+                        $('.shade').fadeOut();
+                    }
+                });
+            }
+            else{
+                customAlert($('#supplier-danger'));
+                manual_duplicatesupplier = 0;
+            }
+        });
+
+        // *** Supplier Add End ***
+
+
+        // *** Add Item Manual Start ***
+
+        // display form
+        $(document).on('click', '#detailsbutton', function() {
+            $("#detailentry").show();
+        });
+
+        // hide form
+        $("#btn_detailclose").click(function(){
+            $("#detailentry").hide();
+        });
+
+        // save item
+        $(document).on('click', '#btn_detailsubmit', function(){
+            if($('#id_quantity').val() >= 1 && $('#id_item_name').val() != ''){
+                $('.shade').fadeIn();
+                $.ajax({
+                    url: "{% url 'canvasssheet:importitemsmanual' %}",
+                    type: "post",
+                    data: {'inv_id': $("#id_item_name").val(),
+                            {% if pagetype == "update" %}
+                            'pagetype': "update",
+                            'csmain': {{ csmain }},
+                            {% else  %}
+                            'pagetype': "create",
+                            {% endif  %}
+                            'secretkey': $("#id_secretkey").val()
+                    },
+
+                    success: function(response) {
+                        if(response.item != ""){
+                            $("#itemno").text(parseInt($("#itemno").text()) + 1);
+
+                            temp_supplier = filterSupplier(response.item_code, response.item_supplier);
+                            temp_supplier_length = temp_supplier.length;
+
+                            summary.append("<tr id='" + response.item + "' class='item_container new_container' data-itemdetailkey='" + response.itemdetail_key + "' form='"+temp_formradio_counter+"'> " +
+                                        "<td class='small' rowspan='" + temp_supplier_length + "' style='width: 40px'></td>" +
+                                        "<td class='small' rowspan='" + temp_supplier_length + "'><input type='hidden' class='itemdetailkey' value='" + response.itemdetail_key + "' readOnly='readOnly'><span style='cursor:pointer;font-size:15px;' class='removeitem' data-item='" + response.item_code + "'><i class='icon fa-trash text-info' aria-hidden='true'></i></span> &nbsp;&nbsp;<b>" + response.item_code + "</b></td>" +
+                                        "<td class='small' rowspan='" + temp_supplier_length + "'><b>" + response.item_description + "</b></td>" +
+                                        "<td class='small' rowspan='" + temp_supplier_length + "'><b> - </b></td>" +
+                                        "<td class='small' rowspan='" + temp_supplier_length + "'>" + branch_list + "</td>" +
+                                        "<td class='small' rowspan='" + temp_supplier_length + "'>" + department_list + "</td>" +
+                                        "<td class='small item_quantity text-center' rowspan='" + temp_supplier_length + "'>" +
+                                            "<input type='number' class='form-control input-sm item_quantity_input' style='margin:auto; width: 70px;text-align:right' data-item='" + response.item + "' value='" + $("#id_quantity").val() + "'>" +
+                                        "</td>" +
+                                        "<td class='small' rowspan='" + temp_supplier_length + "'>" + unitofmeasure_list + "</td>" +
+                                        "<td class='small item_etd text-center' rowspan='" + temp_supplier_length + "' align='center'>" +
+                                            "<input type='text' class='form-control input-sm item_etd_input datepicker date-yyyymmdd' placeholder='YYYY-MM-DD' readOnly='readOnly' style='margin:auto;' data-item='" + response.item + "'>" +
+                                        "</td>" +
+                                        "<td class='small item_remarks' rowspan='" + temp_supplier_length + "' align='center'>" +
+                                            "<div class='col-sm-11 row'>" +
+                                                "<textarea class='form-control input-sm input-remarks item_remarks_input' id='id_temp_remarks[" + response.item + "]' style='margin:auto;' data-item='" + response.item + "'></textarea>" +
+                                            "</div>" +
+                                            "<div class='col-sm-1'>" +
+                                                "<button class='btn showRemarks' data-toggle='modal' data-target='#remarksModal' data-itemno='" + response.item + "'>...</button>" +
+                                            "</div>" +
+                                        "</td>" +
+                                        "<td class='small' rowspan='" + temp_supplier_length + "'><b> - </b></td>" +
+                                        "</tr>");
+
+                            summary.find('tr').last().append("<td colspan='12'><small><a href='#' class='search_supplier' data-toggle='modal' data-target='#myModal2'><i class='icon fa-plus-circle' aria-hidden='true'></i>&nbsp;&nbsp;&nbsp;Add Supplier</a></small></td>");
+
+                            for(var j = 0; j < temp_supplier_length; j++) {
+                                // hover view more details about supplier
+
+                                status_checked = '';
+                                if(j==0) status_checked = "checked='checked'";
+
+                                //vat list
+                                vat_list = "<select name='item_vat_input' class='form-control input-sm item_vat_input pull-right' style='width:70px'>";
+                                {% for data in vat %}
+                                    if(temp_supplier[j][6] == '{{ data.id }}'){
+                                        vat_list += "<option value='{{ data.id }}' data-rate='{{ data.rate }}' data-code='{{ data.code }}' selected='selected'>{{ data.description }}</option>";
+                                    }
+                                    else{
+                                        vat_list += "<option value='{{ data.id }}' data-rate='{{ data.rate }}' data-code='{{ data.code }}'>{{ data.description }}</option>";
+                                    }
+                                {% endfor %}
+                                vat_list += "</select>";
+
+                                summary.append("<tr>" +
+                                        "<td><input type='radio' name='supplier' " + status_checked + " class='radio radio-custom supplier' data-itemdetailkey='" + response.itemdetail_key + "' data-item='" + response.item + "' data-supplier='" + temp_supplier[j][10] + "' form='" + temp_formradio_counter + "'></td> " +
+                                        "<td class='small'><span style='cursor:pointer;font-size:15px;' class='supplierdetails'><i class='icon fa-folder text-info' aria-hidden='true'></i></span> &nbsp;&nbsp;" + temp_supplier[j][5] + "</td> " +
+                                        "<td class='small text-right' style='padding-right: 30px'>" + temp_supplier[j][2] + "</td> " +
+                                        "<td class='small'><input type='number' class='form-control item_cost input-sm' value='" + temp_supplier[j][2] + "'></td> " +
+                                        "<td class='small item_amount text-right'></td>" +
+                                        "<td class='small item_vat_rate text-right'>" + vat_list + "</td>" +
+                                        "<td class='small item_vatable text-right'></td>" +
+                                        "<td class='small item_vatexempt text-right'></td>" +
+                                        "<td class='small item_vatzero text-right'></td>" +
+                                        "<td class='small item_totalpurchase text-right'></td>" +
+                                        "<td class='small item_addvat text-right'></td>" +
+                                        "<td class='small item_total_amount text-right'</td>" +
+                                        "</tr>");
+                            }
+                            addTempForm();
+                        }
+
+                        $("#id_item_name").val('').trigger('change.select2');
+                        $("#id_quantity").val('');
+
+                        addSupplierManual();
+                        separateRadio();
+                        computeVatItem();
+                        reorderItems();
+                        callEventHandler(i);
+                        $('.shade').fadeOut();
+                    }
+                    , error: function(response) {
+                        console.debug(response);
+                        $('.shade').fadeOut();
+                    }
+                });
+            }
+            else{
+                customAlert($('#add-item-danger'));
+            }
+        });
+
+        // *** Add Item Manual End ***
+
+
+        // *** Import PRF items Start ***
+
+        // display PRFs
+        $(document).on('click', '#importbutton', function(){
+            $('#importrfselect2').find('option').prop( "disabled", false );
+            $('.removeprf').each(function(index){
+                $('#importrfselect2').find('option[data-refnum=' + $(this).data('prf') + ']').prop( "disabled", true );
+                $('#importrfselect2').select2("destroy");
+                $('#importrfselect2').select2();
+
+            });
+            resetPrfOptions();
+        });
+
+        // display PRF details
+        $("#importrfselect2").change(function(){
+            if($(this).val() != ''){
+                importrfpreview = $("#importrfpreview tbody tr td");
+                importrfpreview.eq(0).text($(this).children('option:selected').data('refnum'));
+                importrfpreview.eq(1).text($(this).children('option:selected').data('urgency'));
+                importrfpreview.eq(2).text($(this).children('option:selected').data('approver'));
+                importrfpreview.eq(3).text($(this).children('option:selected').data('dateneeded'));
+
+                $("#importconfirm").prop('disabled', false);
+            }
+            else{
+                $("#importconfirm").prop('disabled', true);
+            }
+        });
+
+        // select PRF
+        $(document).on('click', '#importconfirm', function(){
+            $('.shade').fadeIn();
+            $.ajax({
+                url: "{% url 'canvasssheet:importitems' %}",
+                type: "post",
+                data: {'prfnum': $("#importrfselect2").val(),
+                        {% if pagetype == "update" %}
+                        'pagetype': "update",
+                        'csmain': {{ csmain }},
+                        {% else  %}
+                        'pagetype': "create",
+                        {% endif  %}
+                        'secretkey': $("#id_secretkey").val()
+                },
+
+                success: function(response) {
+                    if(response.prfdata != "[]"){
+                        $("#prfcontainer").append("<div class='widgett widgett-article widgett-shadow'>" +
+                                                    "<div class='widgett-header cover padding-0 bg-grey-600'>" +
+                                                    "<div class='background-cover padding-10'>PRF - " +
+                                                        response.prfdata[0] +
+                                                    "<button type='button' class='close removeprf' data-prf='" + response.prfdata[0] + "'>" +
+                                                        "<i class='icon fa-close' aria-hidden='true'></i>" +
+                                                    "</button>" +
+                                                    "</div></div></div>");
+
+                        for (var i = 0; i < response.prfdetail.length; i++) {
+                            $("#itemno").text(parseInt($("#itemno").text()) + 1);
+
+                            temp_supplier = filterSupplier(response.prfdetail[i][0], response.prfsupplier);
+                            temp_supplier_length = temp_supplier.length;
+
+                            summary.append("<tr id='" + response.prfdetail[i][4] + "' class='item_container new_container imported_prf' data-form='"+(temp_formradio_counter+i)+"' data-itemdetailkey='" + response.itemdetailkey[i][0] + "' data-prfdetail='" + response.prfdetail[i][10] + "' data-prfmain='" + response.prfdetail[i][11] + "'> " +
+                                    "<td class='small' rowspan='" + temp_supplier_length + "' style='width: 40px'></td>" +
+                                    "<td class='small' rowspan='" + temp_supplier_length + "'><input type='hidden' class='itemdetailkey' value='" + response.itemdetailkey[i][0] + "' readOnly='readOnly'><span style='cursor:pointer;font-size:15px;' class='removeitem' data-item='" + response.prfdetail[i][0] + "'><i class='icon fa-trash text-info' aria-hidden='true'></i></span> &nbsp;&nbsp;<b>" + response.prfdetail[i][0] + "</b></td>" +
+                                    "<td class='small' rowspan='" + temp_supplier_length + "'><b>" + response.prfdetail[i][1] + "</b></td>" +
+                                    "<td class='small' rowspan='" + temp_supplier_length + "'><b>" + response.prfdetail[i][2] + "</b></td>" +
+                                    "<td class='small' rowspan='" + temp_supplier_length + "' data-branch='" + response.prfdetail[i][8] + "'>" + branch_list + "</td>" +
+                                    "<td class='small' rowspan='" + temp_supplier_length + "' data-department='" + response.prfdetail[i][6] + "'>" + department_list + "</td>" +
+                                    "<td class='small item_quantity text-center' rowspan='" + temp_supplier_length + "'>" +
+                                        "<input type='number' class='form-control input-sm item_quantity_input' readOnly='readOnly' style='margin:auto; width: 70px;text-align:right' data-item='" + response.prfdetail[i][4] + "' value='" + response.prfdetail[i][3] + "'>" +
+                                    "</td>" +
+                                    "<td class='small' rowspan='" + temp_supplier_length + "' data-unitofmeasure='" + response.prfdetail[i][7] + "'>" + unitofmeasure_list + "</td>" +
+                                    "<td class='small item_etd text-center' rowspan='" + temp_supplier_length + "' align='center'>" +
+                                        "<input type='text' class='form-control input-sm item_etd_input datepicker date-yyyymmdd' placeholder='YYYY-MM-DD' readOnly='readOnly' style='margin:auto;' data-item='" + response.prfdetail[i][4] + "'>" +
+                                    "</td>" +
+                                    "<td class='small item_remarks' rowspan='" + temp_supplier_length + "' align='center'>" +
+                                        "<div class='col-sm-11 row'>" +
+                                        "<textarea class='form-control input-sm input-remarks item_remarks_input' id='id_temp_remarks[" + response.prfdetail[i][4] + "]' style='margin:auto;' data-item='" + response.prfdetail[i][4] + "'></textarea>" +
+                                        "</div>" +
+                                        "<div class='col-sm-1'>" +
+                                            "<button class='btn showRemarks' data-toggle='modal' data-target='#remarksModal' data-itemno='" + response.prfdetail[i][4] + "'>...</button>" +
+                                        "</div>" +
+                                    "</td>" +
+                                    "<td class='small' rowspan='" + temp_supplier_length + "'>" + response.prfdetail[i][9] + "</td>" +
+                                    "</tr>");
+
+                            summary.find('tr').last().append("<td colspan='12'><small><a href='#' class='search_supplier' data-toggle='modal' data-target='#myModal2'><i class='icon fa-plus-circle' aria-hidden='true'></i>&nbsp;&nbsp;&nbsp;Add Supplier</a></small></td>");
+
+                            for(var j = 0; j < temp_supplier_length; j++) {
+                                // hover view more details about supplier
+
+                                status_checked = '';
+                                if(j==0) status_checked = "checked='checked'";
+
+                                //vat list
+                                vat_list = "<select name='item_vat_input' class='form-control input-sm item_vat_input pull-right' style='width:70px'>";
+                                {% for data in vat %}
+                                    if(temp_supplier[j][6] == '{{ data.id }}'){
+                                        vat_list += "<option value='{{ data.id }}' data-rate='{{ data.rate }}' data-code='{{ data.code }}' selected='selected'>{{ data.description }}</option>";
+                                    }
+                                    else{
+                                        vat_list += "<option value='{{ data.id }}' data-rate='{{ data.rate }}' data-code='{{ data.code }}'>{{ data.description }}</option>";
+                                    }
+                                {% endfor %}
+                                vat_list += "</select>";
+
+                                summary.append("<tr>" +
+                                        "<td><input type='radio' name='supplier' " + status_checked + " class='radio radio-custom supplier' data-itemdetailkey='" + response.itemdetailkey[i][0] + "' data-item='" + response.prfdetail[i][4] + "' data-supplier='" + temp_supplier[j][10] + "' form='" + (temp_formradio_counter+i) + "'></td> " +
+                                        "<td class='small'><span style='cursor:pointer;font-size:15px;' class='supplierdetails'><i class='icon fa-folder text-info' aria-hidden='true'></i></span> &nbsp;&nbsp;" + temp_supplier[j][5] + "</td> " +
+                                        "<td class='small text-right' style='padding-right: 30px'>" + temp_supplier[j][2] + "</td> " +
+                                        "<td class='small'><input type='number' class='form-control item_cost input-sm' value='" + temp_supplier[j][2] + "'></td> " +
+                                        "<td class='small item_amount text-right'></td>" +
+                                        "<td class='small item_vat_rate text-right'>" + vat_list + "</td>" +
+                                        "<td class='small item_vatable text-right'></td>" +
+                                        "<td class='small item_vatexempt text-right'></td>" +
+                                        "<td class='small item_vatzero text-right'></td>" +
+                                        "<td class='small item_totalpurchase text-right'></td>" +
+                                        "<td class='small item_addvat text-right'></td>" +
+                                        "<td class='small item_total_amount text-right'</td>" +
+                                        "</tr>");
+                            }
+                            addTempForm();
+                            addSupplierManual();
+
+                            reorderItems();
+                            callEventHandler(parseInt($('.item_container').last().index('.item_container'))+1);
+                        }
+                    }
+                    autoSelectItemPrfVal();
+                    separateRadio();
+                    computeVatItem();
+                    $('.shade').fadeOut();
+                }
+                , error: function(response) {
+                    console.debug(response);
+                    $('.shade').fadeOut();
+                }
+            });
+        });
+
+        // *** Import PRF items End ***
+
+
+        // *** Remarks Modal Start ***
+
+        // show remarks popup
+        $(document).on("click", ".showRemarks", function(e){
+            $('#remarks_itemno').val(parseInt($(this).closest('.item_container').index('.item_container'))+1);
+            $('#id_modal_remarks').data("wysihtml5").editor.setValue($(this).parent().siblings().find('.input-remarks').val());
+        });
+
+        // apply remarks changes
+        $(document).on("click", "#save_remarks", function(e){
+            remarks_itemcount = parseInt($('#remarks_itemno').val()) - 1
+            $('.input-remarks:eq('+ remarks_itemcount +')').next().next().remove();
+            $('.input-remarks:eq('+ remarks_itemcount +')').prev().remove();
+            $('.input-remarks:eq('+ remarks_itemcount +')').css('display', 'block');
+            $('.input-remarks:eq('+ remarks_itemcount +')').val($('#id_modal_remarks').val());
+            callEventHandler($('#remarks_itemno').val());
+            $('#remarksModal').modal('hide');
+        });
+
+        // *** Remarks Modal End ***
+
+
+        // *** Costing Compute Start ***
+
+        // on supplier change
+        $(document).on('change', '.supplier', function(){
+            computeVatSummary();
+        });
+
+        // on nego cost
+        $(document).on('change', '.item_cost, .item_quantity_input, .item_vat_input', function(){
+            computeVatItem();
+        });
+
+        // *** Costing Compute End ***
+
+        // *** Item and PRF Removal Start ***
+
+        // remove prf
+        $(document).on('click', '.removeprf', function(){
+            $('.shade').fadeIn();
+            var e = $(this);
+
+            $.ajax({
+                url: "{% url 'canvasssheet:removeprf' %}",
+                type: "post",
+                data: {'prfnum': $(this).data('prf'),
+                        {% if pagetype == "update" %}
+                        'pagetype': "update",
+                        'csmain': {{ csmain }},
+                        {% else  %}
+                        'pagetype': "create",
+                        {% endif  %}
+                        'secretkey': $("#id_secretkey").val()
+                },
+
+                success: function(response) {
+                    reorderItems();
+                    e.parent().remove();
+                    $('.shade').fadeOut();
+                }
+                , error: function(response) {
+                    console.debug(response);
+                    $('.shade').fadeOut();
+                }
+            });
+        });
+
+        // remove item
+        $(document).on('click', '.removeitem', function(){
+            if (!confirm('Remove item(s) from list?')) return false;
+
+            $('.shade').fadeIn();
+            var $t = $(this);
+
+            $.ajax({
+                url: "{% url 'canvasssheet:removeitem' %}",
+                type: "post",
+                data: {'item': $t.data('item'),
+                        'itemdetailkey': $(this).parent().parent().data('itemdetailkey'),
+                        {% if pagetype == "update" %}
+                        'pagetype': "update",
+                        'csmain': {{ csmain }},
+                        {% else  %}
+                        'pagetype': "create",
+                        {% endif  %}
+                        'secretkey': $("#id_secretkey").val()
+                },
+
+                success: function(response) {
+
+                    currentElement = $t.parent().parent();
+
+                    while(currentElement.next().not('.item_container').length == 1){
+                        currentElement.next().remove();
+                    }
+
+                    currentElement.remove();
+
+                    reorderItems();
+                    separateRadio();
+                    computeVatItem();
+
+                    $('.shade').fadeOut();
+                }
+                , error: function(response) {
+                    console.debug(response);
+                    $('.shade').fadeOut();
+                }
+            });
+        });
+
+        // *** Item and PRF Removal End ***
+
+        $(document).ready(function() {
+            $("#importrfselect2").select2({
+                dropdownParent: $("#myModal")
+            });
+        });
+
+        $(document).ready(function(){
+            upd_i = -1;
+            upd_itemdetailkey = '';
+
+            {% for data in csdetailtemp %}
+
+                //vat list
+                vat_list = "<select name='item_vat_input' class='form-control input-sm item_vat_input pull-right' style='width:70px'>";
+                {% for data_temp in vat %}
+                    if('{{ data.vat.id }}' == '{{ data_temp.id }}'){
+                        vat_list += "<option value='{{ data_temp.id }}' data-rate='{{ data_temp.rate }}' data-code='{{ data_temp.code }}' selected='selected'>{{ data_temp.description }}</option>";
+                    }
+                    else{
+                        vat_list += "<option value='{{ data_temp.id }}' data-rate='{{ data_temp.rate }}' data-code='{{ data_temp.code }}'>{{ data_temp.description }}</option>";
+                    }
+                {% endfor %}
+                vat_list += "</select>";
+
+                // new item container
+                if(upd_itemdetailkey != "{{ data.itemdetailkey }}"){
+                    upd_i++;
+                    if("{{ data.prfmain.prfnum }}" != "") imported = 'imported_prf';
+                    else imported = 'imported_prf not_disabled';
+
+                    summary.append("<tr id='{{ data.invitem.id }}' class='item_container new_container supplied "+imported+"' data-form='"+(temp_formradio_counter+upd_i)+"' data-itemdetailkey='{{ data.itemdetailkey }}' data-prfdetail='{{ data.prfdetail.id }}' data-prfmain='{{ data.prfmain.id }}'> " +
+                                   "<td class='small' rowspan='1' style='width: 40px'></td>" +
+                                   "<td class='small' rowspan='1'><input type='hidden' class='itemdetailkey' value='{{ data.itemdetailkey }}' readOnly='readOnly'><span style='cursor:pointer;font-size:15px;' class='removeitem' data-item='{{ data.invitem_code }}'><i class='icon fa-trash text-info' aria-hidden='true'></i></span> &nbsp;&nbsp;<b>{{ data.invitem_code }}</b></td>" +
+                                   "<td class='small' rowspan='1'><b>{{ data.invitem_name }}</b></td>" +
+                                   "<td class='small' rowspan='1'><b>{{ data.prfmain.prfnum|default:'-' }}</b></td>" +
+                                   "<td class='small' rowspan='1' data-branch='{{ data.branch.id }}'>" + branch_list + "</td>" +
+                                   "<td class='small' rowspan='1' data-department='{{ data.department.id }}'>" + department_list + "</td>" +
+                                   "<td class='small item_quantity text-center' rowspan='1'>" +
+                                       "<input type='number' class='form-control input-sm item_quantity_input' readOnly='readOnly' style='margin:auto; width: 70px;text-align:right' data-item='{{ data.invitem.id }}' value='{{ data.quantity }}'>" +
+                                   "</td>" +
+                                   "<td class='small' rowspan='1' data-unitofmeasure='{{ data.invitem_unitofmeasure.id }}'>" + unitofmeasure_list + "</td>" +
+                                   "<td class='small item_etd text-center' rowspan='1' align='center'>" +
+                                       "<input type='text' class='form-control input-sm item_etd_input datepicker date-yyyymmdd' placeholder='YYYY-MM-DD' value='{{ data.estimateddateofdelivery|date:"Y-m-d"|default:'' }}' readOnly='readOnly' style='margin:auto;' data-item='{{ data.invitem.id }}'>" +
+                                   "</td>" +
+                                   "<td class='small item_remarks' rowspan='1' align='center'>" +
+                                       "<div class='col-sm-11 row'>" +
+                                       "<textarea class='form-control input-sm input-remarks item_remarks_input' id='id_temp_remarks[{{ data.invitem.id }}]' style='margin:auto;' data-item='{{ data.invitem.id }}'>{{ data.remarks }}</textarea>" +
+                                       "</div>" +
+                                       "<div class='col-sm-1'>" +
+                                           "<button class='btn showRemarks' data-toggle='modal' data-target='#remarksModal' data-itemno='{{ data.invitem.id }}'>...</button>" +
+                                       "</div>" +
+                                   "</td>" +
+                                   "<td class='small' rowspan='1'>{{ data.prfdetail.remarks }}</td>" +
+                                   "</tr>");
+
+                    summary.find('tr').last().append("<td colspan='12'><small><a href='#' class='search_supplier' data-toggle='modal' data-target='#myModal2'><i class='icon fa-plus-circle' aria-hidden='true'></i>&nbsp;&nbsp;&nbsp;Add Supplier</a></small></td>");
+
+                    summary.append("<tr>" +
+                                   "<td><input type='radio' name='supplier' checked='checked' class='radio radio-custom supplier' data-itemdetailkey='{{ data.itemdetailkey }}' data-item='{{ data.invitem.id }}' data-supplier='{{ data.supplier.id }}' form='" + (temp_formradio_counter+upd_i) + "'></td> " +
+                                   "<td class='small'><span style='cursor:pointer;font-size:15px;' class='supplierdetails'><i class='icon fa-folder text-info' aria-hidden='true'></i></span> &nbsp;&nbsp;{{ data.supplier.name }}</td> " +
+                                   "<td class='small text-right' style='padding-right: 30px'>{{ data.unitcost }}</td> " +
+                                   "<td class='small'><input type='number' class='form-control item_cost input-sm' value='{{ data.negocost }}'></td> " +
+                                   "<td class='small item_amount text-right'></td>" +
+                                   "<td class='small item_vat_rate text-right'>" + vat_list +"</td>" +
+                                   "<td class='small item_vatable text-right'></td>" +
+                                   "<td class='small item_vatexempt text-right'></td>" +
+                                   "<td class='small item_vatzero text-right'></td>" +
+                                   "<td class='small item_totalpurchase text-right'></td>" +
+                                   "<td class='small item_addvat text-right'></td>" +
+                                   "<td class='small item_total_amount text-right'</td>" +
+                                   "</tr>");
+                    addTempForm();
+                    //addSupplierManual();
+                    reorderItems();
+                    callEventHandler(parseInt($('.item_container').last().index('.item_container'))+1);
+                    //separateRadio();
+                    computeVatItem();
+                }
+                else{
+                    summary.append("<tr>" +
+                                   "<td><input type='radio' name='supplier' class='radio radio-custom supplier' data-itemdetailkey='{{ data.itemdetailkey }}' data-item='{{ data.invitem.id }}' data-supplier='{{ data.supplier.id }}' form='" + (temp_formradio_counter+upd_i) + "'></td> " +
+                                   "<td class='small'><span style='cursor:pointer;font-size:15px;' class='supplierdetails'><i class='icon fa-folder text-info' aria-hidden='true'></i></span> &nbsp;&nbsp;{{ data.supplier.name }}</td> " +
+                                   "<td class='small text-right' style='padding-right: 30px'>{{ data.unitcost }}</td> " +
+                                   "<td class='small'><input type='number' class='form-control item_cost input-sm' value='{{ data.negocost }}'></td> " +
+                                   "<td class='small item_amount text-right'></td>" +
+                                   "<td class='small item_vat_rate text-right'>" + vat_list +"</td>" +
+                                   "<td class='small item_vatable text-right'></td>" +
+                                   "<td class='small item_vatexempt text-right'></td>" +
+                                   "<td class='small item_vatzero text-right'></td>" +
+                                   "<td class='small item_totalpurchase text-right'></td>" +
+                                   "<td class='small item_addvat text-right'></td>" +
+                                   "<td class='small item_total_amount text-right'</td>" +
+                                   "</tr>");
+{#                    upd_i = 0;#}
+                }
+
+                upd_itemdetailkey = "{{ data.itemdetailkey }}";
+
+            {% endfor %}
+            updateRowspan();
+            autoSelectItemPrfVal();
+            separateRadio();
+        });
+
+        $('#validateButton').click(function(e){
+            if($('.removeitem').length == 0) {
+                customAlert($('#item-danger'));
+            }
+            else if($('.item_container').length != $('.supplier:checked').length){
+                customAlert($('#supplier-item-danger'));
+            }
+            else{
+                $('.shade').fadeIn();
+                updateTempItems();
+            }
+        });
+
+        function callEventHandler(i){
+            var editor = new wysihtml5.Editor("id_temp_remarks["+i+"]");
+        }
+
+        function autoSelectItemPrfVal(){
+            $('.imported_prf').each(function(){
+                sel_department = $(this).find('.item_department_input').parent().data('department');
+                sel_branch = $(this).find('.item_branch_input').parent().data('branch');
+                sel_unitofmeasure = $(this).find('.item_unitofmeasure_input').parent().data('unitofmeasure');
+
+                $(this).find('.item_department_input').val(sel_department);
+                $(this).find('.item_branch_input').val(sel_branch);
+                $(this).find('.item_unitofmeasure_input').val(sel_unitofmeasure);
+
+                if(!$(this).hasClass('not_disabled')){
+                    $(this).find('.item_department_input option:not(:selected)').prop('disabled',true);
+                    $(this).find('.item_branch_input option:not(:selected)').prop('disabled',true);
+                    $(this).find('.item_unitofmeasure_input option:not(:selected)').prop('disabled',true);
+                }
+
+            });
+        }
+
+        function addTempForm(){
+            $("#tempForm").append("<form action'#' id='" + temp_form_counter + "'>");
+            temp_form_counter++;
+        }
+
+        function updateTempItems(){
+            var arr_item_list = new Array();
+            var arr_quantity_item = new Array();
+            var arr_item_quantity_input = new Array();
+            var arr_item_department_input = new Array();
+            var arr_item_branch_input = new Array();
+            var arr_item_unitofmeasure_input = new Array();
+            var arr_item_etd_input = new Array();
+            var arr_item_remarks_input = new Array();
+            var arr_checked_supplier = new Array();
+            var arr_checked_supplier_item = new Array();
+            var arr_item_cost_supplier = new Array();
+            var arr_item_cost_item = new Array();
+            var arr_item_cost = new Array();
+            var arr_item_cost_vat = new Array();
+            var arr_item_cost_vatrate = new Array();
+            var arr_item_detail_key = new Array();
+            var arr_item_each_detail_key = new Array();
+
+            // get item list
+            $('.item_container').each(function(){
+                arr_item_list.push($(this).attr('id'));
+            });
+
+            // get quantity input per item
+            // get department input per item
+            // get branch input per item
+            // get remarks input per item
+            // get etd input per item
+            // get unitofmeasure input per item
+            $('.item_quantity_input').each(function(index){
+                arr_quantity_item.push($(this).data('item'));
+                arr_item_quantity_input.push($(this).val());
+                arr_item_department_input.push($(this).parent().parent().find('.item_department_input').val());
+                arr_item_branch_input.push($(this).parent().parent().find('.item_branch_input').val());
+                arr_item_unitofmeasure_input.push($(this).parent().parent().find('.item_unitofmeasure_input').val());
+                arr_item_etd_input.push($(this).parent().parent().find('.item_etd_input').val());
+                arr_item_remarks_input.push($(this).parent().parent().find('.item_remarks_input').val());
+            });
+
+            // get supplier selected per item
+            $('.supplier:checked').each(function(index){
+                arr_checked_supplier.push($(this).data('supplier'));
+                arr_checked_supplier_item.push($(this).data('item'));
+            });
+
+            // get item detail key per supplier
+            $('.supplier').each(function(index){
+                arr_item_each_detail_key.push($(this).data('itemdetailkey'));
+            });
+
+            // get nego cost per supplier
+            $('.item_cost').each(function(index){
+                arr_item_cost_supplier.push($(this).parent().parent().find('.supplier').data('supplier'));
+                arr_item_cost_item.push($(this).parent().parent().find('.supplier').data('item'));
+                arr_item_cost.push($(this).val());
+                arr_item_cost_vat.push($(this).parent().parent().find('.item_vat_rate').find('.item_vat_input').val());
+                arr_item_cost_vatrate.push($(this).parent().parent().find('.item_vat_rate').find('.item_vat_input').children('option:selected').data('rate'));
+            });
+
+            // get item detail key
+            $('.itemdetailkey').each(function(index){
+                arr_item_detail_key.push($(this).val());
+            });
+
+            $.ajax({
+                url: "{% url 'canvasssheet:updatecsdetailtemp' %}",
+                type: "post",
+                data: {'prfnum': $("#importrfselect2").val(),
+                        'arr_item_list[]': arr_item_list,
+                        'arr_quantity_item[]': arr_quantity_item,
+                        'arr_checked_supplier[]': arr_checked_supplier,
+                        'arr_checked_supplier_item[]': arr_checked_supplier_item,
+                        'arr_item_quantity_input[]': arr_item_quantity_input,
+                        'arr_item_department_input[]': arr_item_department_input,
+                        'arr_item_branch_input[]': arr_item_branch_input,
+                        'arr_item_unitofmeasure_input[]': arr_item_unitofmeasure_input,
+                        'arr_item_etd_input[]': arr_item_etd_input,
+                        'arr_item_remarks_input[]': arr_item_remarks_input,
+                        'arr_item_cost_supplier[]': arr_item_cost_supplier,
+                        'arr_item_cost_item[]': arr_item_cost_item,
+                        'arr_item_cost[]': arr_item_cost,
+                        'arr_item_cost_vat[]': arr_item_cost_vat,
+                        'arr_item_cost_vatrate[]': arr_item_cost_vatrate,
+                        'arr_item_detail_key[]': arr_item_detail_key,
+                        'arr_item_each_detail_key[]': arr_item_each_detail_key,
+                        'secretkey': $("#id_secretkey").val()
+                },
+
+                success: function(response) {
+                    $('#form-b').submit();
+                    $('.shade').fadeOut();
+                }
+                , error: function(response) {
+                    console.debug(response);
+                    $('.shade').fadeOut();
+                }
+            });
+        }
+
+        function resetPrfOptions(){
+            $('#importrfselect2').val('').trigger('change');
+            $('#importrfpreview td').html(" - ");
+
+            $("#importrfselect2").select2({
+                dropdownParent: $("#myModal")
+            });
+        }
+
+        function reorderItems(){
+            len = summary.find('tr.item_container').find('td:eq(0)').length;
+            for(i=0;i<len;i++){
+                summary.find('tr.item_container:eq('+i+')').find('td:eq(0)').html(i+1);
+            }
+            $(".datepicker").datepicker({
+                autoclose: true,
+                format: 'yyyy-mm-dd'
+            });
+
+            // alert user for blank supplier
+            $('.item_container').each(function(){
+               if($(this).next().is('.item_container') || $(this).is(':last-child')){
+                   $(this).addClass('danger');
+               }
+               else{
+                   $(this).removeClass('danger');
+               }
+            });
+
+            //change id index of id_temp_remarks[]
+            jQuery($('.input-remarks:eq(' + (i-1) + ')')).attr('id', 'id_temp_remarks[' + (i) + ']')
+        }
+
+        function filterSupplier(item, supplier){
+            return $.grep(supplier, function(data){
+                return data[0] == item;
+            });
+        }
+
+        function computeVatItem(){
+            $(".item_amount").each(function(index) {
+                if($(this).parent().hasClass('item_container')){
+                    item_total = parseInt($(this).siblings('.item_quantity').find('.item_quantity_input').val());
+                }
+                else{
+                    item_total = $(this).parent().prevAll('.item_container:first').find('.item_quantity').find('.item_quantity_input').val();
+                }
+
+                item_total_amount = (item_total * parseFloat($(this).prev().find('.item_cost').val()));
+                item_vat_rate = parseFloat($(this).siblings('.item_vat_rate').find('.item_vat_input').children('option:selected').data('rate'));
+                item_gross_amount = item_total_amount;
+                item_vatcode = $(this).siblings('.item_vat_rate').find('.item_vat_input').children('option:selected').data('code');
+                item_vatable = 0;
+                item_vatexempt = 0;
+                item_vatzero = 0;
+                if(item_vat_rate > 0){
+                    item_gross_amount = item_total_amount/(1+(item_vat_rate/100));
+                    item_vatable = item_gross_amount;
+                }
+                else{
+                    if(item_vatcode == 'VE'){
+                        item_vatexempt = item_gross_amount;
+                    }
+                    else if(item_vatcode == 'ZE'){
+                        item_vatzero = item_gross_amount;
+                    }
+                }
+                item_totalpurchase = item_gross_amount;
+                item_addvat = item_total_amount - item_gross_amount;
+
+                // item total amount
+                $(this).siblings('.item_total_amount').html(item_total_amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                // item vatable
+                $(this).siblings('.item_vatable').html(item_vatable.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                // item vatexempt
+                $(this).siblings('.item_vatexempt').html(item_vatexempt.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                // item vatzero
+                $(this).siblings('.item_vatzero').html(item_vatzero.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                // item totalpurchase
+                $(this).siblings('.item_totalpurchase').html(item_totalpurchase.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                // item addvat
+                $(this).siblings('.item_addvat').html(item_addvat.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                // item gross amount
+                $(this).html(item_gross_amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            });
+            computeVatSummary();
+        }
+
+        function computeVatSummary(){
+            totalQty = 0;
+            grossAmt = 0;
+            vatAble = 0;
+            vatExempt = 0;
+            vatZero = 0;
+            totalPurchase = 0;
+            addVat = 0;
+            totalAmt = 0;
+
+            $('.item_quantity_input').each(function(){
+                //compute
+                totalQty += parseFloat($(this).val());
+            });
+
+            $('.supplier:checked').each(function(){
+                //compute
+                grossAmt += parseFloat($(this).parent().siblings('.item_amount').html().replace(/,/g, ''));
+                vatAble += parseFloat($(this).parent().siblings('.item_vatable').html().replace(/,/g, ''));
+                vatExempt += parseFloat($(this).parent().siblings('.item_vatexempt').html().replace(/,/g, ''));
+                vatZero += parseFloat($(this).parent().siblings('.item_vatzero').html().replace(/,/g, ''));
+                totalPurchase += parseFloat($(this).parent().siblings('.item_totalpurchase').html().replace(/,/g, ''));
+                addVat += parseFloat($(this).parent().siblings('.item_addvat').html().replace(/,/g, ''));
+                totalAmt += parseFloat($(this).parent().siblings('.item_total_amount').html().replace(/,/g, ''));
+
+            });
+            //apply
+            $('#totalQty').val(totalQty.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            $('#grossAmt').val(grossAmt.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            $('#vatAble').val(vatAble.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            $('#vatExempt').val(vatExempt.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            $('#vatZero').val(vatZero.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            $('#totalPurchase').val(totalPurchase.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            $('#addVat').val(addVat.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            $('#totalAmt').val(totalAmt.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+
+        }
+
+        function separateRadio(){
+            $('.item_container.new_container').each(function(){
+                currentElement = $(this);
+
+                $(this).find('.supplier').attr('form', temp_formradio_counter);
+                $(this).find('.supplier').attr('form', temp_formradio_counter).attr('checked', 'checked');
+
+                while(currentElement.next().not('.item_container').length == 1){
+                    currentElement.next().find('.supplier').attr('form', temp_formradio_counter);
+                    currentElement = currentElement.next();
+                }
+
+                temp_formradio_counter++;
+            });
+
+            $('.new_container').removeClass('new_container');
+        }
+
+        function addSupplierManual(){
+            // add rowspan
+            $('.item_container:not(".supplied")').each(function(){
+                //handler for no supplier
+                rowspan = parseInt($(this).find('td:eq(0)').attr('rowspan')) + 1;
+
+                $(this).find('td:eq(0)').attr('rowspan', rowspan);
+                $(this).find('td:eq(1)').attr('rowspan', rowspan);
+                $(this).find('td:eq(2)').attr('rowspan', rowspan);
+                $(this).find('td:eq(3)').attr('rowspan', rowspan);
+                $(this).find('td:eq(4)').attr('rowspan', rowspan);
+                $(this).find('td:eq(5)').attr('rowspan', rowspan);
+                $(this).find('td:eq(6)').attr('rowspan', rowspan);
+                $(this).find('td:eq(7)').attr('rowspan', rowspan);
+                $(this).find('td:eq(8)').attr('rowspan', rowspan);
+                $(this).find('td:eq(9)').attr('rowspan', rowspan);
+                $(this).find('td:eq(10)').attr('rowspan', rowspan);
+
+                $(this).addClass('supplied');
+            });
+        }
+
+        function updateRowspan(){
+            $('.item_container').each(function(){
+                upd_sourcecontainer = $(this);
+                upd_currentcontainer = $(this);
+                upd_rowspan = 1;
+
+                if(!upd_currentcontainer.is(':last-child')){
+                    while(upd_currentcontainer.next().hasClass('item_container') == false && upd_currentcontainer.next('tr').length > 0){
+                        upd_rowspan++;
+                        upd_currentcontainer = upd_currentcontainer.next();
+
+                        upd_sourcecontainer.find('td:eq(0)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(1)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(2)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(3)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(4)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(5)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(6)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(7)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(8)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(9)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.find('td:eq(10)').attr('rowspan', upd_rowspan);
+                    }
+                }
+                else{
+                    if(upd_sourcecontainer.hasClass('item_container') == false){
+                        upd_rowspan++;
+                        upd_sourcecontainer.prev().find('td:eq(0)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(1)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(2)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(3)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(4)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(5)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(6)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(7)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(8)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(9)').attr('rowspan', upd_rowspan);
+                        upd_sourcecontainer.prev().find('td:eq(10)').attr('rowspan', upd_rowspan);
+                    }
+                }
+
+            });
+        }
+    });
+</script>

@@ -1,0 +1,419 @@
+{% extends 'reports/base-html.html' %}
+{% load humanize %}
+{% block extra_css %}
+    <style>
+        td{
+            vertical-align: top;
+        }
+        .right{
+            text-align: right;
+        }
+        .left{
+            text-align: left;
+        }
+        .center{
+            text-align: center;
+        }
+        .border{
+            border: 1px solid black;
+            padding-top: 4px;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        #table_ae_detailed td{
+            border: none !important;
+        }
+        body{
+            font-size: 11px;
+        }
+    </style>
+{% endblock %}
+
+{% block page-content %}
+    <h4>{{ report_type }}</h4><br>
+
+    {% if report == 's' %}
+        <table id="table_summary" class="table table-condensed table-bordered">
+        <thead>
+            <tr>
+                <th class="left" style="width: 10%;"><span>AP Number</span></th>
+                <th class="left" style="width: 10%;"><span>Date</span></th>
+                <th class="left" style="width: 10%;"><span>Type</span></th>
+                <th class="left" style="width: 20%;"><span>Subtype</span></th>
+                <th class="left" style="width: 30%;"><span>Payee</span></th>
+                <th class="left" style="width: 10%;"><span>Status</span></th>
+                <th class="right" style="width: 10%;"><span>Amount</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in data_list %}
+                <tr>
+                    <td><a href="{% url 'accountspayable:update' data.pk %}" target="_parent">{{ data.apnum }}</a></td>
+                    <td>{{ data.apdate|date:'Y-m-d' }}</td>
+                    <td>{{ data.aptype.description }}</td>
+                    <td>{{ data.apsubtype.description }}</td>
+                    <td>{{ data.payee.name }}</td>
+                    <td>{{ data.get_apstatus_display }}</td>
+                    <td class="right">{{ data.amount|floatformat:2|intcomma }}</td>
+                </tr>
+            {% endfor %}
+            <tr><td colspan="7"></td></tr>
+            <tr style="border-top: 1px solid grey; padding-top: 5px;">
+                <td colspan="6"><b>Total</b></td>
+                <td class="right"><b>{{ report_total.amount__sum|floatformat:2|intcomma }}</b></td>
+            </tr>
+        </tbody>
+        </table>
+    {% elif report == 'd' %}
+        <table>
+            <tr>
+                <td style="width: 33%;border: 1px solid grey;padding: 3px; padding-bottom: 0px">
+                    <b>Subtype:</b> &nbsp;&nbsp;(RFR) Revolving Fund Replenishment, &nbsp;&nbsp;(MAP) Manual APV
+                </td>
+                <td style="width: 28%;border: 1px solid grey;padding: 3px; padding-bottom: 0px">
+                    <b>In/VAT:</b> &nbsp;&nbsp;(F) Fixed Assets, &nbsp;&nbsp;(S) Supplies Inventory, &nbsp;&nbsp;(V) Services
+                </td>
+                <td style="width: 39%;border: 1px solid grey;padding: 3px; padding-bottom: 0px">
+                    <b>Status</b> &nbsp;&nbsp;(F) For Approval, &nbsp;&nbsp;(A) Approved, &nbsp;&nbsp;(I) In Process, &nbsp;&nbsp;(R) Released, &nbsp;&nbsp;(D) Disapproved
+                </td>
+            </tr>
+        </table>
+        <br>
+        <table id="table_detailed" class="table table-condensed table-bordered">
+        <thead>
+            <tr>
+                <th class="left" style="width: 6%;"><span>AP No.</span></th>
+                <th class="left" style="width: 6%;"><span>Date</span></th>
+                <th class="left" style="width: 5%;"><span>Type</span></th>
+                <th class="left" style="width: 5%;"><span>Subtype</span></th>
+                <th class="left" style="width: 20%;"><span>Payee</span></th>
+                <th class="left" style="width: 5%;"><span>VAT</span></th>
+                <th class="left" style="width: 5%;"><span>ATC</span></th>
+                <th class="center" style="width: 5%;"><span>In/VAT</span></th>
+                <th class="center" style="width: 5%;"><span>Status</span></th>
+                <th class="left" style="width: 17%;"><span>Particulars</span></th>
+                <th style="width: 12%"></th>
+                <th class="right" style="width: 9%;"><span>Amount</span></th>
+            </tr>
+        </thead>
+        {% if rfv == 'hide' %}
+            <tbody class="small">
+                {% for data in data_list %}
+                    <tr>
+                        <td><a href="{% url 'accountspayable:update' data.pk %}" target="_parent">{{ data.apnum }}</a></td>
+                        <td>{{ data.apdate|date:'Y-m-d' }}</td>
+                        <td>{{ data.aptype.description }}</td>
+                        <td>{{ data.apsubtype.code }}</td>
+                        <td>{{ data.payee.name }}</td>
+                        <td>{{ data.vat.code }}</td>
+                        <td>{{ data.atax.code }}</td>
+                        <td style="text-align: center">{{ data.inputvattype.code }}</td>
+                        <td style="text-align: center">{{ data.apstatus }}</td>
+                        <td>{{ data.particulars }}</td>
+                        <td></td>
+                        <td class="right">{{ data.amount|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% endfor %}
+                <tr><td colspan="12"></td></tr>
+                <tr style="border-top: 1px solid grey; padding-top: 5px;">
+                    <td colspan="11"><b>Total</b></td>
+                    <td class="right"><b>{{ report_total.amount__sum|floatformat:2|intcomma }}</b></td>
+                </tr>
+            </tbody>
+        {% elif rfv == 'show' %}
+            <tbody class="small">
+                {% for data in data_list %}
+                    {% ifchanged data.apmain.apnum %}
+                        <tr style="border-top: 1px solid grey; padding-top: 5px;">
+                            <td><a href="{% url 'accountspayable:update' data.apmain.pk %}" target="_parent">{{ data.apmain.apnum }}</a></td>
+                            <td>{{ data.apmain.apdate|date:'Y-m-d' }}</td>
+                            <td>{{ data.apmain.aptype.description }}</td>
+                            <td>{{ data.apmain.apsubtype.code }}</td>
+                            <td>{{ data.apmain.payee.name }}</td>
+                            <td>{{ data.apmain.vat.code }}</td>
+                            <td>{{ data.apmain.atax.code }}</td>
+                            <td style="text-align: center">{{ data.apmain.inputvattype.code }}</td>
+                            <td style="text-align: center">{{ data.apmain.apstatus }}</td>
+                            <td>{{ data.particulars }}</td>
+                            <td></td>
+                            <td class="right">{{ data.apmain.amount|floatformat:2|intcomma }}</td>
+                        </tr>
+                    {% endifchanged %}
+                    <tr>
+                        <td colspan="5" style="padding: 7px; padding-bottom: 2px; background-color: #efefef"></td>
+                        <td colspan="2" style="padding: 7px; padding-bottom: 2px; background-color: #efefef">RFV-{{ data.reprfvnum }}</td>
+                        <td colspan="2" style="padding: 7px; padding-bottom: 2px; background-color: #efefef">{{ data.reprfvdate|date:'Y-m-d' }}</td>
+                        <td colspan="2" style="padding: 7px; padding-bottom: 2px; background-color: #efefef; text-align: right;">{{ data.amount|floatformat:2|intcomma }}</td>
+                        <td style="padding: 7px; padding-bottom: 2px; background-color: #efefef"></td>
+                    </tr>
+                {% endfor %}
+                <tr><td colspan="12"></td></tr>
+                <tr style="border-top: 1px solid grey; padding-top: 5px;">
+                    <td colspan="11"><b>Total</b></td>
+                    <td class="right"><b>{{ report_total.apmain__amount__sum|floatformat:2|intcomma }}</b></td>
+                </tr>
+            </tbody>
+        {% endif %}
+        </table>
+    {% elif report == 'ub' or report == 'ae' %}
+        <table id="table_unbalanced" class="table table-condensed table-bordered">
+        <thead>
+            <tr>
+                <th class="left"><span>AP Number</span></th>
+                <th class="left"><span>Date</span></th>
+                <th class="left"><span>APV Type</span></th>
+                <th class="left"><span>APV Subtype</span></th>
+                <th class="left"><span>Payee</span></th>
+                <th class="left"><span>Disbursing Branch</span></th>
+                <th class="left"><span>APV Status</span></th>
+                <th class="right"><span>Debit</span></th>
+                <th class="right"><span>Credit</span></th>
+                <th class="right"><span>Margin</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in data_list %}
+                <tr>
+                    <td><a href="{% url 'accountspayable:update' data.apmain__pk %}" target="_parent">{{ data.apmain__apnum }}</td>
+                    <td>{{ data.apmain__apdate|date:'Y-m-d' }}</td>
+                    <td>{{ data.apmain__aptype__code }}</td>
+                    <td>{{ data.apmain__apsubtype__code }}</td>
+                    <td>{{ data.apmain__payeename }}</td>
+                    <td>{{ data.apmain__bankbranchdisburse__branch }}</td>
+                    <td>{{ data.apmain__apstatus }}</td>
+                    <td class="right">{{ data.debitsum|floatformat:2|intcomma }}</td>
+                    <td class="right">{{ data.creditsum|floatformat:2|intcomma }}</td>
+                    <td class="right">{{ data.margin|floatformat:2|intcomma }}</td>
+                </tr>
+            {% endfor %}
+            <tr><td colspan="10"></td></tr>
+            <tr style="border-top: 1px solid grey; padding-top: 5px;">
+                <td colspan="7"><b>Total</b></td>
+                <td class="right"><b>{{ report_total.debitsum__sum|floatformat:2|intcomma }}</b></td>
+                <td class="right"><b>{{ report_total.creditsum__sum|floatformat:2|intcomma }}</b></td>
+                <td class="right"><b>{{ report_total.margin__sum|floatformat:2|intcomma }}</b></td>
+            </tr>
+        </tbody>
+        </table>
+    {% elif report == 'a_s' %}
+        <table id="table_ae_summary" class="table table-condensed table-bordered">
+            <thead>
+                <tr>
+                    <th class="border center" colspan="2">General Ledger</th>
+                    <th class="border center" colspan="2">Subsidiary Ledger</th>
+                    <th class="border center" colspan="2">Amount</th>
+                </tr>
+                <tr>
+                    <th class="border left">Acct Code</th>
+                    <th class="border left">Account Title</th>
+                    <th class="border left">Code</th>
+                    <th class="border left">Particulars</th>
+                    <th class="border right">Debit</th>
+                    <th class="border right">Credit</th>
+                </tr>
+                <tr></tr>
+            </thead>
+            <tbody>
+            {% for data in data_list %}
+{#                <tr {% ifchanged data.chartofaccount__accountcode %}style="border-top: 1px solid grey; padding-top: 5px;"{% endifchanged %}>#}
+                <tr>
+                    <td style="width: 10%">{{ data.chartofaccount__accountcode }}</td>
+                    <td style="width: 35%">{{ data.chartofaccount__description }}</td>
+                    <td style="width: 10%">
+                        <table>
+                            <tr>
+                                {% if data.bankaccount__code %}
+                                    <td width="30px">{{ data.bankaccount__code }}</td>
+                                {% endif %}
+                                {% if data.department__code %}
+                                    <td width="30px">{{ data.department__code }}</td>
+                                {% endif %}
+                                {% if data.branch__code %}
+                                    <td width="30px">{{ data.branch__code }}</td>
+                                {% endif %}
+{#                                {% if data.employee__firstname %}#}
+{#                                    <td>{{ data.employee__firstname }} {{ data.employee__lastname }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.supplier__name %}#}
+{#                                    <td>{{ data.supplier__name }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.customer__name %}#}
+{#                                    <td>{{ data.customer__name }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.unit__description %}#}
+{#                                    <td>{{ data.unit__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.product__description %}#}
+{#                                    <td>{{ data.product__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.inputvat__description %}#}
+{#                                    <td>{{ data.inputvat__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.outputvat__description %}#}
+{#                                    <td>{{ data.outputvat__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.vat__description or data.inputvat.description %}#}
+{#                                    <td>{{ data.vat__description|default:'---' }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.wtax__description %}#}
+{#                                    <td>{{ data.wtax__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.ataxcode__code %}#}
+{#                                    <td>{{ data.ataxcode__code }}</td>#}
+{#                                {% endif %}#}
+                            </tr>
+                        </table>
+                    </td>
+                    <td style="width: 30%">
+                        <table>
+                            <tr>
+                                {% if data.bankaccount__accountnumber %}
+                                    <td>{{ data.bankaccount__accountnumber }}</td>
+                                {% endif %}
+                                {% if data.department__departmentname %}
+                                    <td>{{ data.department__departmentname }}</td>
+                                {% endif %}
+{#                                {% if data.employee__firstname %}#}
+{#                                    <td>{{ data.employee__firstname }} {{ data.employee__lastname }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.supplier__name %}#}
+{#                                    <td>{{ data.supplier__name }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.customer__name %}#}
+{#                                    <td>{{ data.customer__name }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.unit__description %}#}
+{#                                    <td>{{ data.unit__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.product__description %}#}
+{#                                    <td>{{ data.product__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.inputvat__description %}#}
+{#                                    <td>{{ data.inputvat__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.outputvat__description %}#}
+{#                                    <td>{{ data.outputvat__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.vat__description or data.inputvat.description %}#}
+{#                                    <td>{{ data.vat__description|default:'---' }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.wtax__description %}#}
+{#                                    <td>{{ data.wtax__description }}</td>#}
+{#                                {% endif %}#}
+{#                                {% if data.ataxcode__code %}#}
+{#                                    <td>{{ data.ataxcode__code }}</td>#}
+{#                                {% endif %}#}
+                            </tr>
+                        </table>
+                    </td>
+                    <td class="right" style="width: 10%;">
+                        {% if data.balancecode == 'D' %}
+                            {{ data.debitamount__sum|floatformat:2|intcomma }}
+                        {% endif %}
+                    </td>
+                    <td class="right" style="width: 10%;">
+                        {% if data.balancecode == 'C' %}
+                            {{ data.creditamount__sum|floatformat:2|intcomma }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr><td colspan="6"></td></tr>
+            <tr style="border-top: 1px solid grey; padding-top: 5px;">
+                <td colspan="4"><b>Total</b></td>
+                <td class="right"><b>{{ report_total.debitamount__sum|floatformat:2|intcomma }}</b></td>
+                <td class="right"><b>{{ report_total.creditamount__sum|floatformat:2|intcomma }}</b></td>
+            </tr>
+            </tbody>
+        </table>
+
+
+    {% elif report == 'a_d' %}
+        <table id="table_ae_detailed" class="table table-condensed table-bordered">
+            <thead>
+                <tr>
+                    <th class="border center" colspan="3">Accounts Payable</th>
+                    <th class="border center" style="width: 6%" rowspan="2">Account Number</th>
+                    <th class="border center" style="width: 19%" rowspan="2">Account Title</th>
+                    <th class="border center" style="width: 3%" rowspan="2">Dept. Code</th>
+                    <th class="border center" style="width: 12%" rowspan="2">Department Name</th>
+                    <th class="border right" style="width: 7%" rowspan="2">Debit</th>
+                    <th class="border right" style="width: 7%" rowspan="2">Credit</th>
+                </tr>
+                <tr>
+                    <th class="border left" style="width: 6%">Date</th>
+                    <th class="border left" style="width: 22%">Number
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Payee</th>
+                    <th class="border center" style="width: 18%">Particulars</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for data in data_list %}
+                <tr>
+                    {% ifchanged data.ap_num %}
+                        <tr>
+                            <td style="width: 6%"></td>
+                            <td style="width: 22%"></td>
+                            <td style="width: 18%"></td>
+                            <td style="width: 6%"></td>
+                            <td style="width: 19%"></td>
+                            <td style="width: 3%"></td>
+                            <td style="width: 12%"></td>
+                            <td style="width: 7%"></td>
+                            <td style="width: 7%"></td>
+                        </tr>
+                    {% endifchanged %}
+                    {% ifchanged data.ap_num %}
+                        <td style="vertical-align: top">
+                            {{ data.apmain__apdate|date:'m/d/Y' }}
+                        </td>
+                        <td style="vertical-align: top">
+                            {% ifchanged data.ap_num %}
+                                {{ data.ap_num }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ data.apmain__payeename|slice:":30" }}
+                            {% endifchanged %}
+                        </td>
+                        <td style="vertical-align: top">
+                            {% ifchanged data.ap_num %}
+                                {{ data.apmain__particulars|slice:":30" }}
+                            {% endifchanged %}
+                        </td>
+                    {% else %}
+                        {% if data.item_counter == 2 %}
+                            <td style="vertical-align: top"></td>
+                            <td style="vertical-align: top">TIN: {{ data.apmain__payee__tin|default:'-' }}</td>
+                            <td style="vertical-align: top">{{ data.apmain__particulars|slice:"30:60" }}</td>
+                        {% elif data.item_counter == 3 %}
+                            <td style="vertical-align: top"></td>
+                            <td style="vertical-align: top">{{ data.apmain__payee__address1 }}</td>
+                            <td style="vertical-align: top">{{ data.apmain__particulars|slice:"60:90" }}</td>
+                        {% elif data.item_counter == 4 %}
+                            <td style="vertical-align: top"></td>
+                            <td style="vertical-align: top">{{ data.apmain__payee__address2 }}</td>
+                            <td style="vertical-align: top">{{ data.apmain__particulars|slice:"90:120" }}</td>
+                        {% elif data.item_counter > 4 %}
+                            <td style="vertical-align: top"></td>
+                            <td style="vertical-align: top"></td>
+                            <td style="vertical-align: top">{{ data.apmain__particulars|slice:"120:150" }}</td>
+                        {% endif %}
+                    {% endifchanged %}
+                    <td style="vertical-align: top">{{ data.chartofaccount__accountcode }}</td>
+                    <td style="vertical-align: top">{{ data.chartofaccount__title }}</td>
+                    <td style="vertical-align: top">{{ data.department__code|default:'' }}</td>
+                    <td style="vertical-align: top">{{ data.department__departmentname|slice:":20"|default:'' }}</td>
+                    <td style="vertical-align: top" align="right">{{ data.debitamount__sum|default:''|intcomma }}</td>
+                    <td style="vertical-align: top" align="right">{{ data.creditamount__sum|default:''|intcomma }}</td>
+                </tr>
+            {% endfor %}
+            <tr><td colspan="9"></td></tr>
+            <tr style="border-top: 1px solid grey; padding-top: 5px;">
+                <td colspan="6"></td>
+                <td><b>GRAND TOTAL</b></td>
+                <td class="right"><b>{{ report_total.debitamount__sum|floatformat:2|intcomma }}</b></td>
+                <td class="right"><b>{{ report_total.creditamount__sum|floatformat:2|intcomma }}</b></td>
+            </tr>
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock page-content %}

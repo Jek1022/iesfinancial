@@ -1,0 +1,217 @@
+{% extends 'base-form.html' %}
+{% block page-title %} Supplier {% endblock page-title %}
+{% load humanize %}
+
+{% block page-content %}
+<div class="page-content container-fluid page">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Start Profile Tab Section -->
+            <div class="nav-tabs nav-tabs-animate border-profile">
+                <ul class="nav nav-tabs nav-profile">
+                    <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Information</a></li>
+                </ul>
+                <div class="tab-content padding-top-0">
+                    <div class="tab-pane active" id="profiles" role="tabpanel">
+                        <div class="panel top-profile skill-profile margin-bottom-25">
+                            <div class="panel-body">
+                                <!-- <h4 class="list-title">Personal Information</h4> -->
+                                <div class="row">
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info" style="width: 35%;">Code&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left; width: 65%;">{{ object.code }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Name&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.name }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info" style="width: 35%;">Industry&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left; width: 65%;">{{ object.industry.name }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Type&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.suppliertype.description }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info" style="width: 20%;">Address&nbsp;1&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left;">{{ object.address1 }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info" style="width: 20%;">Address&nbsp;2&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left;">{{ object.address2|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info" style="width: 20%;">Address&nbsp;3&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left;">{{ object.address3|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info" style="width: 20%;">Contact&nbsp;Person&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left;">{{ object.contactperson|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info" style="width: 35%;">Tel.&nbsp;No&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left; width: 65%;">{{ object.telno|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">TIN&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.tin|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info" style="width: 35%;">Fax No.&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left; width: 65%;">{{ object.faxno|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Zip Code&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.zipcode|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info" style="width: 35%;">Credit&nbsp;Terms&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left; width: 65%;">{{ object.creditterm.description }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Currency&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.currency.description }} ({{ object.currency.symbol }}%)</span>
+                                            <br><span class="text-name-profile text-info"><small>FX Rate&nbsp;: </small></span>
+                                            <span class="detail-profile"><small>{{ object.fxrate }}</small></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info" style="width: 35%;">Input&nbsp;VAT&nbsp;Type&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left; width: 65%;">{{ object.inputvattype.description }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Deferred&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.get_deferredvat_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info" style="width: 35%;">VAT&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left; width: 65%;">{{ object.vat.description }}</span>
+                                            <br><span class="text-name-profile text-info" style="width: 35%;"><small>VAT Rate&nbsp;: </small></span>
+                                            <span class="detail-profile" style="float: left; width: 65%;"><small>{{ object.vatrate }}%</small></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">ATC&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.atc.description }}</span>
+                                            <br><span class="text-name-profile text-info"><small>ATC Rate&nbsp;: </small></span>
+                                            <span class="detail-profile"><small>{{ object.atcrate }}%</small></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Bank&nbsp;Account&nbsp;:</span>
+                                            <span class="detail-profile" style="float: left;">{% if object.bankaccount %}{{ object.bankaccount.code }} [{{ object.bankaccount.bank.description }} - {{ object.bankaccount.bankaccounttype.description }}, {{ object.bankaccount.bankbranch.description }}]{% else %}N/A{% endif %}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Account&nbsp;Number&nbsp;:</span>
+                                            <span class="detail-profile" style="float: left;">{{ object.account_number|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Branch&nbsp;Disburse&nbsp;:</span>
+                                            <span class="detail-profile" style="float: left;">{% if object.bankbranchdisburse %}[{{ object.bankbranchdisburse.branch }}] {{ object.bankbranchdisburse.bank.code }}, {{ object.bankbranchdisburse.address1 }}{% else %}N/A{% endif %}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Payment&nbsp;Type&nbsp;:</span>
+                                            <span class="detail-profile" style="float: left;">{{ object.paytype.description|default:'N/A' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info" style="width: 35%;">Multiple&nbsp;Status&nbsp;: </span>
+                                            <span class="detail-profile" style="float: left; width: 65%;">{{ object.get_multiplestatus_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Status&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.status_verbose }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--  End Profile Tab Section -->
+        </div>
+        <div class="col-md-4">
+            <div class="right-box-profile">
+                <h4 class="skill-title">Activity Logs</h4>
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="master-degree">
+                            <span class="degree-name text-info">Created By:</span>
+                            <div class="univer-profile">{{ object.enterby }}</div>
+                            <div class="univer-profile">{{ object.enterdate }}</div>
+                        </div>
+                        <div class="master-degree">
+                            <span class="degree-name text-info">Modify By:</span>
+                            <div class="univer-profile">{{ object.modifyby }}</div>
+                            <div class="univer-profile">{{ object.modifydate }}</div>
+                        </div>
+                        <div class="master-degree">
+                            <div class="iconlist">
+                            {% if perms.supplier.change_supplier %}
+                            <a href="{% url 'supplier:update' object.pk %}" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to Edit" title="" aria-describedby="tooltip850155">
+                                <button type="button" class="btn btn-floating btn-success btn-sm waves-effect waves-float waves-light">
+                                    <i class="icon_pencil" aria-hidden="true"></i>
+                                </button>
+                            </a>
+                            {% endif %}
+                            {% if perms.supplier.delete_supplier %}
+                            <a href="{% url 'supplier:delete' object.pk %}" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to Delete" title="" aria-describedby="tooltip850155">
+                                <button type="button" class="btn btn-floating btn-danger btn-sm waves-effect waves-float waves-light">
+                                    <i class="icon_trash" aria-hidden="true"></i>
+                                </button>
+                            </a>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock page-content %}

@@ -1,0 +1,296 @@
+{% extends 'base-form.html' %}
+{% block page-title %} Requisition Form {% endblock page-title %}
+{% block extra_css %}
+    <style>
+        .text-name-profile.text-info
+        {
+            width: 30%;
+        }
+        .detail-profile
+        {
+            width: 70%;
+        }
+    </style>
+{% endblock extra_css %}
+{% block page-content %}
+<div class="page-content container-fluid page">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Start Profile Tab Section -->
+            <div class="nav-tabs nav-tabs-animate border-profile">
+                <div class="pull-right">
+                    <a href="{% url 'requisitionform:pdf' object.id %}" target="_blank"><button type="button" id="get_pdf" class="btn btn-info btn-sm waves-effect waves-light get_report">
+                        <i class="icon fa-file-pdf-o" aria-hidden="true"></i>&nbsp; Print
+                    </button></a>
+                    {% if object.rfstatus == 'A' %}
+                        <button type="button" class="btn btn-info btn-sm waves-effect waves-light" data-toggle="modal"
+                            data-target="#myModal"><i class="icon fa-list-ul" aria-hidden="true"></i>&nbsp; PRF</button>
+                    {% endif %}
+                </div>
+                <ul class="nav nav-tabs nav-profile">
+                    <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Main Details</a></li>
+                </ul>
+                <div class="tab-content padding-top-0">
+                    <div class="tab-pane active" id="profiles" role="tabpanel">
+                        <div class="panel top-profile skill-profile margin-bottom-25">
+                            <div class="panel-body small">
+                                <!-- <h4 class="list-title">Personal Information</h4> -->
+                                <div class="row">
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Number&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.rfnum }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">RF&nbsp;Date&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.rfdate }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">RF&nbsp;Type&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.get_rftype_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Inventory&nbsp;Item&nbsp;Type&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.inventoryitemtype.description }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Urgency&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.get_urgencytype_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Date&nbsp;Needed&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.dateneeded }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Branch&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.branch.description }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Department&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.department.departmentname }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Particulars&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.particulars }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Reference Number&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.refnum|default:' - ' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Designated&nbsp;Approver&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.designatedapprover.first_name }} {{ object.designatedapprover.last_name }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Actual&nbsp;Approver&nbsp;: </span>
+                                            <span class="detail-profile">{% if object.actualapprover == None %} - {% else %}{{ object.actualapprover.first_name }} {{ object.actualapprover.last_name }} {% endif %}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Response&nbsp;Date&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.responsedate|default:' - ' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">RF Status&nbsp;: </span>
+                                            <span class="detail-profile {% if object.rfstatus == 'F' %} text-primary {% elif object.rfstatus == 'A' %} text-success {% elif object.rfstatus == 'D' %} text-danger {% endif %}"><b>{{ object.get_rfstatus_display }}</b></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Status&nbsp;: </span>
+                                            <span class="detail-profile {% if object.status == 'A' %} text-success {% else %} text-danger {% endif %}"><b>{{ object.get_status_display }}</b></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="nav-tabs nav-tabs-animate border-profile">
+                <ul class="nav nav-tabs nav-profile">
+                    <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">RF Items</a></li>
+                </ul>
+                <div class="tab-content padding-top-0">
+                    <div class="tab-pane active" id="profiles" role="tabpanel">
+                        <div class="panel top-profile skill-profile margin-bottom-25">
+                            <div class="panel-body">
+                                <!-- <h4 class="list-title">Personal Information</h4> -->
+                                <table class="floatright margin-bottom-10 small">
+                                    <tr>
+                                        <td width="150px">
+                                            <label class="control-label float-left">Total&nbsp;Requested&nbsp;Qty:</label>
+                                        </td>
+                                        <td class="text-align-right">
+                                            <label class="control-label">{{ object.totalquantity }}</label>
+                                        </td>
+                                    </tr>
+                                    {% if object.rfstatus == 'A' %}<tr>
+                                        <td width="150px">
+                                            <label class="control-label float-left">Total&nbsp;PRF&nbsp;Qty:</label>
+                                        </td>
+                                        <td class="text-align-right">
+                                            <label class="control-label">{{ totalprfquantity }}</label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="150px">
+                                            <label class="control-label float-left">Total&nbsp;Remaining&nbsp;Qty:</label>
+                                        </td>
+                                        <td class="text-align-right">
+                                            <label class="control-label">{{ object.totalremainingquantity }}</label>
+                                        </td>
+                                    </tr>{% endif %}
+                                </table>
+                                <table class="table table-striped margin-bottom-0 small" id="summary">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>Item Name</th>
+                                                <th>Remarks</th>
+                                                <th>Unit of Measure</th>
+                                                <th width="100px">Requested Qty</th>
+                                                {% if object.get_rfstatus_display == 'Approved' %}
+                                                    <th style="width:100px; text-align: right">PRF Qty</th>
+                                                    <th style="width:100px; text-align: right">Remaining Qty</th>
+                                                {% endif %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for rfdetail in rfdetail %}
+                                                <tr>
+                                                    <td>{{ rfdetail.item_counter }}</td>
+                                                    <td>{{ rfdetail.invitem_name }}</td>
+                                                    <td>{{ rfdetail.remarks|safe }}</td>
+                                                    <td>{{ rfdetail.invitem_unitofmeasure_code }}</td>
+                                                    <td class="text-align-right">{{ rfdetail.quantity }}</td>
+                                                    {% if object.get_rfstatus_display == 'Approved' %}
+                                                        <td style="width:100px; text-align: right">{{ rfdetail.prftotalquantity }}</td>
+                                                        <td style="width:100px; text-align: right"><strong>{{ rfdetail.prfremainingquantity }}</strong></td>
+                                                    {% endif %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--  End Profile Tab Section -->
+        </div>
+
+        <div class="col-md-3">
+            <div class="right-box-profile">
+                <h4 class="skill-title">Activity Logs</h4>
+                <div class="panel">
+                    <div class="panel-body small">
+                        <div class="master-degree">
+                            <span class="degree-name text-info">Created&nbsp;By:</span>
+                            <div class="univer-profile">{{ object.enterby }}</div>
+                            <div class="univer-profile">{{ object.enterdate }}</div>
+                        </div>
+                        <div class="master-degree">
+                            <span class="degree-name text-info">Modified&nbsp;By:</span>
+                            <div class="univer-profile">{{ object.modifyby }}</div>
+                            <div class="univer-profile">{{ object.modifydate }}</div>
+                        </div>
+                        <div class="master-degree">
+                            <div class="iconlist">
+                            {% if perms.requisitionform.change_rfmain and object.isdeleted == 0 %}
+                            <a href="{% url 'requisitionform:update' object.pk %}" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to Edit" title="" aria-describedby="tooltip850155">
+                                <button type="button" class="btn btn-floating btn-success btn-sm waves-effect waves-float waves-light">
+                                    <i class="icon_pencil" aria-hidden="true"></i>
+                                </button>
+                            </a>
+                            {% endif %}
+                            {% if perms.requisitionform.delete_rfmain and object.rfstatus == 'F' and object.isdeleted == 0 and object.status == 'A' %}
+                            <a href="{% url 'requisitionform:delete' object.pk %}" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to Cancel" title="" aria-describedby="tooltip850155">
+                                <button type="button" class="btn btn-floating btn-danger btn-sm waves-effect waves-float waves-light">
+                                    <i class="icon_trash" aria-hidden="true"></i>
+                                </button>
+                            </a>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Dependent PRFs</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <table class="table table-striped margin-bottom-0 small">
+                        <thead>
+                            <tr>
+                                <th>PRF No.</th>
+                                <th>Status</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in prfs %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'purchaserequisitionform:detail' data.3 %}" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
+                                            <i class="icon md-search" aria-hidden="true">&nbsp;&nbsp;</i> {{ data.0 }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if data.1 == 'F' %}
+                                            For Approval
+                                        {% elif data.1 == 'A' %}
+                                            Approved
+                                        {% elif data.1 == 'D' %}
+                                            Disapproved
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ data.2 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+ {% endblock page-content %}

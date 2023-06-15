@@ -1,0 +1,224 @@
+{% extends 'reports/base-html.html' %}
+{% load humanize %}
+{% block extra_css %}
+    <style>
+        td{
+            vertical-align: top;
+        }
+        .right{
+            text-align: right;
+        }
+        .left{
+            text-align: left;
+        }
+        .center{
+            text-align: center;
+        }
+        .border{
+            border: 1px solid black;
+            padding-top: 4px;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        #table_ae_detailed td{
+            border: none !important;
+        }
+        body{
+            font-size: 11px;
+        }
+    </style>
+{% endblock %}
+
+{% block page-content %}
+    <h4>{{ report_type }}</h4><br>
+
+    {% if report == 'tb' %}
+        <table class="table table-condensed">
+        <thead>
+        <tr>
+            <th>code</th>
+            <th style="min-width: 300px;">acct_des</th>
+            <th class="text-right">beg_debit_amt</th>
+            <th class="text-right">beg_credit_amt</th>
+            <th class="text-right">mon_debit_amt</th>
+            <th class="text-right">mon_credit_amt</th>
+            <th class="text-right">end_debit_amt</th>
+            <th class="text-right">end_credit_amt</th>
+            <th class="text-right">inc_debit_amt</th>
+            <th class="text-right">inc_credit_amt</th>
+            <th class="text-right">bal_debit_amt</th>
+            <th class="text-right">bal_credit_amt</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for data, balances in data_list %}
+            <tr>
+                <td>{{ data.chartofaccount.accountcode|slice:'6' }}</td>
+                <td>{{ data.chartofaccount.description }}</td>
+                <td class="text-right">
+                    {% if data.chartofaccount.main < 4 %}
+                        {% if data.end_code == 'D' %}
+                            {{ data.end_amount|floatformat:2|intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    {% else %}
+                        {% if data.year_to_date_code == 'D' %}
+                            {{ data.year_to_date_amount|floatformat:2|intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if data.chartofaccount.main < 4 %}
+                        {% if data.end_code == 'C' %}
+                            {{ data.end_amount|floatformat:2|intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    {% else %}
+                        {% if data.year_to_date_code == 'C' %}
+                            {{ data.year_to_date_amount|floatformat:2|intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if balances.1 == 'D' %}
+                        {{ balances.0|floatformat:2|intcomma }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if balances.1 == 'C' %}
+                        {{ balances.0|floatformat:2|intcomma }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if balances.3 == 'D' %}
+                        {{ balances.2|floatformat:2|intcomma }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if balances.3 == 'C' %}
+                        {{ balances.2|floatformat:2|intcomma }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if data.chartofaccount.main > 3 %}
+                        {% if balances.3 == 'D' %}
+                            {{ balances.2|floatformat:2|intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if data.chartofaccount.main > 3 %}
+                        {% if balances.3 == 'C' %}
+                            {{ balances.2|floatformat:2|intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if data.chartofaccount.main < 4 %}
+                        {% if balances.3 == 'D' %}
+                            {{ balances.2|floatformat:2|intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if data.chartofaccount.main < 4 %}
+                        {% if balances.3 == 'C' %}
+                            {{ balances.2|floatformat:2|intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+    {% elif report == 'bs' or report == 'sie' %}
+        <table class="table table-condensed">
+        <thead>
+        <tr>
+            <th></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for data in data_list %}
+
+            <!-- Hide totals if not yet needed in loop -->
+            {% ifchanged data.chartofaccount__subgroup__mapped_subgroup__main__description %}
+            {% else %}
+                <style>
+                    .index{{ forloop.counter }}{
+                        display: none;
+                    }
+                </style>
+            {% endifchanged %}
+
+            <!-- Generate totals -->
+            {% if not forloop.first %}
+                <tr class="index{{ forloop.counter }}">
+                    <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Total {{ data.chartofaccount__subgroup__mapped_subgroup__main__description }}</td>
+                    <td></td>
+                </tr>
+                <tr class="index{{ forloop.counter }}">
+                    <td colspan="2"><br><br></td>
+                </tr>
+            {% endif %}
+
+            <!-- Show Main Group -->
+            {% ifchanged data.chartofaccount__subgroup__mapped_subgroup__main__description %}
+                <tr>
+                    <td colspan="2"><b>{{ data.chartofaccount__subgroup__mapped_subgroup__main__description }}</b></td>
+                </tr>
+            {% endifchanged %}
+
+            <!-- Show Sub Groups -->
+            <tr>
+                <td>{{ data.chartofaccount__subgroup__code }} {{ data.chartofaccount__subgroup__description }}</td>
+                <td>{{ data.count }}</td>
+            </tr>
+
+            <!-- Show Last totals -->
+            {% if forloop.last %}
+                <tr>
+                    <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Total {{ data.chartofaccount__subgroup__mapped_subgroup__main__description }}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><br><br></td>
+                </tr>
+            {% endif %}
+
+        {% endfor %}
+        </tbody>
+        </table>
+    {% endif %}
+{% endblock page-content %}

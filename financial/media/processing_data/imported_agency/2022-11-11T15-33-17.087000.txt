@@ -1,0 +1,106 @@
+DJANGO AJAX PAGINATION & SEARCH
+
+----------INSTALLATION----------
+
+> package: pip install django-endless-pagination
+> Add 'endless_pagination' to the INSTALLED_APPS to your settings.py.
+> Add ENDLESS_PAGINATION_PER_PAGE = 5 to settings for per page count configuration
+
+-----------DEBUGGING-----------
+
+> Go to C:\Python27\Lib\site-packages\django_endless_pagination-2.0-py2.7.egg\endless_pagination
+	> Open loaders.py
+		> Replace "from django.utils.importlib import import_module" with:
+				try:
+				    # Django versions >= 1.9
+				    from django.utils.module_loading import import_module
+				except ImportError:
+				    # Django versions < 1.9
+				    from django.utils.importlib import import_module
+	> Open views.py
+		> Go to line #134
+			> Replace 'request.REQUEST.get('querystring_key', PAGE_LABEL)' with 'request.GET.get('querystring_key', PAGE_LABEL)'
+	> Open decorators.py
+		> Go to line #80
+			> Replace 'request.REQUEST.get('querystring_key', PAGE_LABEL)' with 'request.GET.get('querystring_key', PAGE_LABEL)'
+	Open utils.py
+		> Go to line #46
+			> Replace 'return int(request.REQUEST[querystring_key])' with 'return int(request.GET[querystring_key])'
+		> Go to line #165
+			> Replace 'querydict = request.REQUEST.copy()' with 'querydict = request.GET.copy()'
+
+----------USAGE----------			
+
+> Open system_name/urls.py
+	> Add 'app_name='your_app_name' to selected app
+		> e.g. url(r'^accountspayable/', include('accountspayable.urls', app_name='accountspayable', namespace='accountspayable')),
+> Open app folder
+	> views.py
+		> Add from endless_pagination.views import AjaxListView
+		> Add from django.db.models import Q
+		> Change ListView to AjaxListView
+		> Add page_template = '<your_appname>/index_list.html' to indexView
+		> Add queryset filtering
+			> e.g.
+			def get_queryset(self):
+		        query = Apmain.objects.all().filter(isdeleted=0)
+		        if self.request.COOKIES.get('keysearch_' + self.request.resolver_match.app_name):
+		            keysearch = str(self.request.COOKIES.get('keysearch_' + self.request.resolver_match.app_name))
+		            query = query.filter(Q(apnum__contains=keysearch) |
+		                                 Q(apdate__contains=keysearch) |
+		                                 Q(payeecode__contains=keysearch) |
+		                                 Q(vatcode__contains=keysearch) |
+		                                 Q(ataxcode__contains=keysearch) |
+		                                 Q(bankbranchdisbursebranch__contains=keysearch) |
+		                                 Q(refno__contains=keysearch) |
+		                                 Q(particulars__contains=keysearch))
+		        return query
+	> index.html
+		> Add search box
+			<div id="search-container" class="row col-md-3 col-sm-4 col-xs-3">
+                <div class="input-group">
+                    <input type="text" id="searchFilter" class="form-control" placeholder="Search...">
+                    <span class="input-group-btn">
+                        <button id="searchBtn" class="btn btn-info">
+                            <span class="icon_search" aria-hidden="true"></span>
+                        </button>
+                    </span>
+                </div>
+            </div>	        
+        > Add table list
+        	<div class="col-md-12">
+                <div class="page-wrap">
+                    <br>
+                    {% block content %}
+                        <div class="endless_page_template">
+                        {% include page_template %}</div>
+                    {% endblock %}
+                </div>
+            </div>
+        > Add search trigger
+        	<script>
+			    $(function () {
+			        // ajax search and pagination
+			        $('#searchBtn').on('click', function(){
+			            $('.shade').fadeIn();
+			            setCookie('keysearch_{{ request.resolver_match.app_name }}', $('#searchFilter').val());
+			            $('#dummy').trigger('click');
+			        });
+			        $('body').on('keyup', function(e){
+				        var search_code = e.keyCode || e.which;
+				        if(search_code == 13 && $(':focus').attr('id') == "searchFilter"){
+				            $('#searchBtn').trigger('click');
+				        }
+				    });
+			    });
+			</script>       
+	> index_list.html
+		> check accountspayable/templates/accountspayable/index_list.html	 
+
+----------REFERENCES----------
+
+Documentation - http://django-endless-pagination.readthedocs.io/en/latest/start.html
+Customization - http://django-endless-pagination.readthedocs.io/en/latest/customization.html
+Error Fixes - https://stackoverflow.com/questions/32761566/django-1-9-importerror-for-import-module (Issue: loaders.py)
+			- https://github.com/tschellenbach/Django-facebook/issues/558 (Issue: views.py, decorators.py, utils.py)
+Related Tutorials - https://bubuzzz.wordpress.com/2012/06/16/django-endless-pagination-with-ajaxlistview/			

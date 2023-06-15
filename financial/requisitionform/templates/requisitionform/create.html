@@ -1,0 +1,250 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% block page-title %} Requisition Form {% endblock page-title %}
+{% block page-content %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/bootstrap-wysihtml5-0.0.2.css' %}" />
+    <style>
+        .select2-results__option {
+            font-size: 12px;
+        }
+        .form-control.input-sm.date-yyyymmdd.datepicker.week {
+            background-color: white;
+        }
+    </style>
+{% endblock extra_css %}
+<div class="panel">
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="margin-bottom-20">
+                <div class="panel-heading">
+                    <h3 class="panel-title">CREATE</h3>
+                </div>
+                    <form method="post" id="form-b">
+                        {% csrf_token %}
+                        <input type="hidden" name="secretkey" id="id_secretkey" value="{{ secretkey }}"/>
+                        <input type="hidden" name="totalquantity" id="id_totalquantity" value="0"/>
+                        <div class="row col-md-6 row-lg margin-left-10">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_rfnum">Number</label>
+                                <input type="text" class="form-control input-sm" id="id_rfnum" name="rfnum" placeholder="RFxxxxxxx" value="{{ form.rfnum.value|default:'' }}" readonly="readonly">
+                                <span class="help-block form-error">{{ form.rfnum.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_rfdate">RF Date</label>
+                                <input type="text" class="form-control input-sm date-yyyymmdd datepicker closemonth" data-mindate="{{ validtransaction|date:'Y,m,d' }}" readonly="readonly" style="padding: 5px 10px" id="id_rfdate" name="rfdate" placeholder="YYYY-MM-DD" data-validation="required" value="{% if form.rfdate.value %}{{ form.rfdate.value }}{% else %}{% now "Y-m-d" %}{% endif %}">
+                                <span class="help-block form-error">{{ form.rfdate.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.inventoryitemtype.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_inventoryitemtype">Type</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_inventoryitemtype" name="inventoryitemtype">
+{#                                    <option value="">-- Select --</option>#}
+                                    {% for inventoryitemtype in inventoryitemtype %}
+                                        <option value="{{ inventoryitemtype.id }}" {% if form.inventoryitemtype.value|add:0 == inventoryitemtype.id %} selected="selected" {% endif %}>{{ inventoryitemtype.description }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.inventoryitemtype.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group  col-sm-4">
+                                <label class="control-label" for="id_rftype">RF Type</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_rftype" name="rftype">
+                                    {% for id,name in form.fields.rftype.choices %}
+                                        <option value="{{ id }}"{% if form.rftype.value == id %} selected{% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.rftype.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.urgencytype.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_urgencytype">Urgency</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_urgencytype" name="urgencytype">
+                                    {% for id,name in form.fields.urgencytype.choices %}
+                                        <option value="{{ id }}"{% if form.urgencytype.value == id %} selected{% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.urgencytype.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_dateneeded">Date Needed</label>
+                                <input type="text" class="form-control input-sm date-yyyymmdd datepicker week" readonly="readonly" style="padding: 5px 10px" id="id_dateneeded" name="dateneeded" placeholder="YYYY-MM-DD" value="{{ form.dateneeded.value|default:'' }}" data-validation="required">
+                                <span class="help-block form-error">{{ form.dateneeded.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-6 {{ form.department.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_department">Department</label>
+                                <select class="form-control input-sm select2" data-validation="required" id="id_department" name="department">
+                                    <option value="">-- Select --</option>
+                                    {% for department in department %}
+                                        <option value="{{ department.id }}" {% if form.department.value|add:0 == department.id %} selected="selected" {% endif %}>{{ department.departmentname }} ({{ department.code }})</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.department.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-6 {{ form.designatedapprover.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_designatedapprover">Approver</label>
+                                <select class="form-control input-sm select2" data-validation="required" id="id_designatedapprover" name="designatedapprover">
+{#                                    <option value="1">Rey Kenneth Molina</option>#}
+                                    <option value="">-- Select --</option>
+                                    {% for designatedapprover in designatedapprover %}
+                                        <option value="{{ designatedapprover.id }}" {% if form.designatedapprover.value|add:0 == designatedapprover.id %} selected="selected" {% endif %}>{{ designatedapprover.first_name }} {{ designatedapprover.last_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.designatedapprover.errors.as_text }}</span>
+                            </div>
+                        </div>
+                        <div class="row col-md-6 row-lg margin-left-10">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_refnum">Reference #</label>
+                                <input type="text" class="form-control input-sm" maxlength="150" id="id_refnum" name="refnum" placeholder="Reference #" value="{{ form.refnum.value|default:'' }}">
+                                <span class="help-block form-error">{{ form.refnum.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.branch.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_branch">Branch</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_branch" name="branch">
+                                    {#                                    <option value="">-- Select --</option>#}
+                                    {% for branch in branch %}
+                                        <option value="{{ branch.id }}" {% if form.branch.value|add:0 == branch.id %} selected="selected" {% endif %}>{{ branch.description }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.branch.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_rfstatus">RF Status</label>
+                                <input type="text" class="form-control input-sm" id="id_rfstatus" name="rfstatus" value="For Approval" readonly="readonly">
+                                <span class="help-block form-error">{{ form.rfstatus.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-12">
+                                <label class="control-label" for="id_particulars">Particulars</label>
+                                <textarea data-fv-field="standard_content" class="form-control" id="id_particulars" name="particulars" rows="5" data-validation="required">{{ form.particulars.value|default:'' }}</textarea>
+                                <span class="help-block form-error">{{ form.particulars.errors.as_text }}</span>
+                            </div>
+                        </div>
+                        <div class="row row-lg margin-left-10">
+                        </div>
+                        <div class="row row-lg margin-left-10">
+
+                        </div>
+                        <div class="col-sm-12 margin-bottom-10">
+                            <div class="col-sm-6">
+                                <button type="submit" class="btn btn-round btn-success" id="validateButton">Submit</button>
+                            </div>
+                            <div class="col-sm-6">
+                                <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="detailsbutton"><i class="icon fa-plus-square" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Items</button>
+{#                                <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright"><i class="icon fa-refresh" aria-hidden="true"></i> Auto Entry</button>#}
+                            </div>
+                        </div>
+                        </form>
+                        <div class="col-sm-12" id="detailentry" style="display: none">
+                            <div class="panel panel-bordered">
+                                <div class="shade"><div class="loader two-color"></div></div>
+                                <div class="panel-body">
+                                    <h4>Requisition Form Details</h4>
+                                    <div id="detailsentryview">
+                                        {% include "requisitionform/rfdetails.html" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12">
+                            <div class="panel">
+                                <div class="shade"><div class="loader two-color"></div></div>
+                                <div class="panel-body">
+                                    <!-- Start Editable Section -->
+                                    <table class="floatright margin-bottom-10">
+                                        <tr>
+                                            <td width="200px">
+                                                <label class="control-label float-left">Total&nbsp;Requested&nbsp;Qty:</label>
+                                            </td>
+                                            <td class="text-align-right">
+                                                <label class="control-label">
+                                                    <span id="totalrequestedquantity" class="text-right">0</span>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table class="table table-striped margin-bottom-0 small" id="summary">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th style="width:120px">Item Code</th>
+                                                <th>Item Name</th>
+                                                <th style="width:350px">Remarks</th>
+                                                <th style="width:150px; text-align: center">Unit of Measure</th>
+                                                <th style="width:120px; text-align: center">Requested Qty</th>
+                                                <th style="width:50px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+<div id="remarksModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"> <span id="modal-header-title">Remarks</span></h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <input type="hidden" id="remarks_itemno">
+                    <textarea name="remarks" id="id_modal_remarks" class="form-control remarks-editor" rows="10"></textarea>
+                    <br>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" id="save_remarks">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="item-select" class="custom-alert danger">Please select an item.</div>
+<div id="item-quantity" class="custom-alert danger">Please enter requested quantity.</div>
+<div id="item-select-quantity" class="custom-alert danger">Please select an item and enter the requested quantity.</div>
+{% endblock page-content %}
+{% block extra_js %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+    <script src="{% static 'js/jquery.validate.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/libs/js/wysihtml5-0.3.0_rc2.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/bootstrap-wysihtml5-0.0.2.min.js' %}"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+        var sd = $('#id_rfdate').data('mindate');
+        var d = new Date(sd);
+        d.setDate(d.getDate());
+        $('.datepicker.closemonth').each(function(){
+            $(this).datepicker('setStartDate', d);
+        });
+
+            $("#id_branch").val("{{ headoffice }}");
+
+            $("#detailsbutton").click(function (){
+                $("#detailentry").show();
+            });
+            $("#form-b").submit(function(event){
+                if($('.tblInputQuantity').length == 0) {
+                    alert("Please add at least one item.");
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/jquery.maskMoney.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/custom-maskMoney.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        $('.select2').select2({});
+    </script>
+{% endblock extra_js %}

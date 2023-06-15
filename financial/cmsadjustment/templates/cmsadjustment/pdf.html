@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% load humanize %}
+    {% load pdf_filters %}
+    <meta charset="UTF-8">
+    <title>CMS Adjustment</title>
+    <style>
+        @page {
+            size: {{ pagesize }} {{ orientation }};
+            @frame header_frame {
+                -pdf-frame-content: header_content;
+                left: 1cm;
+                width: 19.5cm;
+                top: 1cm;
+                height: 2cm;
+            }
+            @frame content_frame {
+                left: 1cm;
+                width: 19.5cm;
+                top: 2.5cm;
+                height: 19.5cm;
+            }
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 1cm;
+                width: 19.5cm;
+                top: 22cm;
+                height: 6cm;
+            }
+        }
+        body{
+            font-size: 11px;
+            font-family: 'Arial';
+        }
+        .title{
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .center{
+            text-align: center;
+        }
+        .right{
+            text-align: right;
+        }
+        .number{
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .arial{
+            font-family: 'arial';
+        }
+        td{
+            vertical-align: top;
+        }
+        .sign_here{
+            width: 165px;
+            border-bottom: 1px solid black;
+            padding-bottom: -3px;
+            margin-bottom: -3px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="header_content">
+    <table>
+        <tr>
+            <td><img id="logo" src="{{ logo | get64 }}"/><br></td>
+            <td width="500px">
+                <p class="title center"><br>CMS ADJUSTMENT</p>
+            </td>
+            <td>
+                <p class="number right">CM No. {{ cmmain.cmnum }}</p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="footer_content">
+    <table>
+        <tr style="border-top: 2px solid black;border-left: 2px solid black;padding: 5px; padding-bottom: 0px;">
+            <td colspan="6" style="border-right: 2px solid black;"></td>
+        </tr>
+        <tr style="padding: 5px; padding-bottom: 0px;">
+            <td width="20%" style="border-left: 2px solid black;"><b>Prepared by</b></td>
+            <td width="5%"><b>:</b></td>
+            <td align="center" style="margin-right: 20px;">
+                <div class="sign_here">
+                    {{ cmmain.enterby.first_name }}&nbsp;{{ cmmain.enterby.last_name }}
+                </div>
+                <i>Signature over printed name</i>
+            </td>
+            <td width="20%"><b>Approved by</b></td>
+            <td width="5%"><b>:</b></td>
+            <td align="center" style="margin-right: 20px;border-right: 2px solid black;">
+                <div class="sign_here">&nbsp;</div>
+                <i>Signature over printed name</i>
+            </td>
+        </tr>
+        <tr style="border-bottom: 2px solid black; padding: 5px; padding-top: 3px; padding-bottom: 2px;">
+            <td width="20%" style="border-left: 2px solid black;"><b>Date prepared</b></td>
+            <td width="5%"><b>:</b></td>
+            <td align="center" style="margin-right: 20px;">
+                <div class="sign_here">{{ cmmain.enterdate|date:'Y-m-d' }}</div>
+            </td>
+            <td width="20%"><b>Date approved</b></td>
+            <td width="5%"><b>:</b></td>
+            <td align="center" style="margin-right: 20px;border-right: 2px solid black;">
+                <div class="sign_here">&nbsp;</div>
+            </td>
+        </tr>
+    </table>
+    <table class="arial" style="font-size: 8.4px; margin-top: 10px;">
+        <tr>
+            <td>
+                {{ parameter.report_footer1 }} {{ request.user }}<br>
+                {{ parameter.report_footer2 }} {% now 'Y-m-d' %}<br>
+                {{ parameter.report_footer3 }}<br>
+                {{ parameter.report_footer4 }}<br>
+                <b>{{ parameter.report_footer5 }}</b><br>
+                <b>{{ parameter.report_footer6 }}</b>
+            </td>
+            <td style="margin-left: 30px;width: 600px;">
+                {{ parameter.report_footer7 }}<br>
+                {{ parameter.report_footer8 }}<br>
+                {{ parameter.report_footer9 }}<br>
+                {{ parameter.report_footer10 }}<br>
+                {{ parameter.report_footer11 }}<br>
+                {{ parameter.report_footer12 }}
+            </td>
+        </tr>
+    </table>
+    <div style="text-align: right">
+        {%block page_foot%}
+            Page <pdf:pagenumber /> of <pdf:pagecount />
+        {%endblock%}
+    </div>
+</div>
+<table>
+    <tr><td colspan="3"></td></tr>
+    <tr>
+        <td colspan="3" style="line-height: 15px;">
+            <span class="title">{{ parameter.description|upper }}</span><br>
+            {{ parameter.address1 }}<br>
+            {{ parameter.address2 }}<br>
+            Tel: ({{ parameter.telno1 }}, {{ parameter.telno2 }}<br>
+            VAT REG TIN: {{ parameter.tinnum }}
+        </td>
+    </tr>
+    <tr><td>&nbsp;</td></tr>
+    <tr><td>&nbsp;</td></tr>
+</table>
+<br><br>
+<table style="margin-bottom: 30px;">
+    <tr>
+        <td width="40%">
+            <table>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td width="20%"><b>CM Date</b></td>
+                    <td width="10%" style="vertical-align: top"><b>:</b></td>
+                    <td width="70%" style="vertical-align: top">{{ cmmain.cmdate|date:'Y-m-d' }}</td>
+                </tr>
+                <tr>
+                    <td width="20%"><b>Particulars</b></td>
+                    <td width="10%" style="vertical-align: top"><b>:</b></td>
+                    <td width="70%" style="vertical-align: top">{{ cmmain.particulars }}</td>
+                </tr>
+            </table>
+        </td>
+        <td width="60%">
+            <table class="table table-bordered" id="detailstable">
+                <tr>
+                    <th><span>&nbsp;</span></th>
+                    <th style="text-align: left;"><span>PRODUCT</span></th>
+                    <th style="text-align: right; width: 200px;"><span>DEBIT</span></th>
+                    <th style="text-align: right; width: 200px;"><span>CREDIT</span></th>
+                </tr>
+                {% for item in items %}
+                    <tr>
+                        <td width="5%" style="margin-left: 5px;">{{ item.item_counter }}</td>
+                        <td width="65%">[{{ item.product_code }}]&nbsp;&nbsp;{{ item.product_name }}</td>
+                        <td width="30%" style="text-align: right;">{% if item.debitamount > 0 %}{{ item.debitamount|floatformat:2|intcomma }}{% endif %}</td>
+                        <td width="30%" style="text-align: right;">{% if item.creditamount > 0 %}{{ item.creditamount|floatformat:2|intcomma }}{% endif %}</td>
+                    </tr>
+                {% endfor %}
+                <tr><td>&nbsp;</td></tr>
+                <tr>
+                    <td colspan="2"><b>TOTAL:</b></td>
+                    <td style="text-align: right;"><b>{{ cmmain.amount|floatformat:2|intcomma }}</b></td>
+                    <td style="text-align: right;"><b>{{ cmmain.amount|floatformat:2|intcomma }}</b></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

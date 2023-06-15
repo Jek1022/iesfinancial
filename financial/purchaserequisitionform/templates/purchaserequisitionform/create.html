@@ -1,0 +1,313 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% load mathfilters %}
+{% block page-title %} Purchase Requisition Form {% endblock page-title %}
+{% block page-content %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/css/dashboard/dashboard.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/bootstrap-wysihtml5-0.0.2.css' %}" />
+    <style>
+        .select2-results__option {
+            font-size: 12px;
+        }
+        .select2-container--default .select2-results__option[aria-disabled=true] {
+            display: none;
+        }
+        .vattable td, .temp_quantity, .temp_fxrate, .temp_amount {
+            text-align: right;
+        }
+        .vattable td:first-child {
+            width: 170px;
+            padding-right: 20px;
+        }
+        .vattable td input {
+            width: 100px;
+            text-align: right;
+        }
+        .heading-top-index-2 {
+            padding-right: 15px;
+            padding-left: 45px;
+        }
+        .form-control[disabled], .form-control[readonly]{
+            background-color: white !important;
+        }
+    </style>
+{% endblock extra_css %}
+<div class="panel">
+    <div class="panel-heading">
+        <h3 class="panel-title">Create</h3>
+    </div>
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="margin-bottom-20">
+                <form method="post" id="form-b">
+                    {% csrf_token %}
+                    <input type="hidden" name="secretkey" id="id_secretkey" value="{{ secretkey }}"/>
+                    <div class="col-md-8">
+                        <div class="row col-md-12">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_prfnum">Number</label>
+                                <input type="text" class="form-control input-sm" placeholder="PRFxxxxxxx" disabled="disabled">
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.prftype.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_prftype">PRF Type</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_prftype" name="prftype">
+                                    {% for id,name in form.fields.prftype.choices %}
+                                        <option value="{{ id }}"{% if form.prftype.value == id %} selected {% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.prftype.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.inventoryitemtype.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_inventoryitemtype">Type</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_inventoryitemtype" name="inventoryitemtype" data-toggle="tooltip" data-placement="left" data-original-title="To select a new type, remove all items below.">
+                                    {% for inventoryitemtype in inventoryitemtype %}
+                                        <option data-code="{{ inventoryitemtype.code }}" value="{{ inventoryitemtype.id }}" {% if form.inventoryitemtype.value|add:0 == inventoryitemtype.id %} selected="selected" {% endif %}>{{ inventoryitemtype.description }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.inventoryitemtype.errors.as_text }}</span>
+                            </div>
+                        </div>
+                        <div class="row col-md-12">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_prfstatus">PRF Status</label>
+                                <input type="text" class="form-control input-sm" value="FOR APPROVAL" disabled="disabled">
+                                <span class="help-block form-error">{{ form.prfstatus.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_prfdate">PRF Date</label>
+                                <input type="text" class="form-control input-sm date-yyyymmdd datepicker closemonth" data-mindate="{{ validtransaction|date:'Y,m,d' }}" readonly="readonly" style="padding: 5px 10px" id="id_prfdate" name="prfdate" placeholder="YYYY-MM-DD" data-validation="required" value="{{ form.prfdate.value|default:'' }}{% if not form.prfdate.value %}{% now "o-m-d" %}{% endif %}" readonly="readonly">
+                                <span class="help-block form-error">{{ form.prfdate.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_dateneeded">Date Needed</label>
+                                <input type="text" class="form-control input-sm date-yyyymmdd datepicker week" id="id_dateneeded" name="dateneeded" placeholder="YYYY-MM-DD" data-validation="required" value="{{ form.dateneeded.value|date:'Y-m-d'|default:'' }}" readonly="readonly">
+                                <span class="help-block form-error">{{ form.dateneeded.errors.as_text }}</span>
+                            </div>
+                        </div>
+                        <div class="row col-md-12">
+                            <div class="form-group col-sm-4 {{ form.urgencytype.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_urgencytype">Urgency Type</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_urgencytype" name="urgencytype">
+                                    {% for id,name in form.fields.urgencytype.choices %}
+                                        <option value="{{ id }}"{% if form.urgencytype.value == id %} selected {% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.urgencytype.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.branch.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_branch">Branch</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_branch" name="branch">
+                                    {% for branch in branch %}
+                                        <option value="{{ branch.id }}" {% if form.branch.value|add:0 == branch.id %} selected="selected" {% endif %} {% if not form.branch.value and branch.code == 'HO'%} selected="selected" {% endif %}>{{ branch.description }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.branch.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.designatedapprover.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_designatedapprover">Approver</label><br>
+                                <select class="form-control input-sm select2" data-validation="required" id="id_designatedapprover" name="designatedapprover">
+                                    <option value="">-- Select --</option>
+                                    {% for designatedapprover in designatedapprover %}
+                                        <option value="{{ designatedapprover.id }}" {% if form.designatedapprover.value|add:0 == designatedapprover.id %} selected="selected" {% endif %}>{{ designatedapprover.first_name }} {{ designatedapprover.last_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.designatedapprover.errors.as_text }}</span>
+                            </div>
+                        </div>
+                        <div class="row col-md-12">
+                            <div class="form-group col-sm-12">
+                                <label class="control-label" for="id_particulars">Particulars</label>
+                                <textarea data-fv-field="standard_content" class="form-control" id="id_particulars" name="particulars" rows="1" data-validation="required">{{ form.particulars.value|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="widgett widgett-article widgett-shadow">
+                            <div class="heading-top-index-2">
+                                <table class="vattable">
+                                    <tr>
+                                        <td><small><b>Quantity:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm" id="totalQty" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Amount:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" id="totalAmount" disabled="disabled" value="0"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="heading-top-index-2">
+                                <table class="vattable">
+                                    <tr>
+                                        <td><small>VATable&nbsp;Purchase:</small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>VAT-Exempt&nbsp;Purchase:</small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>VAT&nbsp;Zero&nbsp;-&nbsp;Rated&nbsp;Purchase:</small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr><td colspan="0"><br></td></tr>
+                                    <tr>
+                                        <td><small><b>Total&nbsp;Purchase:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Add&nbsp;VAT:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Total&nbsp;Amount:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="0"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 margin-bottom-10">
+                        <div class="col-sm-6">
+                            <button type="submit" class="btn btn-round btn-success" id="validateButton">Submit</button>
+                        </div>
+                        <div class="col-sm-6">
+                            <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="importbutton" data-toggle="modal" data-target="#myModal"><i class="icon fa-download" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Import RF</button>
+                            <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="detailsbutton"><i class="icon fa-plus-square" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Add Items</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="col-sm-12" id="detailentry" style="display: none">
+                    <div class="panel panel-bordered">
+                        <div class="shade"><div class="loader two-color"></div></div>
+                        <div class="panel-body">
+                            <h4>Add Items</h4>
+                            <div id="detailsentryview">
+                                {% include "purchaserequisitionform/createdetails.html" %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-12">
+                    <div class="panel">
+                        <div class="shade"><div class="loader two-color"></div></div>
+                        <div class="panel-body" style="overflow: auto; width: 100%">
+                            <label class="control-label floatright">Total&nbsp;Requested&nbsp;Qty:&nbsp;&nbsp;
+                                <span id="totalrequestedquantity">0</span>
+                            </label><br><br>
+                            <table class="table table-striped margin-bottom-0 small" id="summary">
+                                {% include "purchaserequisitionform/createthead.html" %}
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+            <div id="myModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">Select Requisition Form</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>
+                                <select name="" id="importrfselect2" class="form-control input-sm select2" style="width: 100%;">
+                                    <option value="">-- Select --</option>
+                                    {% for rfmain in rfmain %}
+                                        {% if rfmain.totalremainingquantity > 0 %}
+                                            <option value="{{ rfmain.id }}"
+                                                    data-refnum="{{ rfmain.refnum }}"
+                                                    data-rfnum="{{ rfmain.rfnum }}"
+                                                    data-urgency="{{ rfmain.get_urgencytype_display }}"
+                                                    data-dateneeded="{{ rfmain.dateneeded }}"
+                                                    data-approver="{{ rfmain.actualapprover }}">
+                                                        {{ rfmain.rfnum }} |
+                                                        ({{ rfmain.totalquantity|sub:rfmain.totalremainingquantity }} / {{ rfmain.totalquantity }})
+                                                        {{ rfmain.rfdate|date:"Y-m-d" }} |
+                                                        {{ rfmain.department.departmentname }} |
+                                                        {{ rfmain.get_urgencytype_display }} |
+                                                        Needed: {{ rfmain.dateneeded|date:"Y-m-d" }} |
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <br><br>
+                                <table class="col-md-12 table-bordered" id="importrfpreview">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: center"><small><b>Ref No.</b></small></th>
+                                            <th style="text-align: center"><small><b>Urgency Type</b></small></th>
+                                            <th style="text-align: center"><small><b>Actual Approver</b></small></th>
+                                            <th style="text-align: center"><small><b>Date Needed</b></small></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td align="middle"> - </td>
+                                            <td align="middle"> - </td>
+                                            <td align="middle"> - </td>
+                                            <td align="middle"> - </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <br><br>
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-info" id="importconfirm" data-dismiss="modal" disabled="disabled">Confirm</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="remarksModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"> <span id="modal-header-title">Remarks</span></h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <input type="hidden" id="remarks_itemno">
+                    <textarea name="remarks" id="id_modal_remarks" class="form-control remarks-editor" rows="10"></textarea>
+                    <br>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" id="save_remarks">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock page-content %}
+{% block extra_js %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+    <script src="{% static 'js/jquery.validate.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/jquery.maskMoney.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/custom-maskMoney.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/libs/js/wysihtml5-0.3.0_rc2.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/bootstrap-wysihtml5-0.0.2.min.js' %}"></script>
+    <script type="text/javascript">
+        var sd = $('#id_prfdate').data('mindate');
+        var d = new Date(sd);
+        d.setDate(d.getDate());
+        $('.datepicker.closemonth').each(function(){
+            $(this).datepicker('setStartDate', d);
+        });
+        $('.select2').select2({});
+    </script>
+{% endblock extra_js %}

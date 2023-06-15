@@ -1,0 +1,488 @@
+{% extends 'base-form.html' %}
+{% block page-title %} Triple C - Columnist / Contributor / Correspondent {% endblock page-title %}
+{% block extra_css %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.min.css' %}" />
+    <style>
+        .list_header_modified{
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .select2-results__options{
+            font-size: 12px;
+        }
+    </style>
+{% endblock extra_css %}
+{% block page-content %}
+<div class="panel">
+    <div class="panel-body container-fluid">
+        
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group col-sm-4">
+                        <label class="control-label small">Issue Date <span class="text-danger">*</span></label><br>
+                        <div class="input-daterange datarange">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="icon md-calendar" aria-hidden="true"></i></span>
+                                <input type="text" class="form-control datepickerfrom" id="dfrom" required />
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-addon">to</span>
+                                <input type="text" class="form-control datepickerto" id="dto" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-2">
+                        <label class="control-label small" for="type">Classification</label>
+                        <select class="form-control input-sm select2" id="type">
+                            <option value="">-- All --</option>
+                            {% for classification in classifications %}
+                                <option value="{{ classification.code}} ">{{ classification.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group col-sm-2" >
+                        <label class="control-label small" for="author_name">Author:</label>
+                        <select class="form-control input-sm select2" id="author_name">
+                            {% if authors %}
+                                <option value="">-- All --</option>
+                                {% for author in authors  %}
+                                    <option value="{{ author.name }}" data-ccc-type="{{ author.ccc }}">{{ author.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ author.name }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="form-group col-sm-2" >
+                        <label class="control-label small" for="bureau">Bureau:</label>
+                        <select class="form-control input-sm select2" id="bureau">
+                            <option value="">-- All --</option>
+                            {% for bureau in bureaus  %}
+                                <option value="{{ bureau.id }}" data-bureau-code="{{ bureau.code }}">{{ bureau.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ bureau.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- <div class="form-group col-sm-2" >
+                        <label class="control-label small" for="publication">Publication:</label>
+                        <select class="form-control input-sm select2" id="publication">
+                            <option value="">-- All --</option>
+                            {% for publication in publications  %}
+                                <option value="{{ publication.id }}" data-publication-code="{{ publication.code }}">{{ publication.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div> -->
+                    <div class="form-group col-sm-2" >
+                        <label class="control-label small" for="section">Section:</label>
+                        <select class="form-control input-sm select2" id="section">
+                            <option value="">-- All --</option>
+                            {% for section in sections  %}
+                                <option value="{{ section.id }}" data-section-code="{{ section.code }}">{{ section.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ section.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    
+                    <div class="form-group col-sm-2" >
+                        <label class="control-label small" for="page">Page:</label>
+                        <select class="form-control input-sm select2" id="page">
+                            <option value="">-- All --</option>
+                            {% for page in pages  %}
+                                <option value="{{ page.id }}" data-page-code="{{ page.code }}">{{ page.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group col-sm-2" >
+                        <label class="control-label small" for="status">Status:</label>
+                        <select class="form-control input-sm select2" id="status">
+                            <option value="">-- All --</option>
+                            <option value="A">Active</option>
+                            <option value="E">Ready for Posting</option>
+                            <option value="O">Posted (CS)</option>
+                            <option value="O_APV">Posted (APV)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-sm-1">
+                        <a class="btn btn-info waves-effect waves-dark" id="retrieve" title="Retrieve transaction list" style="margin-top: 27px;">
+                            <i class="icon fa-database" aria-hidden="true"></i>&nbsp;&nbsp;Retrieve
+                        </a>
+                    </div>
+                    <div class="form-group col-sm-4" >
+                        <a class="btn btn-primary waves-effect waves-dark" href="{% url 'triplec:report' %}" target="_blank" id="report" title="Go to report" style="margin-top: 27px;">
+                            <i class="fa fa-file-pdf-o" aria-hidden="true"></i>&nbsp;&nbsp;Report
+                        </a>
+                        <a href="{% url 'triplec:process_transaction' %}" target="_blank" class="btn btn-primary waves-effect waves-dark" id="process_transaction" title="Go to process transaction. (Note: Transactions with Ready for Posting status only are applicable)" style="margin-top: 27px;">
+                            <i class="icon fa-file-text-o" aria-hidden="true"></i>&nbsp;&nbsp;Process Transaction
+                        </a>
+                    </div>
+                    <div class="form-group col-sm-1 dropdown" style="margin-top: 27px;">
+                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"><i class="icon fa-upload" aria-hidden="true"></i>&nbsp;&nbsp;Upload
+                        <span class="caret"></span></button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a id="btn_upload" data-toggle="modal" data-target="#uploadModal">Upload Excel File</a>
+                            </li>
+                            <li>
+                                <a id="btn_manual_upload">Manual Data Entry</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+        <div class="shade" id="loader" style="display:none; z-index: 99; background-color: transparent; margin-top: 100px;">
+            <div class="loader two-color">
+            </div>
+        </div>
+        <br><br>
+        <div class="row" id="result_panel" style="display: none;">
+            <div class="panel panel-default">
+                <div class="panel-body" id="viewhtml">
+                   
+                </div>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+    <div id="uploadModal" class="modal fade" role="dialog">
+        <form method="post" id="data" enctype="multipart/form-data">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" id="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Data Upload</h4>
+                </div>
+                <div class="modal-body" style="overflow:hidden;">
+                    <div class="row" id="fileUploadInput">
+                        <div class="form-group col-md-12">
+                            <label for="data_file" class="control-label">XLS File</label>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <input type="file" id="data_file" class="form-control input-sm" name="data_file" required>
+                            <br>
+                            <br>
+                            <div style="border: 1px solid #e0e0e0; padding: 4px;">
+                                Tips:
+                                <ul>
+                                    <li>File uploading usually takes less than a minute. When it exceeds the specified time, kindly reload the page and try again.</li>
+                                    <li>The recommended date range of data to upload is 1-15 days only.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="row" id="data_summary" style="display: none; max-height: 500px; overflow-y: scroll;">
+                        <br>
+                        <div class="col-md-12">
+                            <span>
+                                RESULT: A total of <b id="success_count" class="text-success"></b> successfully processed data &#8212; and a total of 
+                                <b id="failed_count" class="text-warning"></b> failed/unable to process data are as follows:
+                            </span>
+                            <br><br>
+                            <table class="table table-condensed" id="failed_table">
+                                <thead class="bg-red-400" style="position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th></th>
+                                        <th style="color:white"><small><b>Issue Date</b><div class="pull-right"></div></small></th>
+                                        <th style="color:white">Article ID</th>
+                                        <th style="color:white">Article Title</th>
+                                        <th style="color:white">Number of Words</th>
+                                        <th style="color:white">Number of Characters</th>
+                                        <th style="color:white">Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" id="fileUploadSubmit">Upload</button>
+                    <button type="button" disabled="disabled" class="btn btn-info" style="display: none;" id="fileUploadProcessing">
+                        <i class="icon fa-spinner fa-spin font-16 margin-right-10" aria-hidden="true" style="vertical-align: middle"></i>
+                        PROCESSING ...
+                    </button>
+                    <button type="button" class="btn btn-info" style="display: none;" id="fileReloadPage" onClick="window.location.reload();return false;">Reload page and upload more</button>
+                    <button type="button" class="btn btn-default" id="fileUploadClose" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+<br><br>
+<div id="upload-success" class="custom-alert success">Upload successful.</div>
+<div id="upload-failed" class="custom-alert danger">Upload failed.</div>
+<div id="upload-file-exist" class="custom-alert danger">Uploaded file already exist.</div>
+<div id="upload-form-required" class="custom-alert danger">File is required.</div>
+<div id="upload-file-error" class="custom-alert danger">An error occured.</div>
+
+<div id="custom-success-alert" class="custom-alert success"></div>
+<div id="custom-failed-alert" class="custom-alert danger"></div>
+
+{% endblock page-content %}
+{% block extra_js %}
+<script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+<script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+<script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+<script>
+	$(function(){
+        $('.select2').select2({});
+		$(document).on('click', '#fileUploadSubmit', function(e){
+            $('#fileUploadSubmit').fadeOut(300);
+            $('#fileUploadProcessing').delay(300).fadeIn(300, function() {
+                $("form#data").submit();                
+            });
+        });
+
+        $('#btn_upload').click(function(){
+            form_refresh();
+        });
+
+        $('form#data').submit(function(){
+	        if ($('#data_file').get(0).files.length === 0) {
+                $('#fileUploadProcessing').fadeOut(300);
+                $('#fileUploadInput').fadeIn();
+                $('#fileUploadSubmit').delay(300).fadeIn(300);
+	            customAlert($('#upload-form-required'));
+	        }
+	        else{
+	            var formData = new FormData(this);
+	            $.ajax({
+	                url: "{% url 'triplec:upload' %}",
+	                type: 'POST',
+	                data: formData,
+	                async: false,
+	                success: function (data) {
+                        $('#fileUploadInput').fadeOut(300);
+                        $('#fileUploadProcessing').fadeOut(300);
+                        $('#fileUploadSubmit').fadeOut(300);
+                        $('form#data').trigger('reset');
+                        switch(data['result']) {
+                            case 1:
+                                customAlert($('#upload-success'));
+                                $('#uploadModal').modal('toggle');
+                                break;
+                            case 2:
+                                if(data['records_count'] == data['failed_data'].length){
+                                    $('#uploadModal').modal('toggle');
+                                    customAlert($('#upload-file-exist'));
+                                } else {
+                                    $('#data_summary').fadeIn();
+                                    $('#fileReloadPage').fadeIn();
+                                    datasummary(data);
+                                }
+                                break;
+                            case 3:
+                                customAlert($('#upload-failed'));
+                                $('#uploadModal').modal('toggle');
+                                break;
+                            default:
+                                customAlert($('#upload-file-error'));
+                        }
+	                },
+	                cache: false,
+	                contentType: false,
+	                processData: false
+	            });
+	        }
+			return false;
+	    });
+
+        function datasummary(data){
+
+            $('#success_count').text(data['success_count']);
+            $('#failed_count').text(data['failed_data'].length);
+            
+            $('#failed_table tbody').html('');
+
+            var article_title = ''
+            var count = 1;
+            for (var i = 0; i < data['failed_data'].length; i++) {
+
+                if (data['failed_data'][i][2] != null){
+                    article_title = data['failed_data'][i][2];
+                } else {
+                    article_title = '';
+                }
+
+                $('#failed_table tbody').append("<tr> \
+                    <td><small>" + count++ + "</small></td> \
+                    <td><small>" + data['failed_data'][i][0] + "</small></td> \
+                    <td><small>" + data['failed_data'][i][1] + "</small></td> \
+                    <td><small>" + article_title + "</small></td> \
+                    <td><small>" + data['failed_data'][i][3] + "</small></td> \
+                    <td><small>" + data['failed_data'][i][4] + "</small></td> \
+                    <td class='"+data['failed_data'][i][6]+"'><small>" + data['failed_data'][i][5] + "</small></td> \
+                </tr>");
+            }
+        }
+        
+        function form_refresh(){
+            $('#fileUploadInput').fadeIn();
+            $('#fileUploadProcessing').fadeOut();
+            $('#fileReloadPage').fadeOut();
+            $('#data_summary').fadeOut();
+            $('#fileUploadSubmit').fadeIn();
+        }
+
+        $('#retrieve').click(function(){
+
+            $('#loader').show();
+            $('#result_panel').hide();
+            $('#triplec_result').hide();
+            $('#viewhtml').css('min-height', '700px');
+
+            const dfrom = $('#dfrom').val() || '';
+            const dto = $('#dto').val() || '';
+            const type = $('#type').val() || '';
+            const status = $('#status').val() || '';
+            const author_name = $('#author_name').val() || '';
+            const bureau = $('#bureau').val() || '';
+            // const publication = $('#publication').val() || '';
+            const section = $('#section').val() || '';
+            const page = $('#page').val() || '';
+            
+            if (dfrom == '' || dto == '') {
+                alert('Issue Date is required');
+                $('#loader').hide();
+                return false;
+            }
+
+            url = "{% url 'triplec:generic_retrieve' %}"+"?dfrom="+dfrom+"&dto="+dto+"&type="+type+"&author_name="+author_name+"&status="+status+"&bureau="+bureau+"&section="+section+"&page="+page;
+            
+            $.ajax({
+                url: url,
+                type: "GET",
+                data: {
+                    'csrfmiddlewaretoken': " {{ csrf_token}} "
+                },
+                success: function(response) {
+                    console.log('success');
+                    $('#loader').hide();
+                    $('#result_panel').show();
+                    $('#triplec_result').show();
+                    console.log('start');
+                    $("#viewhtml").html(response);
+                    console.log('end');
+                },
+                error: function(response) {
+                    $('#loader').hide();
+                    $('#result_panel').show();
+                    $('#triplec_result').show();
+                    console.log(response);
+                    alert('Server error occured');
+                    return false;
+                }
+            });
+        });
+
+
+        // retrieve
+        // $('#retrieve').click(function(){
+
+        //     $('#loader').show();
+        //     $('#result_panel').hide();
+        //     $('#triplec_result').hide();
+        //     $('#viewhtml').css('min-height', '700px');
+
+        //     const dfrom = $('#dfrom').val() || '';
+        //     const dto = $('#dto').val() || '';
+        //     const type = $('#type').val() || '';
+        //     const status = $('#status').val() || '';
+        //     const author_name = $('#author_name').val() || '';
+        //     const bureau = $('#bureau').val() || '';
+        //     // const publication = $('#publication').val() || '';
+        //     const section = $('#section').val() || '';
+        //     const page = $('#page').val() || '';
+            
+        //     if (dfrom == '' || dto == '') {
+        //         alert('Issue Date is required');
+        //         $('#loader').hide();
+        //         return false;
+        //     }
+
+        //     url = "{-% url 'triplec:retrieve' %-}"+"?dfrom="+dfrom+"&dto="+dto+"&type="+type+"&author_name="+author_name+"&status="+status+"&bureau="+bureau+"&section="+section+"&page="+page;
+            
+        //     $.ajax({
+        //         url: url,
+        //         type: "GET",
+        //         data: {
+        //             'csrfmiddlewaretoken': " {{ csrf_token}} "
+        //         },
+        //         success: function(response) {
+        //             console.log('success');
+        //             $('#loader').hide();
+        //             $('#result_panel').show();
+        //             $('#triplec_result').show();
+        //             console.log('start');
+        //             $("#viewhtml").html(response['viewhtml']);
+        //             console.log('end');
+        //         },
+        //         error: function(response) {
+        //             $('#loader').hide();
+        //             $('#result_panel').show();
+        //             $('#triplec_result').show();
+        //             console.log(response);
+        //             alert('Server error occured');
+        //             return false;
+        //         }
+        //     });
+        // });
+
+        // $('#type').change(function(e){
+        //     e.preventDefault();
+        //     var ccc = $(this).val();
+   
+        //     $.ajax({
+        //         url: "{% url 'triplec:get_supplier_by_type' %}" + "?ccc=" + ccc,
+        //         type: "GET",
+        //         dataType: "JSON",
+        //         data: {
+        //             'csrfmiddlewaretoken': "{{csrf_token}}",
+        //         },
+        //         success: function(response) {
+        //             if(response.result == 'success'){
+
+        //                 $('#author_name').empty();
+        //                 if(ccc == ''){
+        //                     $('#author_name').append($('<option/>', { 
+        //                         value: "",
+        //                         text : "-- All --" 
+        //                     }));
+        //                 } else {
+        //                     $('#author_name').append($('<option/>', { 
+        //                         value: "",
+        //                         text : "-- Select --" 
+        //                     }));
+        //                 }
+                        
+        //                 $.each(response.data, function(propName, propVal) {
+        //                     $('#author_name').append(
+        //                         $('<option/>', { 
+        //                             value: propVal['id'],
+        //                             text : propVal['name']
+        //                         })
+        //                     );
+        //                 });
+        //             } else {
+        //                 alert("Connection error.");
+        //             }
+        //         },
+        //         error: function(response) {
+        //             alert("An error occured.");
+        //         },
+        //         cache: false,
+        //         contentType: false,
+        //         processData: false
+        //     });
+            
+        // });
+    });
+</script>
+{% endblock extra_js %}

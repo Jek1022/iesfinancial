@@ -1,0 +1,197 @@
+{% extends 'base-form.html' %}
+{% block page-title %} Budget Monitoring Report {% endblock page-title %}
+{% block extra_css %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.min.css' %}" />
+    <style>
+        .list_header_modified{
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+        }
+    </style>
+{% endblock extra_css %}
+{% block page-content %}
+<div class="panel">
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="form-group col-sm-12" style="padding-left: 0px; padding-right: 0px;">
+                        <div class="form-group col-sm-3">
+                            <label class="control-label small">Report Type</label>
+                            <select class="form-control input-sm" id="report_type">
+                                <option value="1">Schedule of Expenses by Department/Section</option>
+                                <option value="2">Schedule of Expenses by Department Group</option>
+                                <option value="3">Schedule of Expenses by Group</option>
+                                <option value="9">Schedule of Expenses by Year-to-date</option>
+                                <option value="4">Schedule of Expenses</option>
+                                <option value="5">Budget Status by Department/Section</option>
+                                <option value="6">Budget Status by Department Group</option>
+                                <option value="7">Budget Status by Group</option>
+                                <option value="8">Schedule of Budget</option>
+                                <!--<option value="8">Budget Status by Product</option>-->
+                                <!--<option value="1">Budget Performance On Fixed Operating Expenses</option>-->
+                                <!--<option value="2">Budget Status by Department/Section</option>-->
+                                <!--<option value="3">Budget Status by Group</option>-->
+                                <!--<option value="4">Budget Status by Product</option>-->
+                                <!--<option value="5">Budget Status Summary by Group</option>-->
+                                <!--<option value="6">Scheduled of Budget</option>-->
+                            </select>
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label small">Expense</label>
+                            <select class="form-control input-sm" id="filter">
+                                <option value="">-- Select --</option>
+                                {% for data in expense %}
+                                    <option value="{{ data.id }}">{{ data.accountcode }} - {{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label small">Pick Filter</label>
+                            <div class="input-group">
+                                <div class="radio-custom radio-default radio-inline padding-top-0">
+                                    <input type="radio" id="type" name="type" checked="checked" value="1">
+                                    <label for="type">Summary</label>
+                                </div>
+                                <div class="radio-custom radio-default radio-inline padding-top-10">
+                                    <input type="radio" id="type" name="type" value="2">
+                                    <label for="type">Detailed</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-2">
+                            <a class="btn btn-info waves-effect waves-dark" id="generate" style="margin-top: 22px; width: 48%;">
+                                <i class="icon fa-file-pdf-o" aria-hidden="true"></i>&nbsp;&nbsp;Generate
+                            </a>
+                            <a class="btn btn-info waves-effect waves-dark" id="generatexls" style="margin-top: 22px; width: 48%;">
+                                <i class="icon fa-file-excel-o" aria-hidden="true"></i>&nbsp;&nbsp;Excel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="form-group col-sm-12" style="padding-left: 0px; padding-right: 0px;">
+                        <div class="form-group col-sm-3">
+                            <label class="control-label small">Date</label><br>
+                            <div class="input-daterange datarange">
+                                <div class="input-group">
+                                    <span class="input-group-addon input-sm"><i class="icon md-calendar" aria-hidden="true"></i></span>
+                                    <input type="text" class="form-control input-sm datepickerfrom" id="dfrom" value="{% now 'Y-m-d' %}">
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-addon input-sm">to</span>
+                                    <input type="text" class="form-control input-sm datepickerto" id="dto" value="{% now 'Y-m-d' %}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-4">
+                            <label class="control-label small">Department</label>
+                            <select class="form-control input-sm" id="department">
+                                <option value="">-- Select --</option>
+                                {% for data in department %}
+                                    <option value="{{ data.id }}">{{ data.code }} - {{ data.departmentname }} ( {{ data.product.code }} - {{ data.product.description }} )</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-sm-4">
+                            <label class="control-label small">Product</label>
+                            <select class="form-control input-sm" id="product">
+                                <option value="">-- Select --</option>
+                                {% for data in product %}
+                                    <option value="{{ data.id }}">{{ data.code }} - {{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12" style="min-height: 800px;overflow: scroll;">
+                <iframe src="{% url 'budgetreport:pdf' %}?report=1&from={% now 'Y-m-d' %}&to={% now 'Y-m-d' %}&filter=1&type=1&department=&product=" id="result" height="1200px" width="100%"></iframe>
+                <div id="iframe" frameborder="0" scrolling="yes"></div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+{% endblock page-content %}
+{% block extra_js %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+<script type="text/javascript">
+$(function(){
+    $('#generate').click(function(){
+        var report = $('#report_type').val();
+        var date_from = $('#dfrom').val();
+        var date_to = $('#dto').val();
+        var filter = $('#filter').val();
+        var type = $("#type[type='radio']:checked").val();
+        var department = $('#department').val();
+        var product = $('#product').val();
+
+        if (date_from == '' || date_to == '' || filter == '') {
+            alert('Transaction Date and Expense must not be empty');
+            return false;
+        }
+
+        if (report == 4 || report == 8) {
+            $.ajax({
+                url: "{% url 'budgetreport:generate' %}",
+                type: "get",
+                dataType: "json",
+                data: {
+                    'csrfmiddlewaretoken': "{{csrf_token}}",
+                    'report':  report,
+                    'from':  date_from,
+                    'to':  date_to,
+                    'filter':  filter,
+                    'type':  type,
+                    'department':  department,
+                    'product':  product,
+                },
+                success: function(response) {
+                $('#iframe').show();
+                $('#result').hide();
+                $("#iframe").html(response['viewhtml']);
+                }
+            });
+        } else {
+            url = "{% url 'budgetreport:pdf' %}"+"?report="+report+"&from="+date_from+"&to="+date_to+"&filter="+filter+"&type="+type+"&department="+department+"&product="+product;
+            $('#iframe').hide();
+            $('#result').show();
+            $('#result').prop('src', url);
+        }
+    });
+
+    $('#generatexls').click(function(){
+        var report = $('#report_type').val();
+        var date_from = $('#dfrom').val();
+        var date_to = $('#dto').val();
+        var filter = $('#filter').val();
+        var type = $("#type[type='radio']:checked").val();
+        var department = $('#department').val();
+        var product = $('#product').val();
+
+        if (date_from == '' || date_to == '' || filter == '') {
+            alert('Transaction Date and Expense must not be empty');
+            return false;
+        }
+
+        url = "{% url 'budgetreport:excel' %}"+"?report="+report+"&from="+date_from+"&to="+date_to+"&filter="+filter+"&type="+type+"&department="+department+"&product="+product;
+        $('#result').prop('src', url);
+    });
+
+    $('#clear_payee').click(function() {
+        $('#payee').val(null).trigger('change');
+    });
+
+    $('.select2').select2({});
+            ajaxselect2v2("supplier_payee", "payee");
+    });
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,473 @@
+{% extends 'base-form.html' %}
+{% block page-title %} RF Approval {% endblock page-title %}
+{% block extra_css %}
+    <style>
+        .table-bordered button{
+            width: 80px;
+        }
+        .select2-container--default .select2-results__option[aria-disabled=true] {
+            display: none;
+        }
+        .tabContent{
+            border-bottom: none;
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+    </style>
+{% endblock extra_css %}
+{% block page-content %}
+<div class="panel">
+    <div class="shade"><div class="loader two-color"></div></div>
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+{#                <div class="page-wrap paginate-table" data-list="{{ listcount }}" data-rows="rfnum,rfdate,particulars,rfstatus">#}
+                <div class="page-wrap">
+                    <!-- Start Basic Table Section -->
+                    <div class="row col-md-12 form-group form-material">
+                        <form method="get" id="filter">
+{#                            {% if perms.requisitionform.view_allassignrf or perms.requisitionform.view_assignrf or perms.requisitionform.view_allassignprf or perms.requisitionform.view_assignprf %}#}
+{#                                <div class="col-md-3">#}
+{#                                    <label class="control-label" for="id_selecttype">Select Form Type:</label>#}
+{#                                    <select class="form-control" id="id_selecttype" name="selecttype">#}
+{#                                        {% if perms.requisitionform.view_allassignrf or perms.requisitionform.view_assignrf %}#}
+{#                                            {% if perms.purchaserequisitionform.view_allassignprf or perms.purchaserequisitionform.view_assignprf %}#}
+{#                                                <option value="ALL" {% if formtype == "ALL" %} selected="selected" {% endif %}>All</option>#}
+{#                                            {% endif %}#}
+{#                                        {% endif %}#}
+{#                                        {% if perms.requisitionform.view_assignrf or perms.requisitionform.view_allassignrf %}#}
+{#                                            <option value="RF" {% if formtype == "RF" %} selected="selected" {% endif %}>Requisition Forms (RF)</option>#}
+{#                                        {% endif %}#}
+{#                                        {% if perms.purchaserequisitionform.view_assignprf or perms.purchaserequisitionform.view_allassignprf %}#}
+{#                                            <option value="PRF" {% if formtype == "PRF" %} selected="selected" {% endif %}>Purchase Requisition Forms (PRF)</option>#}
+{#                                        {% endif %}#}
+{#                                    </select><br>#}
+{#                                </div>#}
+                                {% if perms.requisitionform.view_assignrf or perms.requisitionform.view_allassignrf %}
+                                    <div class="col-md-3 select_holder" id="selectrfapprover_holder">
+                                        <label class="control-label" for="id_selectrfapprover">Filter RF Assigned To:</label>
+                                        <select class="form-control" id="id_selectrfapprover" name="selectrfapprover">
+{#                                            {% if perms.requisitionform.view_assignrf or perms.requisitionform.view_allassignrf %}#}
+{#                                                <option value="ME" {% if formrfapprover == "ME" %} selected="selected" {% endif %}>Me</option>#}
+{#                                            {% endif %}#}
+                                            {% if perms.requisitionform.view_allassignrf %}
+                                                <option value="ALL" {% if formrfapprover == "ALL" %} selected="selected" {% endif %}>All</option>
+                                            {% endif %}
+                                            {% for rfapprovers in rfapprovers %}
+                                                <option value="{{ rfapprovers.id }}" {% if formrfapprover == rfapprovers.id|slugify %} selected="selected" {% endif %}>{{ rfapprovers.first_name }} {{ rfapprovers.last_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <br>
+                                    </div>
+                                {% endif %}
+
+{#                                {% if perms.purchaserequisitionform.view_assignprf or perms.purchaserequisitionform.view_allassignprf %}#}
+{#                                    <div class="col-md-3 select_holder" id="selectprfapprover_holder">#}
+{#                                        <label class="control-label" for="id_selectprfapprover">Filter PRF Assigned To:</label>#}
+{#                                        <select class="form-control" id="id_selectprfapprover" name="selectprfapprover">#}
+{#                                            {% if perms.purchaserequisitionform.view_assignprf or perms.purchaserequisitionform.view_allassignprf %}#}
+{#                                                <option value="ME" {% if formprfapprover == "ME" %} selected="selected" {% endif %}>Me</option>#}
+{#                                            {% endif %}#}
+{#                                            {% if perms.purchaserequisitionform.view_allassignprf %}#}
+{#                                                <option value="ALL" {% if formprfapprover == "ALL" %} selected="selected" {% endif %}>All</option>#}
+{#                                            {% endif %}#}
+{#                                            {% for prfapprovers in prfapprovers %}#}
+{#                                                <option value="{{ prfapprovers.id }}" {% if formprfapprover == prfapprovers.id|slugify %} selected="selected" {% endif %}>{{ prfapprovers.first_name }} {{ prfapprovers.last_name }}</option>#}
+{#                                            {% endfor %}#}
+{#                                        </select>#}
+{#                                        <br>#}
+{#                                    </div>#}
+{#                                {% endif %}#}
+                                <div style="margin-top: 25px" class="col-md-2">
+                                    <input type="submit" id="filterforms" value="GO" class="btn btn-info btn-sm waves-effect waves-light"/>
+                                    <a href="{% url 'rfprfapproval:prf' %}"><input type="button" value="PRF Approval" class="btn btn-info btn-sm waves-effect waves-light"/></a>
+                                    <br><br><br>
+                                </div>
+{#                            {% endif %}#}
+                        </form>
+                    </div>
+                    <div>
+                    <ul class="nav nav-tabs small">
+                        <li class="active">
+                          <a id="0" href="#a"><i class="icon fa-refresh" aria-hidden="true"></i>Pending</a>
+                        </li>
+                        <li>
+                            <a id="1" href="#a"><i class="icon fa-check" aria-hidden="true"></i>Approved</a>
+                        </li>
+                        <li>
+                            <a id="2" href="#a"><i class="icon fa-remove" aria-hidden="true"></i> Disapproved</a>
+                        </li>
+                    </ul>
+
+                    <!-- Accordions -->
+                    <div class="tabContent" id="tabPending">
+                        <div class="table-responsive">
+                            <table id="pending" class="table small">
+                                <thead>
+                                    <tr>
+                                        <th><span>No.</span></th>
+                                        <th><span>Date</span></th>
+                                        <th><span>Particulars</span></th>
+                                        <th><span>Assigned Approver</span></th>
+                                        <th><span>Actual Approver</span></th>
+                                        <th><span>Remarks</span></th>
+                                        <th class="text-center" style="width: 210px;"><span>Action</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in rfpending %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'requisitionform:detail' data.pk %}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
+                                                RF-{{ data.rfnum }}
+                                            </a>
+                                        </td>
+                                        <td>{{ data.rfdate }}</td>
+                                        <td>{{ data.particulars }}</td>
+                                        <td>{{ data.designatedapprover.first_name }} {{ data.designatedapprover.last_name }}</td>
+                                        <td> - </td>
+                                        <td>{{ data.remarks|default:' - ' }}</td>
+                                        <td>
+                                            <div class="text-center buttonHolder">
+                                                {% if perms.requisitionform.can_approverf %}
+                                                    <button type="button" class="btn btn-info btn-sm approvebutton" data-toggle="modal"
+                                                        data-target="#myModal" data-id="{{ data.id }}" data-num="{{ data.rfnum }}" data-type="RF" data-response="A">Approve</button>
+                                                {% endif %}
+                                                {% if perms.requisitionform.can_disapproverf %}
+                                                    <button type="button" class="btn btn-info btn-sm approvebutton" data-toggle="modal"
+                                                        data-target="#myModal" data-id="{{ data.id }}" data-num="{{ data.rfnum }}" data-type="RF" data-response="D">Disapprove</button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+{#                                    {% for data in prfpending %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            <a href="{% url 'purchaserequisitionform:detail' data.pk %}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">#}
+{#                                                PRF-{{ data.prfnum }}#}
+{#                                            </a>#}
+{#                                        </td>#}
+{#                                        <td>{{ data.prfdate }}</td>#}
+{#                                        <td>{{ data.particulars }}</td>#}
+{#                                        <td>{{ data.designatedapprover.first_name }} {{ data.designatedapprover.last_name }}</td>#}
+{#                                        <td> - </td>#}
+{#                                        <td>{{ data.remarks|default:' - ' }}</td>#}
+{#                                        <td>#}
+{#                                            <div class="text-center buttonHolder">#}
+{#                                                {% if perms.purchaserequisitionform.can_approveprf %}#}
+{#                                                    <button type="button" class="btn btn-success btn-xs waves-effect waves-light approvebutton" data-toggle="modal"#}
+{#                                                        data-target="#myModal" data-id="{{ data.id }}" data-num="{{ data.prfnum }}" data-type="PRF" data-response="A">Approve</button>#}
+{#                                                {% endif %}#}
+{#                                                {% if perms.purchaserequisitionform.can_disapproveprf %}#}
+{#                                                    <button type="button" class="btn btn-danger btn-xs waves-effect waves-light approvebutton" data-toggle="modal"#}
+{#                                                        data-target="#myModal" data-id="{{ data.id }}" data-num="{{ data.prfnum }}" data-type="PRF" data-response="D">Disapprove</button>#}
+{#                                                {% endif %}#}
+{#                                            </div>#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                    {% endfor %}#}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tabContent" id="tabApproved">
+                        <div class="table-responsive">
+                            <table id="approved" class="table small">
+                                <thead>
+                                    <tr>
+                                        <th><span>No.</span></th>
+                                        <th><span>Date</span></th>
+                                        <th><span>Particulars</span></th>
+                                        <th><span>Assigned Approver</span></th>
+                                        <th><span>Actual Approver</span></th>
+                                        <th><span>Remarks</span></th>
+                                        <th class="text-center" style="width: 210px;"><span>Action</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in rfapproved %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'requisitionform:detail' data.pk %}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
+                                                RF-{{ data.rfnum }}
+                                            </a>
+                                        </td>
+                                        <td>{{ data.rfdate }}</td>
+                                        <td>{{ data.particulars }}</td>
+                                        <td>{{ data.designatedapprover.first_name }} {{ data.designatedapprover.last_name }}</td>
+                                        <td>{{ data.actualapprover.first_name }} {{ data.actualapprover.last_name }}</td>
+                                        <td>{{ data.remarks|default:' - ' }}</td>
+                                        <td>
+                                            <div class="text-center buttonHolder">
+                                                {% if perms.requisitionform.can_disapproverf %}
+                                                    <button type="button" class="btn btn-info btn-sm approvebutton" data-toggle="modal"
+                                                        data-target="#myModal" data-id="{{ data.id }}" data-num="{{ data.rfnum }}" data-type="RF" data-response="D">Disapprove</button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+{#                                    {% for data in prfapproved %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            <a href="{% url 'purchaserequisitionform:detail' data.pk %}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">#}
+{#                                                PRF-{{ data.prfnum }}#}
+{#                                            </a>#}
+{#                                        </td>#}
+{#                                        <td>{{ data.prfdate }}</td>#}
+{#                                        <td>{{ data.particulars }}</td>#}
+{#                                        <td>{{ data.designatedapprover.first_name }} {{ data.designatedapprover.last_name }}</td>#}
+{#                                        <td>{{ data.actualapprover.first_name }} {{ data.actualapprover.last_name }}</td>#}
+{#                                        <td>{{ data.remarks|default:' - ' }}</td>#}
+{#                                        <td>#}
+{#                                            <div class="text-center buttonHolder">#}
+{#                                                {% if perms.purchaserequisitionform.can_disapproveprf %}#}
+{#                                                    <button type="button" class="btn btn-danger btn-xs waves-effect waves-light approvebutton" data-toggle="modal"#}
+{#                                                        data-target="#myModal" data-id="{{ data.id }}" data-num="{{ data.prfnum }}" data-type="PRF" data-response="D">Disapprove</button>#}
+{#                                                {% endif %}#}
+{#                                            </div>#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                    {% endfor %}#}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tabContent" id="tabDisapproved">
+                        <div class="table-responsive">
+                            <table id="disapproved" class="table small">
+                                <thead>
+                                    <tr>
+                                        <th><span>No.</span></th>
+                                        <th><span>Date</span></th>
+                                        <th><span>Particulars</span></th>
+                                        <th><span>Assigned Approver</span></th>
+                                        <th><span>Actual Approver</span></th>
+                                        <th><span>Remarks</span></th>
+                                        <th class="text-center" style="width: 210px;"><span>Action</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in rfdisapproved %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'requisitionform:detail' data.pk %}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
+                                                RF-{{ data.rfnum }}
+                                            </a>
+                                        </td>
+                                        <td>{{ data.rfdate }}</td>
+                                        <td>{{ data.particulars }}</td>
+                                        <td>{{ data.designatedapprover.first_name }} {{ data.designatedapprover.last_name }}</td>
+                                        <td>{{ data.actualapprover.first_name }} {{ data.actualapprover.last_name }}</td>
+                                        <td>{{ data.remarks|default:' - ' }}</td>
+                                        <td>
+                                            <div class="text-center buttonHolder">
+                                                {% if perms.requisitionform.can_approverf %}
+                                                    <button type="button" class="btn btn-info btn-sm approvebutton" data-toggle="modal"
+                                                        data-target="#myModal" data-id="{{ data.id }}" data-num="{{ data.rfnum }}" data-type="RF" data-response="A">Approve</button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+{#                                    {% for data in prfdisapproved %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            <a href="{% url 'purchaserequisitionform:detail' data.pk %}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">#}
+{#                                                PRF-{{ data.prfnum }}#}
+{#                                            </a>#}
+{#                                        </td>#}
+{#                                        <td>{{ data.prfdate }}</td>#}
+{#                                        <td>{{ data.particulars }}</td>#}
+{#                                        <td>{{ data.designatedapprover.first_name }} {{ data.designatedapprover.last_name }}</td>#}
+{#                                        <td>{{ data.actualapprover.first_name }} {{ data.actualapprover.last_name }}</td>#}
+{#                                        <td>{{ data.remarks|default:' - ' }}</td>#}
+{#                                        <td>#}
+{#                                            <div class="text-center buttonHolder">#}
+{#                                                {% if perms.purchaserequisitionform.can_approveprf %}#}
+{#                                                    <button type="button" class="btn btn-success btn-xs waves-effect waves-light approvebutton" data-toggle="modal"#}
+{#                                                        data-target="#myModal" data-id="{{ data.id }}" data-num="{{ data.prfnum }}" data-type="PRF" data-response="A">Approve</button>#}
+{#                                                {% endif %}#}
+{#                                            </div>#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                    {% endfor %}#}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    </div>
+                    <!-- End Basic Table Section -->
+                </div>
+            </div>
+            <div class="clearfix"></div>
+            <div id="myModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title"> <span id="modal-header-title"></span><span id="num"></span></h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>
+                                <input type="hidden" id="id_main">
+                                <input type="hidden" id="id_type">
+                                <input type="hidden" id="id_responseselect">
+                                <label class="control-label" for="id_remarks">Remarks:</label>
+                                <textarea name="remarks" id="id_remarks" class="form-control" rows="3"></textarea>
+                                <br>
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-info" id="approveconfirm">Confirm</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock page-content %}
+{% block extra_js %}
+{#    {% load static %}#}
+{#    <script src="{% static 'js/paginationSearchPlugin.js' %}" type="text/javascript"></script>#}
+    <script type="text/javascript">
+        $(function(){
+            var itemcount, tab, appendResponse;
+            filterClean();
+
+            $("#id_selecttype").on("change", function(){
+               filterClean();
+            });
+
+            $(document).on("click", ".approvebutton", function(){
+                $("#num").html($(this).data("type") + "-" + $(this).data("num"));
+                $("#id_main").val($(this).data("id"));
+                $("#id_type").val($(this).data("type"));
+
+                if($(this).parent().parent().parent().parent().parent().parent().parent().attr('id') == 'tabDisapproved' || $(this).data("response") == 'A'){
+                    $("#modal-header-title").html("Approve ");
+                    $("#id_responseselect").val('A');
+                }
+                else if($(this).parent().parent().parent().parent().parent().parent().parent().attr('id') == 'tabApproved' || $(this).data("response") == 'D'){
+                    $("#modal-header-title").html("Disapprove ");
+                    $("#id_responseselect").val('D');
+                }
+
+                tab = $(this).parent().parent().parent().parent().parent().parent().parent().attr('id');
+                itemcount = $(this).parent().index("#" + tab + " .buttonHolder");
+            });
+            $(document).on("click", "#approveconfirm", function(e){
+                if($("#id_remarks").val() != ""){
+                    $('.shade').fadeIn();
+                    if (confirm('Are you sure?')) {
+                        $.ajax({
+                            url: "{% url 'rfprfapproval:approve' %}",
+                            type: "post",
+                            data: {'main_id': $("#id_main").val(),
+                                    'main_type': $("#id_type").val(),
+                                    'response': $("#id_responseselect").val(),
+                                    'remarks': $("#id_remarks").val()},
+
+                            success: function(response) {
+                                if(response.valid == true){
+                                    $('#myModal').modal('hide');
+
+                                    if($("#id_responseselect").val() == "A") appendResponse = "tabApproved";
+                                    else if($("#id_responseselect").val() == "D") appendResponse = "tabDisapproved";
+                                    $("#id_responseselect").val('');
+
+                                    $("#"+tab+" tr:eq("+(itemcount + 1)+")").appendTo("#" + appendResponse + " tbody");
+                                    $("#"+appendResponse+" tr").last().find("td").last().prev().html($("#id_remarks").val());
+                                    $("#"+appendResponse+" tr").last().find("td").last().prev().prev().html("{{ request.user.first_name }} {{ request.user.last_name }}");
+
+                                    form_type = $("#"+appendResponse+" tr").last().find("td").last().find('button').data('type')
+                                    if(appendResponse == "tabApproved"){
+                                        if(form_type == 'RF'){
+                                            {% if not perms.requisitionform.can_disapproverf %}
+                                                $("#"+appendResponse+" tr").last().find("td").last().find('button').remove();
+                                            {% endif %}
+                                        }
+                                        else if(form_type == 'PRF'){
+                                            {% if not perms.purchaserequisitionform.can_disapproveprf %}
+                                                $("#"+appendResponse+" tr").last().find("td").last().find('button').remove();
+                                            {% endif %}
+                                        }
+                                    }
+                                    else if(appendResponse == "tabDisapproved"){
+                                        if(form_type == 'RF') {
+                                            {% if not perms.requisitionform.can_approverf %}
+                                                $("#" + appendResponse + " tr").last().find("td").last().find('button').remove();
+                                            {% endif %}
+                                        }
+                                        else if(form_type == 'PRF') {
+                                            {% if not perms.purchaserequisitionform.can_approveprf %}
+                                                $("#" + appendResponse + " tr").last().find("td").last().find('button').remove();
+                                            {% endif %}
+                                        }
+                                    }
+
+                                    $("#id_remarks").val('');
+                                    buttonClean();
+                                    $('.shade').fadeOut();
+                                }
+                            }
+                            , error: function(response) {
+                                console.debug(response);
+                                $('.shade').fadeOut();
+                            }
+                        });
+                    }
+                }
+                else{
+                    alert("Remarks are required.");
+                }
+
+            })
+
+            $('.nav a').click(function (e) {
+                $(this).tab('show');
+
+                var tabContent = '.tabContent:eq(' + this.id + ')';
+
+                $('#tabPending').hide();
+                $('#tabApproved').hide();
+                $('#tabDisapproved').hide();
+                $(tabContent).show();
+            });
+            $('#tabApproved').hide();
+            $('#tabDisapproved').hide();
+
+            function buttonClean(){
+                $("#tabApproved button").removeClass('btn-success').removeClass('btn-danger').text("Disapprove");
+                $("#tabApproved button").addClass('btn-danger');
+                $("#tabApproved button").attr('data-response', 'D');
+
+                $("#tabDisapproved button").removeClass('btn-danger').removeClass('btn-success').text("Approve");
+                $("#tabDisapproved button").addClass('btn-success');
+                $("#tabDisapproved button").attr('data-response', 'A');
+
+                $("#tabApproved .buttonHolder").each(function( index ) {
+                    if($("#tabApproved .buttonHolder").eq(index).find('button').length > 1){
+                        $("#tabApproved .buttonHolder").eq(index).find('button').first().remove();
+                    }
+                });
+
+                $("#tabDisapproved .buttonHolder").each(function( index ) {
+                    if($("#tabDisapproved .buttonHolder").eq(index).find('button').length > 1){
+                        $("#tabDisapproved .buttonHolder").eq(index).find('button').first().remove();
+                    }
+                });
+            }
+
+            function filterClean(){
+                if($('#id_selecttype').val() == 'RF') $('.select_holder').show().not('#selectrfapprover_holder').hide();
+                else if($('#id_selecttype').val() == 'PRF') $('.select_holder').show().not('#selectprfapprover_holder').hide();
+                else if($('#id_selecttype').val() == 'ALL') $('.select_holder').show();
+            }
+        })
+    </script>
+{% endblock extra_js %}
+

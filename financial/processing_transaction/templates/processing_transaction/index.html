@@ -1,0 +1,497 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% load mathfilters %}
+{% load humanize %}
+{% block page-title %} Importation of Transaction Data {% endblock page-title %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
+    <style>
+{#        .iconlist {#}
+{#            text-align: left;#}
+{#            margin-left: 40px;#}
+{#            margin-right: 40px;#}
+{#        }#}
+        .btns-icon{
+            padding: 2px;
+            margin: auto;
+        }
+        td{
+            vertical-align: middle !important;
+        }
+        .checkbox label {
+            padding-left: 5px;
+        }
+        .input-sm{
+            font-size: 13px !important;
+        }
+    </style>
+{% endblock extra_css %}
+{% block page-content %}
+<div class="panel">
+    <div class="panel-body container-fluid" style="padding: 30px 20px;">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-wrap">
+                    {% block content %}
+                    <div class="col-md-12" style="margin-right: 15px;">
+                        <form method="get" id="filter" class="row form-material">
+                            <div class="col-md-4">
+                                <label class="control-label" for="id_selectprocess">Select Process:</label>
+                                <select class="form-control form-material input-sm" id="id_selectprocess" name="selectprocess">
+                                    <option value="">-- Select --</option>
+                                    <option value="potoapv" {% if selectprocess == 'potoapv' %}selected="selected"{% endif %} >Purchase Order to Accounts Payable Voucher (PO to APV)</option>
+                                    <option value="potocv" {% if selectprocess == 'potocv' %}selected="selected"{% endif %} >Purchase Order to Check Voucher (PO to CV)</option>
+                                    <option value="apvtocv" {% if selectprocess == 'apvtocv' %}selected="selected"{% endif %} >Accounts Payable Voucher to Check Voucher (APV to CV)</option>
+                                    <option value="apvtoapv" {% if selectprocess == 'apvtoapv' %}selected="selected"{% endif %} >Accounts Payable Voucher to Accounts Payable Voucher (APV to APV)</option>
+                                </select><br><br>
+                            </div>
+                            <div class="col-md-2 select_holder" id="datefrom_holder">
+                                <label class="control-label" for="id_datefrom">Date FROM:</label>
+                                <input type="text" class="form-control date-yyyymmdd datepickerfrom input-sm" readonly="readonly"
+                                       style="padding: 5px 10px" id="id_datefrom" name="datefrom" placeholder="YYYY-MM-DD"
+                                       value="{{ datefrom }}">
+                                <br><br>
+                            </div>
+                            <div class="col-md-2 select_holder" id="dateto_holder">
+                                <label class="control-label" for="id_dateto">Date TO:</label>
+                                <input type="text" class="form-control date-yyyymmdd datepickerto input-sm" readonly="readonly"
+                                       style="padding: 5px 10px" id="id_dateto" name="dateto" placeholder="YYYY-MM-DD"
+                                       value="{{ dateto }}">
+                                <br><br>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="control-label" for="id_keywords">Keyword(s):</label>
+                                <input type="text" class="form-control input-sm" style="padding: 5px 10px" id="id_keywords"
+                                       name="keywords" value="{{ keywords }}">
+                                <br><br>
+                            </div>
+                            <div style="margin-top: 25px" class="col-md-1">
+                                <input type="submit" id="filterforms" value="GO" class="btn btn-info btn-sm waves-effect waves-light">
+                                <br>
+                            </div>
+                        </form>
+
+                        <form action="{% url 'processing_transaction:importtransdata' %}" target="_blank" method="post" id="form-importdata">
+                            <input type="hidden" id="transtype" name="transtype" value="">
+                            <input type="hidden" id="hdn_datefrom" name="hdn_datefrom" value="{{ datefrom }}">
+                            <input type="hidden" id="hdn_dateto" name="hdn_dateto" value="{{ dateto }}">
+                            {% if selectprocess != None %}
+                                <table class="table table-hover small" id="items_table">
+                                    <thead>
+                                        <tr>
+                                            {% if selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}
+                                                <th>
+                                                    <div class="checkbox checkbox-primary" style="margin-bottom: 0px; margin-top: 0px;">
+                                                        <input type="checkbox" id="checkbox0" class="item-check-all"
+                                                               name="trans_checkbox_all">
+                                                        <label for="checkbox0"><b>Number</b></label>
+                                                    </div>
+                                                </th>
+                                            {% elif selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                <th><span>Number</span></th>
+                                            {% endif %}
+                                            <th><span>Date</span></th>
+                                            {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                <th>
+                                                    <div class="checkbox checkbox-primary" style="margin-bottom: 0px; margin-top: 0px;">
+                                                        <input type="checkbox" id="checkbox0" class="item-check-all"
+                                                               name="trans_checkbox_all">
+                                                        <label for="checkbox0"><b>Item</b></label>
+                                                    </div>
+                                                </th>
+                                            {% endif %}
+                                            <th><span>Supplier/Payee</span></th>
+                                            <th><span>VAT</span></th>
+                                            <th><span>Input VAT Type</span></th>
+                                            <th class="text-right"><span>Amount</span></th>
+                                            <th class="text-right"><span>Final Amount</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for data in data_list %}
+                                        <tr id="tr_{{ data.pk }}" style="font-size: 13px;">
+                                            <td>
+                                                {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                    {% ifchanged data.pomain.ponum %}
+                                                        <a href="{% if perms.purchaseorder.change_pomain %}{% url 'purchaseorder:update' data.pomain.pk %}{% else %}{% url 'purchaseorder:detail' data.pomain.pk %}{% endif %}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
+                                                            PO #{{ data.pomain.ponum }}
+                                                        </a>
+                                                    {% else %}
+                                                        <style>
+                                                            #tr_{{ data.pk }}{
+                                                                border-top: 2px solid white;
+                                                            }
+                                                        </style>
+                                                    {% endifchanged %}
+                                                {% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}
+                                                    <div class="checkbox checkbox-primary" style="margin-bottom: 0px; margin-top: 0px;">
+                                                        <input type="checkbox" id="checkbox{{ data.id }}" class="item-check"
+                                                               name="trans_checkbox" value="{{ data.id }}">
+                                                        <label for="checkbox{{ data.id }}">
+                                                            <a href="{% if perms.accountspayable.change_apmain %}{% url 'accountspayable:update' data.pk %}{% else %}{% url 'accountspayable:detail' data.pk %}{% endif %}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
+                                                                APV # {{ data.apnum }}
+                                                            </a>
+                                                        </label>
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                    {% ifchanged data.pomain.ponum %}
+                                                        {{ data.pomain.podate|date:"Y-m-d" }}
+                                                    {% endifchanged %}
+                                                {% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}
+                                                    {{ data.apdate|date:"Y-m-d" }}
+                                                {% endif %}
+                                            </td>
+                                            <td class="po-item-apv-supplier">
+                                                {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                    <div class="checkbox checkbox-primary" style="margin-bottom: 0px; margin-top: 0px;">
+                                                        <input type="checkbox" id="checkbox{{ data.id }}" class="item-check"
+                                                               name="trans_checkbox" value="{{ data.id }}">
+                                                        <label for="checkbox{{ data.id }}">
+                                                            {{ data.invitem_name }}
+                                                        </label>
+                                                    </div>
+                                                {% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}
+                                                    {{ data.payee.name }}
+                                                {% endif %}
+                                            </td>
+                                            <td class="po-supplier-apv-vat">
+                                                {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                    {{ data.pomain.supplier_name }}
+                                                {% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}
+                                                    {{ data.vat.description }}
+                                                {% endif %}
+                                            </td>
+                                            <td class="po-vat-apv-inputvattype">
+                                                {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                    {{ data.vat.description }}
+                                                {% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}
+                                                    {{ data.inputvattype.description }}
+                                                {% endif %}
+                                            </td>
+                                            <td class="po-inputvattype-apv-amount" {% if selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}style="text-align: right;"{% endif %}>
+                                                {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                    {{ data.inputvattype.description }}
+                                                {% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}
+                                                    {{ data.amount|sub:data.cvamount|floatformat:2|intcomma }}
+                                                {% endif %}
+                                            </td>
+                                            <td style="text-align: right;" class="po-amount-apv-actual-amount">
+                                                {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                    {{ data.netamount|sub:data.apvtotalamount|floatformat:2|intcomma }}
+                                                {% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}
+                                                    <input type="text" name="temp_actualamount" style="width: 120px; margin-right: -50px;" disabled="disabled"
+                                                       class="form-control input-sm text-right input-amount
+                                                       po_dynamic" maxlength="26" value="{% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}{{ data.netamount|sub:data.apvtotalamount|floatformat:2|intcomma }}{% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}{{ data.amount|sub:data.cvamount|floatformat:2|intcomma }}{% endif %}">
+                                                {% endif %}
+                                            </td>
+                                            {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}
+                                                <td align="right" class="po-actual-amount">
+                                                    <input type="text" name="temp_actualamount" style="width: 120px;" disabled="disabled"
+                                                           class="form-control input-sm amount text-right input-amount
+                                                           po_dynamic" maxlength="26" value="{% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}{{ data.netamount|sub:data.apvtotalamount|floatformat:2|intcomma }}{% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}{{ data.amount|sub:data.cvamount|floatformat:2|intcomma }}{% endif %}">
+                                                </td>
+                                            {% endif %}
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <thead>
+                                        <tr style="font-size: 13px;">
+                                            <th class="text-right" {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}colspan="7"{% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}colspan="6"{% endif %} style="border-bottom: none"><b>TOTAL AMOUNT</b></th>
+                                            <th class="text-right" id="totalamount" style="border-bottom: none; {% if selectprocess == 'potoapv' or selectprocess == 'potocv' %}padding-right:19px;{% elif selectprocess == 'apvtocv' or selectprocess == 'apvtoapv' %}padding-right:0px;{% endif %}"><b>0.00</b></th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <input type="hidden" id="hdnamount" name="hdnamount" value="0.00">
+                                <input type="hidden" id="hdnamountinwords" name="hdnamountinwords" value="">
+                                {% if selectprocess == 'potoapv' or selectprocess == 'apvtoapv' %}
+                                <div id="apvtypecontainer">
+                                    <div class="row col-sm-1 padding-top-5 margin-right-10">
+                                        <label class="control-label" for="id_selectapvtype"><small>Select&nbsp;APV&nbsp;Type:</small></label>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <select class="form-control form-material input-sm" id="id_selectapvtype" name="selectapvtype">
+                                            <option value="N">NON-UB</option>
+                                            <option value="S">SB</option>
+                                            <option value="U">UB</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="col-sm-4">
+                                    <input type="button" id="importButton" value="Import Transaction Data" class="btn btn-round btn-success btn-sm">
+                                </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                    {% endblock %}
+                </div>
+            <br>
+            <br>
+            <br>
+            <br>
+{#            <table class="table small">#}
+{#            <thead>#}
+{#            <tr>#}
+{#                <th>PO #</th>#}
+{#                <th>PO Date</th>#}
+{#                <th>PO Item</th>#}
+{#                <th style="text-align: right; border-right: 1px solid #e0e0e0;">PO Item Amt</th>#}
+{#                <th style="text-align: center;">APV #</th>#}
+{#                <th style="text-align: center;">APV Date</th>#}
+{#                <th style="text-align: right; border-right: 1px solid #e0e0e0;">APV Amt</th>#}
+{#                <th style="text-align: center;">APV # (payment)</th>#}
+{#                <th style="text-align: center; border-right: 1px solid #e0e0e0;">APV Date (payment)</th>#}
+{#                <th style="text-align: center;">CV #</th>#}
+{#                <th style="text-align: center;border-right: 1px solid #e0e0e0;">CV Date</th>#}
+{#                <th style="text-align: right;">Amt Paid</th>#}
+{#            </tr>#}
+{#            </thead>#}
+{#            {% for poapvtrans, apvcvtrans in data %}#}
+{#            <tr>#}
+{#                <td {% ifchanged poapvtrans.pomain.ponum %}{% else %}style="border-top: none;" {% endifchanged %}>{% ifchanged poapvtrans.pomain.ponum %}{{ poapvtrans.pomain.ponum }}{% endifchanged %}</td>#}
+{#                <td {% ifchanged poapvtrans.pomain.ponum %}{% else %}style="border-top: none;" {% endifchanged %}>{% ifchanged poapvtrans.pomain.ponum %}{{ poapvtrans.pomain.podate|date:'Y-m-d' }}{% endifchanged %}</td>#}
+{#                <td {% ifchanged poapvtrans.pomain.ponum and poapvtrans.podetail.invitem_name %}{% else %}style="border-top: none;" {% endifchanged %}>{% ifchanged poapvtrans.pomain.ponum and poapvtrans.podetail.invitem_name %}{{ poapvtrans.podetail.invitem_name }}{% endifchanged %}</td>#}
+{#                <td style="border-right: 1px solid #e0e0e0;{% ifchanged poapvtrans.pomain.ponum and poapvtrans.podetail.invitem_name %}{% else %}border-top: none;{% endifchanged %}" align="right">{% ifchanged poapvtrans.pomain.ponum and poapvtrans.podetail.invitem_name %}{{ poapvtrans.podetail.netamount|floatformat:2|intcomma }}{% endifchanged %}</td>#}
+{#                <td align="center">{{ poapvtrans.apmain.apnum|default:'-' }}</td>#}
+{#                <td align="center">{{ poapvtrans.apmain.apdate|date:'Y-m-d'|default:'-' }}</td>#}
+{#                <td align="right" style="border-right: 1px solid #e0e0e0;">{% if poapvtrans.apmain %}{{ poapvtrans.apamount|floatformat:2|intcomma }}{% else %}-{% endif %}</td>#}
+{#                <td align="center">{{ apvcvtrans.ap_to_ap_num|default:'-' }}</td>#}
+{#                <td align="center" style="border-right: 1px solid #e0e0e0;">{{ apvcvtrans.ap_to_ap_date|date:'Y-m-d'|default:'-' }}</td>#}
+{#                <td align="center">{% if poapvtrans.cvmain %}{{ poapvtrans.cvmain.cvnum }}{% elif apvcvtrans.ap_to_cv_num %}{{ apvcvtrans.ap_to_cv_num }}{% else %}-{% endif %}</td>#}
+{#                <td align="center" style="border-right: 1px solid #e0e0e0;">{% if poapvtrans.cvmain %}{{ poapvtrans.cvmain.cvdate|date:'Y-m-d' }}{% elif apvcvtrans.ap_to_cv_num %}{{ apvcvtrans.ap_to_cv_date|date:'Y-m-d' }}{% else %}-{% endif %}</td>#}
+{#                <td align="right">{% if apvcvtrans.ap_to_ap_num %}{{ poapvtrans.apamount|floatformat:2|intcomma }}{% elif poapvtrans.cvmain %}{{ poapvtrans.apamount|floatformat:2|intcomma }}{% elif apvcvtrans.ap_to_cv_num %}{{ poapvtrans.apamount|floatformat:2|intcomma }}{% else %}-{% endif %}</td>#}
+{#            </tr>#}
+{#            {% endfor %}#}
+{#            </table>#}
+
+{#            <table class="table small">#}
+{#            <thead>#}
+{#                <tr>#}
+{#                    <th>APV #</th>#}
+{#                    <th>APV Date</th>#}
+{#                    <th>APV Amt</th>#}
+{#                    <th style="text-align: right; border-right: 1px solid #e0e0e0;">PO Item Amt</th>#}
+{#                    <th style="text-align: center;">APV #</th>#}
+{#                    <th style="text-align: center;">APV Date</th>#}
+{#                    <th style="text-align: right; border-right: 1px solid #e0e0e0;">APV Amt</th>#}
+{#                    <th style="text-align: center;">APV # (payment)</th>#}
+{#                    <th style="text-align: center; border-right: 1px solid #e0e0e0;">APV Date (payment)</th>#}
+{#                    <th style="text-align: center;">CV #</th>#}
+{#                    <th style="text-align: center;border-right: 1px solid #e0e0e0;">CV Date</th>#}
+{#                    <th style="text-align: right;">Amt Paid</th>#}
+{#                </tr>#}
+{#            </thead>#}
+{#            {% for data in data2 %}#}
+{#                <tr>#}
+{#                    <td>{{ data.apmain.apnum }}</td>#}
+{#                    <td>{{ data.apmain.apdate|date:'Y-m-d' }}</td>#}
+{#                    <td align="right">{{ data.apmain.amount|floatformat:2|intcomma }}</td>#}
+{#                    <td>{{ data.new_apmain.apnum|default:'-' }}</td>#}
+{#                    <td>{{ data.new_apmain.apdate|date:'Y-m-d'|default:'-' }}</td>#}
+{#                    <td align="right">{{ data.apmain.amount|floatformat:2|intcomma|default:'-' }}</td>#}
+{#                    <td>{{ data.cvmain.cvnum|default:'-' }}</td>#}
+{#                    <td>{{ data.cvmain.cvdate|date:'Y-m-d'|default:'-' }}</td>#}
+{#                    <td align="right">{{ data.apmain.amount|floatformat:2|intcomma|default:'-' }}</td>#}
+{#                </tr>#}
+{#            {% endfor %}#}
+{#            </table>#}
+
+            </div>
+
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+{#<div id="required-fields-error" class="custom-alert danger">Please provide filters.</div>#}
+{#<div id="checked-items-error" class="custom-alert danger">Please check at least one item.</div>#}
+{#<div id="choose-type-error" class="custom-alert danger">Please choose a process type first.</div>#}
+{#<div id="different-values-error" class="custom-alert danger">Same supplier and VAT only.</div>#}
+{% endblock page-content %}
+{% block extra_js %}
+    {% load staticfiles %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+    <script src="{% static 'js/jquery.maskMoney.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/custom-maskMoney.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+    <script>
+    $(function () {
+        var date = new Date();
+        var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        $('#transtype').val($('#id_selectprocess').val());
+
+        if($('#id_datefrom').val() == '' && $('#id_dateto').val() == ''){
+            $("#id_datefrom").datepicker("setDate", firstDay);
+            $("#id_dateto").datepicker("setDate", lastDay);
+        }
+        $(document).on('change', '.item-check', function(){
+            if($('.item-check:checked').length == $('.item-check').length)
+                $('.item-check-all').prop('checked', true);
+            else
+                $('.item-check-all').prop('checked', false);
+            computeItemTotal();
+        });
+        $(document).on('change', '.item-check-all', function(){
+            if ($('.item-check-all').is(':checked')){
+                $('.item-check').prop('checked', true);
+            }
+            else{
+                $('.item-check').prop('checked', false);
+            }
+            computeItemTotal();
+        });
+        $('.item-amount').each(function() {
+            $(this).text($(this).text().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+        });
+
+        $('#filterforms').on('click', function(){
+            if($('#id_selectprocess').val() == '' || ($('#id_datefrom').val() == '' && $('#id_dateto').val() == '')){
+                alert("Please provide filters.");
+                event.preventDefault();
+            }
+        });
+
+        function useSome(array){
+            return !array.some(function(value, index, array){
+                return value !== array[0];
+            });
+        }
+
+        $(document).on('click', '#importButton', function(){
+            var allSuppliers = new Array();
+            var allVats = new Array();
+
+            $('.item-check:checked').each(function() {
+                if($('#id_selectprocess').val() == 'potoapv' || $('#id_selectprocess').val() == 'potocv') {
+                    allSuppliers.push($(this).parent().parent().parent().find('.po-supplier-apv-vat').text().trim());
+                    allVats.push($(this).parent().parent().parent().find('.po-vat-apv-inputvattype').text().trim());
+                }
+                else if($('#id_selectprocess').val() == 'apvtocv' || $('#id_selectprocess').val() == 'apvtoapv') {
+                    allSuppliers.push($(this).parent().parent().parent().find('.po-item-apv-supplier').text().trim());
+                    allVats.push($(this).parent().parent().parent().find('.po-supplier-apv-vat').text().trim());
+                }
+            });
+
+            if($('.item-check:checked').length == 0){
+                alert("Please check at least one item.");
+                event.preventDefault();
+            }
+            else if(!useSome(allSuppliers) || !useSome(allVats)){
+                alert("Only items with the same supplier and VAT can be imported.");
+                event.preventDefault();
+            }
+            else {
+                var valid = true;
+                if($('#id_selectprocess').val() == 'potoapv'){
+                    if(confirm("Are you sure you would like to import the selected POs to an APV?")){
+                        $("#form-importdata").submit();
+                    }
+                    else {
+                        event.preventDefault();
+                        valid = false;
+                    }
+                }
+                else if($('#id_selectprocess').val() == 'apvtocv'){
+                    if(confirm("Are you sure you would like to import the selected APVs to a CV?")){
+                        $("#form-importdata").submit();
+                    }
+                    else {
+                        event.preventDefault();
+                        valid = false;
+                    }
+                }
+                else if($('#id_selectprocess').val() == 'potocv'){
+                    if(confirm("Are you sure you would like to import the selected POs to a CV?")){
+                        $("#form-importdata").submit();
+                    }
+                    else {
+                        event.preventDefault();
+                        valid = false;
+                    }
+                }
+                else if($('#id_selectprocess').val() == 'apvtoapv'){
+                    if(confirm("Are you sure you would like to import the selected APVs to another APV?")){
+                        $("#form-importdata").submit();
+                    }
+                    else {
+                        event.preventDefault();
+                        valid = false;
+                    }
+                }
+                else {
+                    alert("Please select a valid process.");
+                    event.preventDefault();
+                    valid = false;
+                }
+            }
+            if(valid){
+                setTimeout(function(){
+                    location.reload();
+                }, 5000);
+            }
+        });
+
+        $('#id_selectprocess').on('change', function(){
+            if($('.input-amount').length > 0){
+                if(confirm('Upon changing the process type, the displayed results will be cleared. Would you like to proceed?')){
+                    $('#transtype').val($(this).val());
+                    $('#items_table').html('');
+                    $('#importButton').hide();
+                    $('#apvtypecontainer').hide();
+                }
+                else {
+                    $(this).val($('#transtype').val());
+                }
+            }
+        });
+
+        $('#id_datefrom').on('change', function(){
+            $('#hdn_datefrom').val($(this).val());
+        });
+
+        $('#id_dateto').on('change', function(){
+            $('#hdn_dateto').val($(this).val());
+        });
+
+        $(document).on('change', '.input-amount', function(){
+            var amountToCheck;
+            amountToCheck = ($('#id_selectprocess').val() == 'potoapv' || $('#id_selectprocess').val() == 'potocv') ? '.po-amount-apv-actual-amount' : ($('#id_selectprocess').val() == 'apvtocv' || $('#id_selectprocess').val() == 'apvtoapv') ? '.po-inputvattype-apv-amount' : '';
+            if(Number($(this).val().replace( /,/g, "")) > Number($(this).parent().parent().find(amountToCheck).text().replace( /,/g, ""))){
+                $(this).val($(this).parent().parent().find(amountToCheck).text());
+                $(this).focus();
+            }
+            else {
+                if($(this).parent().parent().find('.item-check').is(':checked')){
+                    computeItemTotal();
+                }
+            }
+        });
+
+        function computeItemTotal(){
+            var sum = 0;
+            $('.input-amount').prop('disabled', true);
+            $('.item-check:checkbox:checked').each(function() {
+                sum += Number($(this).parent().parent().parent().find('.input-amount').val().replace( /,/g, ""));
+                $(this).parent().parent().parent().find('.input-amount').prop('disabled', false);
+                if($('#id_selectprocess').val() == 'apvtocv' || $('#id_selectprocess').val() == 'apvtoapv'){
+                    $(this).parent().parent().parent().find('.input-amount').css('background', 'white');
+                    $(this).parent().parent().parent().find('.input-amount').prop('readonly', true);
+                }
+                else if($('#id_selectprocess').val() == 'potoapv' || $('#id_selectprocess').val() == 'potocv'){
+                    $(this).parent().parent().parent().find('.input-amount').prop('readonly', false);
+                }
+            });
+            $('#hdnamount').val(sum.toFixed(2));
+            var words = toWords(sum.toFixed(2));
+            $("#hdnamountinwords").val(words);
+            $('#totalamount').text(sum.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+        }
+	});
+    </script>
+{% endblock extra_js %}

@@ -1,0 +1,48 @@
+from __future__ import unicode_literals
+import datetime
+from django.core.urlresolvers import reverse
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class Ofsubtype(models.Model):
+    code = models.CharField(max_length=10, unique=True)
+    description = models.CharField(max_length=250)
+    oftype = models.ForeignKey('oftype.Oftype', related_name='ofsubtype_oftype')
+    chartexpcostofsale = models.ForeignKey('chartofaccount.Chartofaccount',
+                                            related_name='ofsubtype_chartexpcostofsale', null=True, blank=True)
+    chartexpgenandadmin = models.ForeignKey('chartofaccount.Chartofaccount',
+                                            related_name='ofsubtype_chartexpgenandadmin', null=True, blank=True)
+    chartexpsellexp = models.ForeignKey('chartofaccount.Chartofaccount',
+                                            related_name='ofsubtype_chartexpsellexp', null=True, blank=True)
+
+    STATUS_CHOICES = (
+        ('A', 'Active'),
+        ('I', 'Inactive'),
+        ('C', 'Cancelled'),
+        ('O', 'Posted'),
+        ('P', 'Printed'),
+    )
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='A')
+    enterby = models.ForeignKey(User, default=1, related_name='ofsubtype_enter')
+    enterdate = models.DateTimeField(auto_now_add=True)
+    modifyby = models.ForeignKey(User, default=1, related_name='ofsubtype_modify')
+    modifydate = models.DateTimeField(auto_now_add=True)
+    isdeleted = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'ofsubtype'
+        ordering = ['-pk']
+        permissions = (("view_ofsubtype", "Can view ofsubtype"),)
+
+    def get_absolute_url(self):
+        return reverse('ofsubtype:detail', kwargs={'pk': self.pk})
+
+    def __str__(self):
+        return self.code
+
+    def __unicode__(self):
+        return self.code
+
+    def status_verbose(self):
+        return dict(Ofsubtype.STATUS_CHOICES)[self.status]

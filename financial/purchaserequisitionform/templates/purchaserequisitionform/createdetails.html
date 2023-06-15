@@ -1,0 +1,444 @@
+<div class="form-horizontal" id="detailform">
+{% csrf_token %}
+    <div class="row">
+        <label style="display: none;" id="itemno">1</label>
+        <div class="col-lg-12 form-group">
+            <div class="col-md-12">
+                <label class="col-sm-3 control-label" for="item_name">Item</label>
+                <div class="col-sm-6">
+{#                    <select class="form-control input-sm select2" required style="width: 100%" id="id_item_name" name="item_name">#}
+{#                        <option value="">-- Select Item --</option>#}
+{#                        {% for invitem in invitem %}#}
+{#                            <option value="{{ invitem.id }}" data-itemtype="{{ invitem.inventoryitemclass.inventoryitemtype.id }}"  data-um="{{ invitem.unitofmeasure }}">{{ invitem.code  }} - {{ invitem.description }}</option>#}
+{#                        {% endfor %}#}
+{#                    </select>#}
+                    <select class="form-control input-sm" required style="width: 100%" id="id_item_name" name="item_name">
+                    </select>
+                    <span class="help-block form-error">{{ form.item_name.errors.as_text }}</span>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label class="col-sm-3 control-label" for="quantity">Requested Quantity</label>
+                <div class="col-sm-4">
+                    <input type="number" class="form-control input-sm text-right" id="id_quantity" name="quantity">
+                    <span class="help-block form-error">{{ form.quantity.errors.as_text }}</span>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label class="col-sm-3 control-label" for="currency">Currency</label>
+                <div class="col-sm-4">
+                    <select class="form-control input-sm" required style="width: 100%" id="id_currency" name="currency">
+                        {% for currency in currency %}
+                            <option value="{{ currency.id }}" {% if form.currency.value == currency.id %} selected {% elif currency.symbol == "PHP" %} selected {% endif %}>{{ currency.symbol }} ({{ currency.description }})</option>
+                        {% endfor %}
+                    </select>
+                    <span class="help-block form-error">{{ form.quantity.errors.as_text }}</span>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label class="col-sm-3 control-label" for="department">Department</label>
+                <div class="col-sm-4">
+                    <select class="form-control input-sm" required style="width: 100%" id="id_department" name="department">
+                        {% for department in department %}
+                            <option value="{{ department.id }}">{{ department.code }} - {{ department.departmentname }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="help-block form-error">{{ form.department.errors.as_text }}</span>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label class="col-sm-3 control-label">Remarks</label>
+                <div class="col-sm-4">
+                    <textarea class="form-control input-sm remarks-editor" id="id_remarks" name="remarks" rows="5"></textarea>
+                    <span class="help-block form-error">{{ form.remarks.errors.as_text }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12 pull-left margin-bottom-10">
+            <button type="button" class="btn btn-round btn-dark waves-effect waves-light" id="btn_detailsubmit">Add Item</button>
+            <button type="button" class="btn btn-round btn-dark waves-effect waves-light" id="btn_detailclose">Close</button>
+        </div>
+    </div>
+</div>
+{% load staticfiles %}
+<script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        summary = $("#summary tbody");
+        filterItems();
+        inventorytypeimportDisable();
+        computeTotalRequestedQty();
+        computeTotals();
+
+        $('.remarks-editor').wysihtml5({
+            "font-styles": false, //Font styling, e.g. h1, h2, etc. Default true
+            "emphasis": false, //Italics, bold, etc. Default true
+            "lists": false, //(Un)ordered lists, e.g. Bullets, Numbers. Default true
+            "html": false, //Button which allows you to edit the generated HTML. Default false
+            "link": false, //Button to insert a link. Default true
+            "image": false, //Button to insert an image. Default true,
+            "color": false //Button to change color of font
+        });
+
+        $("#form-b").submit(function(event){
+            if($('.remove_item').length == 0) {
+                alert("Please add at least one item.");
+                event.preventDefault();
+            }
+        });
+
+        $('.amount').each(function(){
+            $(this).val(parseFloat($(this).val()).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+        });
+
+        $("#btn_detailclose").click(function(){
+            $("#detailentry").hide();
+        });
+
+        $(document).on('click', '#btn_detailsubmit', function(){
+            $('.shade').fadeIn();
+            $.ajax({
+                url: "{% url 'purchaserequisitionform:savedetailtemp' %}",
+                type: "post",
+                data: {'itemno': $("#itemno").text(),
+                        'inv_id': $("#id_item_name").val(),
+                        'quantity': $("#id_quantity").val(),
+                        'currency': $("#id_currency").val(),
+                        'department': $("#id_department").val(),
+                        'remarks': $("#id_remarks").val(),
+                        'secretkey': $("#id_secretkey").val()
+                },
+
+                success: function(response) {
+                    if(response.prfdata != "[]"){
+                        um_selected = $("#id_item_name option:selected").data('um');
+
+                        summary.append("<tr><td style='width:10px'></td>" +
+                                    "<td>" + response.prfdata[0] + "</td>" +
+                                    "<td>" + response.prfdata[1] + "</td>" +
+                                    "<td><div>" +
+                                        "<div class='col-sm-11 row'>" +
+                                            "<textarea class='form-control input-sm input-remarks' id='id_temp_remarks[" + $("#itemno").text() + "]' name='temp_remarks' form='form-b'>" + response.remarks + "</textarea>" +
+                                        "</div>" +
+                                        "<div class='col-sm-1'>" +
+                                            "<button class='btn showRemarks' data-toggle='modal' data-target='#remarksModal' data-itemno='" + $("#itemno").text() + "'>...</button>" +
+                                        "</div>" +
+                                    "</div></td>" +
+                                    "<td align='right'> - </td>" +
+                                    "<td><input type='number' name='temp_quantity' form='form-b' step='any' class='form-control input-sm temp_quantity' value='" + $("#id_quantity").val() + "'></td>" +
+                                    "<td>" +
+                                        "<select class='form-control input-sm' required style='width: 100%' id='id_temp_item_um' name='temp_item_um' form='form-b'>" +
+                                            "{% for unitofmeasure in unitofmeasure %}" +
+                                            "{% if unitofmeasure.id == 8 %}" +
+                                            "<option value='{{ unitofmeasure.code }}' selected='selected'   >{{ unitofmeasure.description }} ({{ unitofmeasure.code }})</option>" +
+                                            "{% else %}" +
+                                            "<option value='{{ unitofmeasure.code }}'>{{ unitofmeasure.description }} ({{ unitofmeasure.code }})</option>" +
+                                            "{% endif %}" +
+                                            "{% endfor %}" +
+                                        "</select>" +
+                                    "</td>" +
+                                    "<td>" +
+                                        "<select class='form-control input-sm temp_item_currency' required style='width: 100%' name='temp_item_currency' form='form-b'>" +
+                                            "{% for currency in currency %} <option value='{{ currency.id }}' data-fxrate='{{ currency.fxrate }}'>{{ currency.symbol }}</option>{% endfor %}" +
+                                        "</select>" +
+                                    "</td>" +
+                                    "<td><input type='number' name='temp_fxrate' form='form-b' step='any' class='form-control input-sm temp_fxrate' value='0.00000'></td>" +
+                                    "<td><input type='number' name='temp_amount' form='form-b' step='any' class='form-control input-sm temp_amount' value='" + 0 + "'></td>" +
+                                    "<td>" +
+                                        "<select class='form-control input-sm temp_department' required style='width: 100%' name='temp_department' form='form-b'>" +
+                                            "{% for department in department %} <option value='{{ department.id }}'>{{ department.code }} - {{ department.departmentname }}</option>{% endfor %}" +
+                                        "</select>" +
+                                    "</td>" +
+                                    "<td><button class='btn remove_item' data-itemno='" + $("#itemno").text() + "'><i class='icon fa-remove' aria-hidden='true'></i></button></td>" +
+                                    "</tr>");
+
+                        $("#itemno").text(parseInt($("#itemno").text()) + 1);
+                        summary.find("tr").last().find("#id_temp_item_um option[value="+um_selected+"]").attr('selected','selected');
+                    }
+
+                    $(summary).find('tr').last().find('.temp_item_currency').val($('#id_currency').val());
+                    $(summary).find('tr').last().find('.temp_department').val($('#id_department').val());
+
+                    $("#id_item_name").val('').trigger('change.select2');
+                    $("#id_quantity").val('');
+                    $("#id_department").val('');
+                    $('#id_remarks').data("wysihtml5").editor.setValue('');
+
+                    reorderItems();
+                    computeTotals();
+                    inventorytypeimportDisable();
+                    computeFxRateAll();
+                    computeTotalRequestedQty();
+                    callEventHandler(summary.find("tr").last().find('.remove_item').data('itemno'));
+                    $('.shade').fadeOut();
+                }
+                , error: function(response) {
+                    console.debug(response);
+                    $('.shade').fadeOut();
+                }
+            });
+        });
+
+        $(document).on('click', '#importconfirm', function(){
+            $('.shade').fadeIn();
+            $.ajax({
+                url: "{% url 'purchaserequisitionform:importitems' %}",
+                type: "post",
+                data: {'itemno': $("#itemno").text(),
+                        'rfnum': $("#importrfselect2").val(),
+                        'secretkey': $("#id_secretkey").val()
+                },
+
+                success: function(response) {
+                    if(response.prfdata != "[]"){
+                        for (var i = 0; i < response.prfdata.length; i++) {
+                            $("#itemno").text(parseInt($("#itemno").text()) + 1);
+
+                            um_selected = response.prfdata[i][9];
+
+                            summary.append("<tr><td style='max-width:10px'></td>" +
+                                        "<td>" + response.prfdata[i][0] + "</td>" +
+                                        "<td>" + response.prfdata[i][1] + "</td>" +
+                                        "<td><div>" +
+                                            "<div class='col-sm-11 row'>" +
+                                                "<textarea class='form-control input-sm input-remarks' id='id_temp_remarks[" + response.prfdata[i][8] + "]' name='temp_remarks' form='form-b'></textarea>" +
+                                            "</div>" +
+                                            "<div class='col-sm-1'>" +
+                                                "<button class='btn showRemarks' data-toggle='modal' data-target='#remarksModal' data-itemno='" + response.prfdata[i][8] + "'>...</button>" +
+                                            "</div>" +
+                                        "</div></td>" +
+                                        "<td align='right'>" + response.prfdata[i][3] + "</td>" +
+                                        "<td><input type='number' name='temp_quantity' form='form-b' step='any' class='form-control input-sm temp_quantity' data-itemno='" + response.prfdata[i][8] + "' value='" + response.prfdata[i][10] + "' min='1' max='" + response.prfdata[i][10] + "'></td>" +
+                                        "<td>" +
+                                            "<select class='form-control input-sm' required style='width: 100%' id='id_temp_item_um' name='temp_item_um' form='form-b'>" +
+                                                "{% for unitofmeasure in unitofmeasure %} <option value='{{ unitofmeasure.code }}'>{{ unitofmeasure.description }} ({{ unitofmeasure.code }})</option>{% endfor %}" +
+                                            "</select>" +
+                                        "</td>" +
+                                        "<td>" +
+                                            "<select class='form-control input-sm temp_item_currency' required style='width: 100%' name='temp_item_currency' form='form-b'>" +
+                                                "{% for currency in currency %} <option value='{{ currency.id }}' data-fxrate='{{ currency.fxrate }}'>{{ currency.symbol }}</option>{% endfor %}" +
+                                            "</select>" +
+                                        "</td>" +
+                                        "<td><input type='number' name='temp_fxrate' form='form-b' step='any' class='form-control input-sm temp_fxrate' value='0.00000'></td>" +
+                                        "<td><input type='number' name='temp_amount' form='form-b' step='any' class='form-control input-sm temp_amount' value='" + 0 + "'></td>" +
+                                        "<td>" +
+                                            "<select class='form-control input-sm temp_department' required style='width: 100%' name='temp_department' form='form-b'>" +
+                                                "{% for department in department %} <option value='{{ department.id }}'>{{ department.code }} - {{ department.departmentname }}</option>{% endfor %}" +
+                                            "</select>" +
+                                        "</td>" +
+                                        "<td><button class='btn remove_item' data-rf='" + response.prfdata[i][3] + "' data-itemno='" + response.prfdata[i][8] + "'><i class='icon fa-remove' aria-hidden='true'></i></button></td>" +
+                                        "</tr>");
+
+                            summary.find("tr").last().find("#id_temp_item_um option[value="+um_selected+"]").attr('selected','selected');
+                            summary.find('tr').last().find('.temp_department').val(response.prfdata[i][11]);
+                            reorderItems();
+                            callEventHandler(summary.find("tr").last().find('.remove_item').data('itemno'));
+                        }
+                    }
+
+                    computeTotals();
+                    inventorytypeimportDisable();
+                    computeFxRateAll();
+                    computeTotalRequestedQty();
+                    $('.shade').fadeOut();
+                }
+                , error: function(response) {
+                    console.debug(response);
+                    $('.shade').fadeOut();
+                }
+            });
+        });
+
+        $(document).on("click", ".showRemarks", function(e){
+            $('#remarks_itemno').val($(this).data('itemno'));
+            $('#id_modal_remarks').data("wysihtml5").editor.setValue($(this).parent().siblings().find('.input-remarks').val());
+        });
+
+        $(document).on("click", "#save_remarks", function(e){
+            $(".remove_item[data-itemno='" + $('#remarks_itemno').val() +"']").parent().parent().find('.input-remarks').next().next().remove();
+            $(".remove_item[data-itemno='" + $('#remarks_itemno').val() +"']").parent().parent().find('.input-remarks').prev().remove();
+            $(".remove_item[data-itemno='" + $('#remarks_itemno').val() +"']").parent().parent().find('.input-remarks').css('display', 'block');
+            $(".remove_item[data-itemno='" + $('#remarks_itemno').val() +"']").parent().parent().find('.input-remarks').val($('#id_modal_remarks').val());
+            console.log($('#remarks_itemno').val())
+            callEventHandler($('#remarks_itemno').val());
+            $('#remarksModal').modal('hide');
+        });
+
+        $(document).on('click', '.remove_item', function(){
+            if (!confirm('Remove item(s) from list?')) return false;
+
+            $('.shade').fadeIn();
+            var elem = $(this);
+
+            $.ajax({
+                url: "{% url 'purchaserequisitionform:deletedetailtemp' %}",
+                type: "post",
+                data: {'itemno': $(this).data('itemno'),
+                        'secretkey': $("#id_secretkey").val(),
+                        'prfnum': $("#id_prfnum").val()
+                },
+
+                success: function(response) {
+                    elem.parent().parent().remove();
+                    reorderItems();
+                    inventorytypeimportDisable();
+                    computeTotals();
+                    computeTotalRequestedQty();
+                    $('.shade').fadeOut();
+                }
+                , error: function(response) {
+                    console.debug(response);
+                    $('.shade').fadeOut();
+                }
+            });
+        });
+
+        $('#id_inventoryitemtype').on('change', function(){
+            filterItems();
+            inventorytypeimportDisable();
+        });
+
+        $("#detailsbutton").click(function (){
+            $("#detailentry").show();
+        });
+
+        $(document).ready(function() {
+            $("#importrfselect2").select2({
+                dropdownParent: $("#myModal")
+            });
+        });
+
+        $("#importrfselect2").change(function(){
+            if($(this).val() != ''){
+                importrfpreview = $("#importrfpreview tbody tr td");
+                importrfpreview.eq(0).text($(this).children('option:selected').data('refnum'));
+                importrfpreview.eq(1).text($(this).children('option:selected').data('urgency'));
+                importrfpreview.eq(2).text($(this).children('option:selected').data('approver'));
+                importrfpreview.eq(3).text($(this).children('option:selected').data('dateneeded'));
+
+                $("#importconfirm").prop('disabled', false);
+            }
+            else{
+                $("#importconfirm").prop('disabled', true);
+            }
+        });
+
+        $(document).on('click', '#importbutton', function(){
+            $('#importrfselect2').find('option').prop( "disabled", false );
+            $('.remove_item').each(function(index){
+                $('#importrfselect2').find('option[data-rfnum=' + $(this).data('rf') + ']').prop( "disabled", true );
+                $('#importrfselect2').select2("destroy");
+                $('#importrfselect2').select2();
+            });
+            resetRfOptions();
+        });
+
+        $(document).on('change', '.temp_item_currency', function(){
+            computeFxrateSingle($(this));
+        });
+
+        $(document).on('change', '.temp_quantity', function(){
+            computeTotalRequestedQty();
+            computeTotals();
+        });
+        $(document).on('change', '.temp_amount', function(){
+            computeTotalRequestedQty();
+            computeTotals();
+        });
+
+
+        function callEventHandler(i){
+            var editor = new wysihtml5.Editor("id_temp_remarks["+i+"]");
+        }
+
+        function computeFxRateAll(){
+            $('.temp_item_currency').each(function(){
+                if(parseFloat($(this).parent().parent().find('.temp_fxrate').val()) == parseFloat(0.00000)){
+                    $(this).parent().parent().find('.temp_fxrate').val(parseFloat($(this).children('option:selected').data('fxrate')));
+                }
+            });
+        }
+
+        function computeFxrateSingle(e){
+            e.parent().parent().find('.temp_fxrate').val(parseFloat(e.children('option:selected').data('fxrate')));
+        }
+
+        function resetRfOptions(){
+            $('#importrfselect2').val('').trigger('change');
+            $('#importrfpreview td').html(" - ");
+
+            $("#importrfselect2").select2({
+                dropdownParent: $("#myModal")
+            });
+        }
+
+        function reorderItems(){
+            len = summary.find('tr').find('td:eq(0)').length;
+            for(i=0;i<len;i++){
+                summary.find('tr:eq('+i+')').find('td:eq(0)').html(i+1);
+            }
+            //change id index of id_temp_remarks[]
+            jQuery($('.input-remarks:eq(' + i + ')')).attr('id', 'id_temp_remarks[' + (i + 1) + ']')
+        }
+
+        function computeTotals(){
+            totalQty = 0;
+            totalAmount = 0;
+
+            $('#totalQty').val(0);
+            $('#totalAmount').val(0);
+
+            $('.temp_quantity').each(function(){
+                totalQty += parseFloat($(this).val());
+                $('#totalQty').val(totalQty);
+            });
+            $('.temp_amount').each(function(){
+                totalAmount += parseFloat($(this).val()) * parseInt($(this).parent().parent().find('.temp_quantity').val());
+                $('#totalAmount').val(totalAmount);
+            });
+        }
+
+        function filterItems(){
+            $("#id_item_name").html('');
+            item_type = $('#id_inventoryitemtype option:selected').data('code');
+            ajaxselect2("inventoryitem_" + item_type, "id_item_name");
+{#            $('#id_item_name').find('option').prop( "disabled", false );#}
+{#            $('#id_item_name').find('option').not('#id_item_name option[data-itemtype=' + item_id + ']').prop( "disabled", true );#}
+{#            $('#id_item_name').select2("destroy");#}
+{#            $('#id_item_name').select2();#}
+{#            $('#id_item_name').val('').trigger('change');#}
+        }
+
+        function inventorytypeimportDisable(){
+            if(summary.find('tr').length > 0){
+                $('#id_inventoryitemtype option:not(:selected)').prop('disabled', true);
+            }
+            else{
+                $('#id_inventoryitemtype option:not(:selected)').prop('disabled', false);
+            }
+
+            if($('#id_inventoryitemtype').val() != 2){
+                $('#importbutton').prop('disabled', true);
+            }
+            else{
+                $('#importbutton').prop('disabled', false);
+            }
+        }
+
+        function computeTotalRequestedQty(){
+            var totalRequestedQty = 0;
+            $('.temp_quantity').each(function() {
+                totalRequestedQty += parseFloat($(this).val());
+            });
+
+            var totalRemainingQuantity = 0;
+            totalRemainingQuantity = {{ totalremainingquantity }};
+            var totalPrfQuantity = totalRequestedQty - totalRemainingQuantity;
+
+            $("#totalrequestedquantity").text(totalRequestedQty);
+            $("#id_computeTotals").val(totalRequestedQty);
+            $("#totalremainingquantity").text(totalRemainingQuantity);
+            $("#totalprfquantity").text(totalPrfQuantity);
+        }
+    });
+</script>

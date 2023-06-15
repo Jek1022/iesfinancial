@@ -1,0 +1,71 @@
+{% extends 'base-form.html' %}
+{% block page-title %} Department Budget {% endblock page-title %}
+
+{% block page-content %}
+<div class="panel">
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="text-right">
+                    <!-- pagination and search start -->
+                    <div id="search-container" class="row col-md-3 col-sm-4 col-xs-3">
+                        <div class="input-group">
+                            <input type="text" id="searchFilter" class="form-control" placeholder="Search...">
+                            <span class="input-group-btn">
+                                <button id="searchBtn" class="btn btn-info">
+                                    <span class="icon_search" aria-hidden="true"></span>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- pagination and search end -->
+
+
+                    <div class="text-right">
+                        <a href="{% url 'departmentbudget:report' %}">
+                            <button class="btn btn-info btn-sm">
+                                <i class="icon fa-file-o" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Report
+                            </button>
+                        </a>
+                        {% if perms.departmentbudget.add_departmentbudget %}
+                        <a href="{% url 'departmentbudget:create' %}"><button type="button" class="btn btn-info btn-sm waves-effect waves-light">New Data</button></a>
+                        {% endif  %}
+                    </div>
+                </div>
+            </div>
+            <!-- pagination and search start -->
+            <div class="col-md-12">
+                <div class="page-wrap">
+                    <br>
+                    {% block content %}
+                        <div class="endless_page_template">
+                        {% include page_template %}</div>
+                    {% endblock %}
+                </div>
+            </div>
+            <!-- pagination and search end -->
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+{% endblock page-content %}
+{% block extra_js %}
+    {% load static %}
+    <script>
+        $(function () {
+            // ajax search and pagination
+            $('#searchBtn').on('click', function(){
+                $('.shade').fadeIn();
+                setCookie('keysearch_{{ request.resolver_match.app_name }}', $('#searchFilter').val());
+{#                alert($('#searchFilter').val());#}
+                $('#dummy').trigger('click');
+            });
+            $('body').on('keyup', function(e){
+                var search_code = e.keyCode || e.which;
+                if(search_code == 13 && $(':focus').attr('id') == "searchFilter"){
+                    $('#searchBtn').trigger('click');
+                }
+            });
+        });
+    </script>
+{% endblock extra_js %}

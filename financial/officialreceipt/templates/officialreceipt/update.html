@@ -1,0 +1,790 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% load humanize %}
+{% block page-title %} Official Receipt {% endblock page-title %}
+{% block page-content %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/css/dashboard/dashboard.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" /><style>
+        .widgett {
+            margin-bottom: 10px;
+        }
+        .vattable td{
+        }
+            text-align: right;
+        }
+        .vattable td:first-child {
+            width: 170px;
+            padding-right: 20px;
+        }
+        .vattable td input {
+            width: 100px;
+            text-align: right;
+        }
+        .heading-top-index-2 {
+            padding-right: 15px;
+            padding-left: 45px;
+        }
+        .form-control.input-sm.date-yyyymmdd.datepicker.week {
+            background-color: transparent;
+        }
+        .payee_options{
+            display: none;
+        }
+        hr{
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        .select2-results__option {
+            font-size: 12px;
+        }
+        .class-adv {
+            display: none;
+        }
+        .class-cir {
+            display: none;
+        }
+        .amount_display{
+            height: 25px;
+            margin-left: 40px;
+        }
+    </style>
+{% endblock extra_css %}
+<div class="panel">
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="margin-bottom-20">
+                <!-- Start Simple Form Validation -->
+                <h3 class="panel-title" style="padding:5px 10px 20px 25px;">Update
+                    <div class="btn-group pull-right">
+                        <div class="shade"><div class="loader loader-sm two-color"></div></div>
+                        <button class="btn btn-info small" data-toggle='modal' data-target='#searchModal'>
+                            <i class="icon fa-search" aria-hidden="true"></i> Search
+                        </button>
+                        <button id="nav_stepleft" class="btn btn-default nav_btn small">
+                            <i class="icon fa-step-backward" aria-hidden="true"></i>
+                        </button>
+                        <button id="nav_left" class="btn btn-default nav_btn small">
+                            <i class="icon fa-backward" aria-hidden="true"></i>
+                        </button>
+                        <button id="nav_right" class="btn btn-default nav_btn small">
+                            <i class="icon fa-forward" aria-hidden="true"></i>
+                        </button>
+                        <button id="nav_stepright" class="btn btn-default nav_btn small">
+                            <i class="icon icon fa-step-forward" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </h3>
+                <div style="padding-top: 10px; padding-right: 10px; padding-bottom: 50px;">
+                    {% if perms.officialreceipt.delete_ormain and object.orstatus == 'F' and object.isdeleted == 0 and object.status == 'A' %}
+                    <a href="{% url 'officialreceipt:delete' object.id %}" class="floatright">
+                        <button type="button" id="delete" class="btn btn-round btn-info btn-sm waves-effect
+                        waves-light get_report">
+                            <i class="icon fa-trash" aria-hidden="true"></i>&nbsp; Cancel
+                        </button>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'officialreceipt:pdf' object.id %}" target="_blank" class="floatright">
+                        <button type="button" id="get_pdf" class="btn btn-round btn-info btn-sm waves-effect
+                        waves-light get_report">
+                            <i class="icon fa-file-pdf-o" aria-hidden="true"></i>&nbsp; Print
+                        </button>
+                    </a>
+                    <a href="{% url 'officialreceipt:detail' object.id %}" class="floatright">
+                        <button type="button" id="get_details" class="btn btn-round btn-info btn-sm waves-effect
+                        waves-light get_report">
+                            <i class="icon fa-info-circle" aria-hidden="true"></i>&nbsp; View
+                        </button>
+                    </a>
+                </div>
+                <form autocomplete="off" id="form-b" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="secretkey" id="secretkey" value="{{ secretkey }}"/>
+                    <div class="col-sm-12">
+                        <div class="form-group col-sm-2">
+                            <label class="control-label" for="id_ornum">OR Number</label>
+                            <input type="text" class="form-control input-sm" style="background: white;" id="id_ornum" name="ornum" data-validation="required" value="{{ ornum }}">
+                            <span class="help-block form-error">{{ form.ornum.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-2 {{ form.ordate.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_ordate">OR Date</label>
+                            <input type="text" class="form-control input-sm date-yyyymmdd datepicker week" readonly="readonly" style="padding: 5px 10px" id="id_ordate" name="ordate" placeholder="YYYY-MM-DD" data-validation="required" value="{% if form.ordate.value %}{{ form.ordate.value|date:'Y-m-d' }}{% else %}{% now "Y-m-d" %}{% endif %}">
+                            <span class="help-block form-error">{{ form.ordate.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-2 {{ form.ortype.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_ortype">OR Type</label>
+                            <select class="form-control input-sm" data-validation="required" id="id_ortype" name="ortype">
+                                {% for data in ortype %}
+                                    <option value="{{ data.id }}" {% if form.ortype.value|add:0 == data.id %} selected="selected" {% endif %}>{{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.ortype.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-2 {{ form.orsource.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_orsource">AR Type</label>
+                            <select class="form-control input-sm" data-validation="required" id="id_orsource" name="orsource">
+                                <option value="A" {% if form.orsource.value == "A" %} selected="selected" {% endif %}>Advertising</option>
+                                <option value="C" {% if form.orsource.value == "C" %} selected="selected" {% endif %}>Circulation</option>
+                            </select>
+                            <span class="help-block form-error">{{ form.orsource.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-4 padding-top-30">
+                            <span class="label {% if trans_type == 'M' %}label-primary {% elif trans_type == 'A' %}label-success {% endif %}" style="font-size: 13px;">{% if trans_type == 'M' %}MANUAL{% elif trans_type == 'A' %}AUTOMATIC{% endif %}</span>
+                            {% if logs_orstatus %}<span class="label {% if logs_orstatus == 'A' %}label-success {% elif logs_orstatus == 'C' %}label-danger {% endif %}" style="font-size: 13px;">{% if logs_orstatus == 'A' %}ACTIVE{% elif logs_orstatus == 'C' %}CANCELLED{% endif %}</span>{% endif %}
+                            {% if logs_ormain %}<button type="button" class="btn btn-info btn-sm pull-right" style="padding: 0px 30px 0px 30px;" data-toggle='modal' data-target='#logsModal'>View Logs</button>{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-md-12"><hr></div>
+                        <div class="form-group col-sm-2 {{ form.prnum.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_prnum">PR #</label>
+                            <input type="text" class="form-control input-sm" id="id_prnum" name="prnum" placeholder="PR #" value="{{ form.prnum.value|default:'' }}" style="background: white;">
+                            <span class="help-block form-error">{{ form.prnum.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-2 {{ form.prdate.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_prdate">PR Date</label>
+                            <input type="text" class="form-control input-sm date-yyyymmdd datepicker week" readonly="readonly" style="padding: 5px 10px; background: white;" id="id_prdate" name="prdate" placeholder="YYYY-MM-DD" data-validation="required" value="{% if form.prdate.value %}{{ form.prdate.value|date:'Y-m-d' }}{% else %}{% now "Y-m-d" %}{% endif %}">
+                            <span class="help-block form-error">{{ form.prdate.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-4 {{ form.adtype.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_adtype">Ad Type</label>
+                            <select id="id_adtype" class="form-control input-sm select2" name="adtype">
+                                <option value="">-- Select --</option>
+                                {% for data in adtype %}
+                                    <option value="{{ data.id }}" {% if form.adtype.value|add:0 == data.id %} selected="selected" {% endif %}>[{{ data.code }}] {{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.adtype.errors.as_text }}</span>
+                        </div>
+                        {% if logs %}
+                            <div class="col-sm-4 panel panel-bordered">
+                                <div class="panel-body padding-10">
+                                    <p id="to_html" class="small">{{ logs }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-md-12"><hr></div>
+                        <!--------------------------------------------------------------------------------------------->
+
+                        <div class="form-group col-sm-4 {{ form.collector.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_collector">Collector</label>
+                            <select class="form-control input-sm select2" id="id_collector" name="collector" data-validation="required">
+                                <option value="">-- Select --</option>
+                                {% for data in collector %}
+                                    <option value="{{ data.id }}" {% if form.collector.value|add:0 == data.id %} selected="selected" {% endif %}>[{{ data.code }}] {{ data.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.collector.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-2 {{ form.branch.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_branch">Branch</label>
+                            <select class="form-control input-sm" data-validation="required" id="id_branch" name="branch">
+                                <option value="">-- Select --</option>
+                                {% for data in branch %}
+                                    <option value="{{ data.id }}" {% if form.branch.value|add:0 == data.id %} selected="selected" {% endif %}>{{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.branch.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-2 {{ form.payee_type.errors|yesno:'has-error,' }}">
+                            <label class="control-label">Payee Type</label>
+                            <select class="form-control input-sm class-adv payee-type" data-validation="required" id="id_payee_adv" name="payee_adv">
+                                <option value="Y" {% if form.payee_type.value == "Y" %} selected="selected" {% endif %}>Agency</option>
+                                <option value="C" {% if form.payee_type.value == "C" %} selected="selected" {% endif %}>Client</option>
+                            </select>
+                            <select class="form-control input-sm class-cir payee-type" data-validation="required" id="id_payee_cir" name="payee_cir">
+                                <option value="A" {% if form.payee_type.value == "A" %} selected="selected" {% endif %}>Agent</option>
+                            </select>
+                            <span class="help-block form-error">{{ form.payee_type.errors.as_text }}</span>
+                        </div>
+                        <!------------REQUIRE THE VISIBLE PAYEE TYPE--------------------------------------------->
+                        <div class="form-group col-sm-4 payee_options class-adv" id="payee_options_agency">
+                            <label class="control-label" for="id_agency">Agency</label>
+                            <select class="form-control input-sm" id="id_agency" name="agency" style="width: 100%">
+                                {% if agency.id != None %}
+                                    <option value="{{ agency.id }}">[{{ agency.code }}] {{ agency.name }}</option>
+                                {% endif %}
+                            </select>
+                            <span class="help-block form-error">{{ form.agency.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-4 payee_options class-adv" id="payee_options_client">
+                            <label class="control-label" for="id_client">Client</label>
+                            <select class="form-control input-sm" id="id_client" name="client" style="width: 100%">
+                                {% if client.id != None %}
+                                    <option value="{{ client.id }}">[{{ client.code }}] {{ client.name }}</option>
+                                {% endif %}
+                            </select>
+                            <span class="help-block form-error">{{ form.client.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-4 payee_options class-cir" id="payee_options_agent">
+                            <label class="control-label" for="id_agent">Agent</label>
+                            <select class="form-control input-sm" id="id_agent" name="agent" style="width: 100%">
+                                {% if agent.id != None %}
+                                    <option value="{{ agent.id }}">[{{ agent.code }}] {{ agent.name }}</option>
+                                {% endif %}
+                            </select>
+                            <span class="help-block form-error">{{ form.agent.errors.as_text }}</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <!------------REQUIRE THE VISIBLE PAYEE TYPE--------------------------------------------->
+                        <div class="col-md-12"><hr></div>
+                        <!--------------------------------------------------------------------------------------------->
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-group col-sm-3 {{ form.amount.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_amount">Amount</label>
+                            <input type="text" class="form-control input-sm amount" id="id_amount" style="text-align: right;" data-validation="required" value="{{ form.amount.value|default:'' }}" name="amount">
+                            <span class="help-block form-error">{{ form.amount.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-9">
+                            <label class="control-label">&nbsp;</label>
+                            <input type="text" class="form-control input-sm" id="id_amountinwords" readonly="readonly" style="background-color: transparent;" value="{{ form.amountinwords.value|default:'' }}" name="amountinwords">
+                        </div>
+                        <div class="col-md-12"></div>
+                        <div class="form-group col-sm-4 {{ form.vat.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_vat">VAT</label>
+                            <select class="form-control input-sm" data-validation="required" id="id_vat" name="vat" data-vatrate="RATE: {{ form.vatrate.value|floatformat:2 }}%">
+                                <option value="" data-rate="0">-- Select --</option>
+                                {% for data in vat %}
+                                    <option value="{{ data.id }}" data-code="{{ data.code }}" data-rate="{{ data.rate|floatformat:2 }}" {% if form.vat.value|add:0 == data.id %} selected="selected" {% endif %}>{{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.vat.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-2 padding-top-30"><span id="vatrate" class="text-success small small"><strong>RATE: 00.00%</strong></span></div>
+                        <div class="form-group col-sm-6 {{ form.outputvattype.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_outputvattype">Output VAT Type</label>
+                            <select class="form-control input-sm" data-validation="required" id="id_outputvattype" name="outputvattype">
+                                <option value="">-- Select --</option>
+                                {% for data in outputvattype %}
+                                    <option value="{{ data.id }}" {% if form.outputvattype.value|add:0 == data.id %} selected="selected" {% endif %}>{{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.outputvattype.errors.as_text }}</span>
+                        </div>
+                        <div class="col-md-12"></div>
+                        <div class="form-group col-sm-4 {{ form.wtax.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_wtax">WTAX</label>
+                            <select class="form-control input-sm" id="id_wtax" name="wtax" data-wtaxrate="RATE: {{ form.wtaxrate.value|floatformat:2 }}%">
+                                <option value="" data-rate="0">-- Select --</option>
+                                {% for data in wtax %}
+                                    <option value="{{ data.id }}" data-code="{{ data.code }}" data-rate="{{ data.rate|floatformat:2 }}" {% if form.wtax.value|add:0 == data.id %} selected="selected" {% endif %}>{{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.wtax.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-2 padding-top-30"><span id="wtaxrate" class="text-success small small"><strong>RATE: 00.00%</strong></span></div>
+                        <div class="form-group col-sm-3 {{ form.deferredvat.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_deferredvat">Deferred VAT</label>
+                            <select class="form-control input-sm" data-validation="required" id="id_deferredvat" name="deferredvat">
+                                {% for id,name in form.fields.deferredvat.choices %}
+                                    <option value="{{ id }}"{% if form.deferredvat.value == id %} selected{% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.deferredvat.errors.as_text }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="widgett widgett-article widgett-shadow">
+                            <div class="heading-top-index-2">
+                                <table class="vattable">
+                                    <tr>
+                                        <td><small>VATable&nbsp;Sale:</small></td>
+                                        <td class="form-group form-material"><input type="text" id="disp_vatable" class="form-control input-sm amount amount_display" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>VAT-Exempt&nbsp;Sale:</small></td>
+                                        <td class="form-group form-material"><input type="text" id="disp_vatexempt" class="form-control input-sm amount amount_display" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>VAT&nbsp;Zero&nbsp;-&nbsp;Rated&nbsp;Sale:</small></td>
+                                        <td class="form-group form-material"><input type="text" id="disp_vatzero" class="form-control input-sm amount amount_display" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Total&nbsp;Sale:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" id="disp_totalsale" class="form-control input-sm amount amount_display" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Add&nbsp;VAT:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" id="disp_addvat" class="form-control input-sm amount amount_display" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Total&nbsp;Payment:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" id="disp_totalpay" class="form-control input-sm amount amount_display" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" style="text-align: right; padding-right: 0px; padding-top: 10px;"><code id="disp_note"></code></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-md-12"><hr></div>
+                    </div>
+                    <!--------------------------------------------------------------------------------------------->
+                    <div class="col-md-12">
+                        <div class="form-group col-sm-4 {{ form.circulationproduct.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_circulationproduct">Product</label>
+                            <select id="id_circulationproduct" class="form-control input-sm select2" name="circulationproduct">
+                                <option value="">-- Select --</option>
+                                {% for data in circulationproduct %}
+                                    <option value="{{ data.id }}" {% if form.circulationproduct.value|add:0 == data.id %} selected="selected" {% endif %}>[{{ data.code }}] {{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.circulationproduct.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-5">
+                            <label class="control-label" for="id_bankaccount">Bank Account</label>
+                            <select id="id_bankaccount" class="form-control input-sm select2" data-validation="required" name="bankaccount">
+                                <option value="">-- Select --</option>
+                                {% for data in bankaccount %}
+                                    <option value="{{ data.id }}" {% if form.bankaccount.value|add:0 == data.id %} selected="selected" {% endif %}>{{ data.code }} [{{ data.bank.description }} - {{ data.bankaccounttype.description }}, {{ data.bankbranch.description }}] {{ data.accountnumber }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.bankaccount.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-3 {{ form.government.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_government">Government</label>
+                            <select id="id_government" class="form-control input-sm" name="government">
+                                {% for id,name in form.fields.government.choices %}
+                                    <option value="{{ id }}"{% if form.government.value == id %} selected{% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.government.errors.as_text }}</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="form-group col-sm-6 {{ form.particulars.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_particulars">Particulars</label>
+                            <textarea id="id_particulars" class="form-control input-sm" data-validation="required" name="particulars" rows="2">{{ form.particulars.value|default:'' }}</textarea>
+                            <span class="help-block form-error">{{ form.particulars.errors.as_text }}</span>
+                        </div>
+
+{#                        <div class="form-group col-sm-3 {{ form.designatedapprover.errors|yesno:'has-error,' }}">#}
+{#                            <label class="control-label" for="id_designatedapprover">Approver</label>#}
+{#                            <select id="id_designatedapprover" class="form-control input-sm select2" name="designatedapprover">#}
+{#                                <option value="">-- Select --</option>#}
+{#                                {% for data in designatedapprover %}#}
+{#                                    <option value="{{ data.id }}" {% if form.designatedapprover.value|add:0 == data.id %} selected="selected" {% endif %}>{{ data.first_name }} {{ data.last_name }}</option>#}
+{#                                {% endfor %}#}
+{#                            </select>#}
+{#                            <span class="help-block form-error">{{ form.designatedapprover.errors.as_text }}</span>#}
+{#                        </div>#}
+{#                        <div class="form-group col-sm-2 {{ form.orstatus.errors|yesno:'has-error,' }}">#}
+{#                            <label class="control-label" for="id_orstatus">OR Status</label>#}
+{#                            <input type="text" disabled="disabled" value="For Approval" class="form-control input-sm disabled-white">#}
+{#                            <span class="help-block form-error">{{ form.orstatus.errors.as_text }}</span>#}
+{#                        </div>#}
+                        <div class="form-group col-sm-6 {{ form.remarks.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_remarks">Remarks</label>
+                            <textarea id="id_remarks" class="form-control input-sm" name="remarks" rows="2">{{ form.remarks.value|default:'' }}</textarea>
+                            <span class="help-block form-error">{{ form.remarks.errors.as_text }}</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="form-group col-sm-6 padding-top-15 padding-bottom-15">
+                            {% if object.status == 'A' %}
+                                {% if object.orstatus == 'A' %}
+                                <button type="button" class="btn btn-round btn-info">Approved</button>
+                                {% elif object.orstatus == 'R' %}
+                                <button type="button" class="btn btn-round btn-info">Ready for Posting</button>
+                                {% else %}
+                                <button type="submit" class="btn btn-round btn-success" id="validateButton">Submit</button>
+                                {% endif %}
+                            {% elif object.status == 'C' %}
+                            <button type="button" class="btn btn-round btn-danger">Cancelled JV</button>
+                            {% elif object.status == 'O' %}
+                            <button type="button" class="btn btn-round btn-info">Posted JV</button>
+                            {% endif %}
+                        </div>
+                        <div class="col-sm-6 padding-top-15 padding-bottom-15">
+                            <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="manualbutton"><i class="icon fa-plus-square" aria-hidden="true"></i> Manual Entry</button>
+{#                                <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="autobutton"><i class="icon fa-refresh" aria-hidden="true"></i> Auto Entry</button>#}
+                        </div>
+
+                        <!-- Accounting entry start -->
+                        <div class="col-sm-12" id="entryview" style="display: none">
+                            <div class="panel panel-bordered">
+                                <div class="panel-body">
+                                    <h4>Manual Accounting Entry</h4>
+                                    <div id="waitingbar" class="animatebar-bar progress-bar-success" style="width: 95%;">
+                                        <div class="animatebar-bar-percent">95%</div>
+                                    </div>
+                                    <div id="manualentryview">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12">
+                            <div class="panel">
+                                <div class="shade"><div class="loader two-color"></div></div>
+                                <div class="panel-body">
+                                    <h4>Accounting Entries</h4><br>
+                                    <table class="table table-striped margin-bottom-0">
+                                        <thead>
+                                            <tr>
+                                                <th width="5%"></th>
+                                                <th width="15%">Chart of Account</th>
+                                                <th width="55%">Title</th>
+                                                <th width="10%" style="text-align: right;">Debit&nbsp;</th>
+                                                <th width="10%" style="text-align: right;">Credit&nbsp;</th>
+                                                <th width="15%" class="actionrowhead"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="datatable">
+                                        {{ datatable|safe }}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <th>
+                                                    <strong>Total</strong>
+                                                </th>
+                                                <th></th>
+                                                <th></th>
+                                                <th id="total_debitamount" class="text-align-right"><strong>0.00</strong></th>
+                                                <th id="total_creditamount" class="text-align-right"><strong>0.00</strong></th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Accounting entry end -->
+
+                    </div>
+                    <div class="col-md-12 small">
+                        <div class="col-sm-1">Created&nbsp;by:</div><div class="col-sm-3"><b>{{ footers.0 }}</b></div>
+                        <div class="col-sm-1">Modified&nbsp;by:</div><div class="col-sm-3"><b>{{ footers.4 }}</b></div>
+                        <div class="col-sm-1">Imported&nbsp;by:</div><div class="col-sm-3"><b>{{ footers.1|default:'N/A' }}</b></div>
+                        <div class="col-sm-1">Create&nbsp;date:</div><div class="col-sm-3"><b>{{ footers.2 }}</b></div>
+                        <div class="col-sm-1">Modify&nbsp;date:</div><div class="col-sm-3"><b>{{ footers.6 }}</b></div>
+                        <div class="col-sm-1">Import&nbsp;date:</div><div class="col-sm-3"><b>{{ footers.3|default:'N/A' }}</b></div>
+                        <div class="col-sm-12">&nbsp;</div>
+                        <div class="col-sm-1">Posted&nbsp;by:</div><div class="col-sm-3"><b>{{ footers.5|default:'N/A' }}</b></div>
+                        <div class="col-sm-1">Closed&nbsp;by:</div><div class="col-sm-3"><b>{{ footers.8|default:'N/A' }}</b></div>
+                        <div class="col-sm-4">&nbsp;</div>
+                        <div class="col-sm-1">Post&nbsp;date:</div><div class="col-sm-3"><b>{{ footers.7|default:'N/A' }}</b></div>
+                        <div class="col-sm-1">Close&nbsp;date:</div><div class="col-sm-3"><b>{{ footers.9|default:'N/A' }}</b></div>
+                    </div>
+                </form>
+                <!-- End Simple Form Validation -->
+            </div>
+            <div class="clearfix"></div>
+            <div id="logsModal" class="modal fade" role="dialog">
+                <div class="modal-dialog" style="width: 780px;">
+                    <div class="modal-content">
+                        <div class="shade" id="shadePRFImport"><div class="loader two-color"></div></div>
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">OR Logs from <span id="span_artype">...</span></h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="form-group col-md-12 small">
+                                    {% for data in logs_ormain %}
+                                        <div class="col-sm-1">OR&nbsp;Number:</div><div class="col-sm-3 text-right"><strong>{{ data.orno }}</strong></div>
+                                        <div class="col-sm-1">OR&nbsp;Date:</div><div class="col-sm-1"></div><div class="col-sm-6"><strong>{{ data.ordate }}</strong></div>
+                                        <div class="col-sm-12"></div>
+                                        <div class="col-sm-1">Amount:</div><div class="col-sm-3 text-right"><strong>{{ data.amount|floatformat:2|intcomma }}</strong></div>
+                                        <div class="col-sm-1">Payee:</div><div class="col-sm-1"></div><div class="col-sm-6" style="text-transform: capitalize;"><strong>{{ data.payeename }}</strong></div>
+                                        <div class="col-sm-12"></div>
+                                        <div class="col-sm-1">Bank&nbsp;Account:</div><div class="col-sm-3 text-right"><strong>{{ data.bankaccount }}</strong></div>
+                                        <div class="col-sm-1">Batch&nbsp;Key:</div><div class="col-sm-1"></div><div class="col-sm-6"><strong>{{ data.batchkey }}</strong></div>
+                                        <div class="col-sm-1">Entered&nbsp;By:</div><div class="col-sm-3 text-right"><strong>{{ data.enterby }}</strong></div>
+                                        <div class="col-sm-1">Enter&nbsp;Date:</div><div class="col-sm-1"></div><div class="col-sm-6"><strong>{{ data.enterdate }}</strong></div>
+                                    {% endfor %}
+                                    <br><br><br><br><br>
+                                    <table class="table table-bordered" id="logs_details">
+                                        {% if artype == 'A' %}
+                                        <thead>
+                                            <tr>
+                                                <th style="text-align: center"><b>Doc Num</b></th>
+                                                <th style="text-align: center"><b>Ad Type</b></th>
+                                                <th style="text-align: center"><b>Assign Amount</b></th>
+                                                <th style="text-align: center"><b>VAT Amount</b></th>
+                                                <th style="text-align: center"><b>VAT</b></th>
+                                                <th style="text-align: center"><b>Entered By</b></th>
+                                                <th style="text-align: center"><b>Enter Date</b></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for data2 in logs_ordetail %}
+                                                <tr>
+                                                    <td>{{ data2.docnum }}</td>
+                                                    <td>{{ data2.adtypedesc }}</td>
+                                                    <td align="right">{{ data2.assignamount|floatformat:2|intcomma }}</td>
+                                                    <td align="right">{{ data2.assignvatamount|floatformat:2|intcomma }}</td>
+                                                    <td align="center">{{ data2.vatcode }}</td>
+                                                    <td align="center">{{ data2.usercode }}</td>
+                                                    <td>{{ data2.userdate }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        {% endif %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="not-equal-debit-credit-error" class="custom-alert danger">Debit and Credit amounts must be equal.</div>
+<div id="not-equal-accounting-entries-total-amount-error" class="custom-alert danger">Total amounts of items and accounting entries must be equal.</div>
+<div id="unbalanced-entries-error" class="custom-alert danger">You have unbalanced entry(ies). Please review your entry(ies).</div>
+{% include "officialreceipt/search.html" %}
+{% endblock page-content %}
+{% block extra_js %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+    <script src="{% static 'js/jquery.validate.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/jquery.maskMoney.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/custom-maskMoney.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+    <script>
+    $(function(){
+        $('#to_html').html($('#to_html').text());
+        $('.select2').select2();
+        ajaxselect2("agency", "id_agency");
+        ajaxselect2("client", "id_client");
+        ajaxselect2("agent", "id_agent");
+        $('#span_artype').text($('#id_orsource option:selected').text());
+
+        displayPayeeDropdowns();
+
+        if($('#id_orsource').val() == 'A'){
+            if($('#id_agency').val() != null){
+                $('#id_payee_adv').val('AG');
+                $('#payee_options_client').hide();
+                $('#payee_options_agency').show();
+            }
+            else if($('#id_client').val() != null){
+                $('#id_payee_adv').val('C');
+                $('#payee_options_agency').hide();
+                $('#payee_options_client').show();
+            }
+        }
+
+        setPayeeOptions();
+        generateTotals();
+
+        {% if trans_type == 'A' %}
+            $("#id_adtype option:selected").siblings().attr('disabled','disabled');
+        {% endif %}
+
+        if($("#id_vat").val() != '')    $('#vatrate').html("<strong>" + $("#id_vat").data('vatrate') + "</strong>");
+        else                            showRate("#id_vat", "vatrate", "RATE");
+
+        if($("#id_wtax").val() != '')    $('#wtaxrate').html("<strong>" + $("#id_wtax").data('wtaxrate') + "</strong>");
+        else                            showRate("#id_wtax", "wtaxrate", "RATE");
+
+        $("#id_amount").on('keyup', function(){
+            var words = toWords($(this).val());
+            $("#id_amountinwords").val(words);
+        });
+
+        $('#id_orsource').on('change', function(){
+            displayPayeeDropdowns();
+            setPayeeOptions();
+            $('#span_artype').text($(this).find('option:selected').text());
+        });
+
+        $('.payee-type').on('change', function(){
+            setPayeeOptions();
+        });
+
+        $("#id_branch option").filter(function(){
+            return $(this).text() == 'HEAD OFFICE';
+        }).attr('selected', 'selected');
+
+        $('#id_vat').on('change', function(){
+            showRate("#id_vat", "vatrate", "RATE");
+        });
+        $('#id_wtax').on('change', function(){
+            showRate("#id_wtax", "wtaxrate", "RATE");
+        });
+
+        $('#id_amount').on('keyup', function(){
+            generateTotals();
+        });
+        $('#id_vat, #id_wtax').on('change', function(){
+            generateTotals();
+        });
+
+
+        // Accounting entry start
+            $.ajax({
+                url: "{% url 'acctentry:maccountingentry' %}",
+                type: "post",
+                data: {'csrfmiddlewaretoken': "{{csrf_token}}",
+                       'table': "ordetailtemp"},
+                success: function(response){
+                    $("#manualentryview").html(response['viewhtml']);
+                    $("#waitingbar").hide();
+                }, error: function(response) {
+                    console.debug(response);
+                }
+            });
+
+            $("#manualbutton").unbind().click(function (){
+                $("#entryview").show();
+                $.ajax({
+                    url: "{% url 'acctentry:maccountingentry' %}",
+                    type: "post",
+                    data: {'csrfmiddlewaretoken': "{{csrf_token}}",
+                           'table': "ordetailtemp"},
+                    success: function(response){
+                        $("#manualentryview").html(response['viewhtml']);
+                        $("#waitingbar").hide();
+                    }, error: function(response) {
+                        console.debug(response);
+                    }
+                });
+            });
+
+        $("#validateButton").on('click', function() {
+            if($('#id_orsource').val() == 'A'){
+                if($('#id_payee_adv').val() == 'AG' && $('#id_agency').val() === null){
+                    $('#payee_options_agency').find('.form-error').text('This Field is required');
+                    event.preventDefault();
+                }
+                else if($('#id_payee_adv').val() == 'C' && $('#id_client').val() === null){
+                    $('#payee_options_client').find('.form-error').text('This Field is required');
+                    event.preventDefault();
+                }
+                else{
+                    $('#payee_options_agency').find('.form-error').text('');
+                    $('#payee_options_client').find('.form-error').text('');
+                }
+            }
+            else if($('#id_orsource').val() == 'C'){
+                if($('#id_payee_cir').val() == 'A' && $('#id_agent').val() === null){
+                    $('#payee_options_agent').find('.form-error').text('This Field is required');
+                    event.preventDefault();
+                }
+                else{
+                    $('#payee_options_agent').find('.form-error').text('');
+                }
+            }
+            var total_creditamount = $("#total_creditamount").text().replace(/,/g, '');
+            var total_debitamount = $("#total_debitamount").text().replace(/,/g, '');
+            var total_itemamount = $("#id_amount").val().replace(/,/g, '');
+            console.log(total_debitamount);
+            console.log(total_creditamount);
+            console.log(total_itemamount);
+            if (parseFloat(total_creditamount) != '0.00' || parseFloat(total_debitamount) != '0.00') {
+                if (parseFloat(total_creditamount) != parseFloat(total_debitamount)) {
+                    customAlert($('#not-equal-debit-credit-error'));
+                    event.preventDefault();
+                    return false;
+                }
+                if (parseFloat(total_creditamount) != parseFloat(total_itemamount)) {
+                    alert('Note! Total OR Amount is not equal to your accounting entry!');
+                }
+            }
+            var checkbreakdownstatus = $('#breaktabledata').find('td').hasClass('unbalancebreakdown');
+            if (checkbreakdownstatus) {
+                customAlert($('#unbalanced-entries-error'));
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        function generateTotals(){
+            givenAmount = parseFloat($('#id_amount').val().replace(/,/g,''));
+            vatRate = parseFloat($('#id_vat option:selected').data('rate'));
+            wtaxRate = parseFloat($('#id_wtax option:selected').data('rate'));
+            console.log($('#id_wtax option:selected').data('rate'));
+            grossAmount = givenAmount/(1+(vatRate/100)-(wtaxRate/100));
+            addVat = grossAmount * (vatRate/100);
+            wtaxAmount = grossAmount * (wtaxRate/100);
+            totalPayment = grossAmount + addVat - wtaxAmount;
+
+            $('.amount_display').val(0);
+            $('#disp_note').text('');
+
+            if($('#id_vat').val() != ''){
+                if($('#id_vat option:selected').data('code') == 'VE') $('#disp_vatexempt').val(grossAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                else if ($('#id_vat option:selected').data('code') == 'ZE') $('#disp_vatzero').val(grossAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                else $('#disp_vatable').val(grossAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+
+                $('#disp_totalsale').val(grossAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                $('#disp_addvat').val(addVat.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                $('#disp_totalpay').val(totalPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+
+                if($('#id_wtax').val() != ''){
+                    $('#disp_note').text('Noted: ' + wtaxRate + '% w/tax -------> ' + wtaxAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                }
+            }
+        }
+
+        function displayPayeeDropdowns(){
+            if($('#id_orsource').val() == 'A'){
+                $('.class-adv').not('.class-agency').show();
+                $('.class-adv').not('.class-client').show();
+                $('.class-cir').hide();
+            }
+            else if($('#id_orsource').val() == 'C'){
+                $('.class-cir').not('.class-agent').show();
+                $('.class-adv').hide();
+            }
+        }
+
+        function setPayeeOptions(){
+            $('.payee_options').hide();
+            if($('#id_orsource').val() == 'A'){
+                e = $('#id_payee_adv');
+                $('.class-cir').hide();
+            }
+            else if($('#id_orsource').val() == 'C'){
+                e = $('#id_payee_cir');
+                $('.class-adv').hide();
+            }
+
+            if(e.val() == 'AG'){
+                $('#payee_options_agency').show();
+                $('#id_agent').val(null);
+                $('#id_client').val(null);
+                ajaxselect2("client", "id_client");
+                ajaxselect2("agent", "id_agent");
+            }
+            else if(e.val() == 'C'){
+                $('#payee_options_client').show();
+                $('#id_agent').val(null);
+                $('#id_agency').val(null);
+                ajaxselect2("agent", "id_agent");
+                ajaxselect2("agency", "id_agency");
+            }
+            else if(e.val() == 'A'){
+                $('#payee_options_agent').show();
+                $('#id_agency').val(null);
+                $('#id_client').val(null);
+                ajaxselect2("agency", "id_agency");
+                ajaxselect2("client", "id_client");
+            }
+        }
+
+        function showRate(field, rateSpan, defaultText){
+            var rateValue = rateSpan == "fxrate" ? parseFloat($(field + " option:selected").data('rate')).toFixed(2) :
+                    parseFloat($(field + " option:selected").data('rate')).toFixed(2) + '%';
+            $('#' + rateSpan).html("<strong>" + defaultText + ": " + rateValue + "</strong>");
+            if($(field + " option:selected").text() == "-- Select --"){
+                $('#' + rateSpan).html("<strong>" + defaultText + "</strong>");
+            }
+        }
+
+    });
+    </script>
+{% endblock extra_js %}

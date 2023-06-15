@@ -1,0 +1,1136 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% load humanize %}
+{% block page-title %} Check Voucher {% endblock page-title %}
+{% block page-content %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/css/dashboard/dashboard.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
+    <style>
+        .select2-results__option {
+            font-size: 12px;
+        }
+        .vattable td {
+            text-align: right;
+
+        }
+        .vattable td:first-child {
+            width: 130px;
+            padding-right: 10px;
+        }
+        .vattable td input {
+            width: 100px;
+            text-align: right;
+        }
+        .heading-top-index-2 {
+            padding: 27px 15px 26px 15px;
+        }
+        .form-control.input-sm.date-yyyymmdd.datepicker.week {
+            background-color: transparent;
+        }
+        .input-search {
+            z-index: 99;
+        }
+    </style>
+{% endblock extra_css %}
+<div class="panel">
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="margin-bottom-20">
+                    <h3 class="panel-title" style="padding:5px 10px 20px 25px;">UPDATE
+                        <div class="btn-group pull-right">
+                            <div class="shade"><div class="loader loader-sm two-color"></div></div>
+                            <button class="btn btn-info small" data-toggle='modal' data-target='#searchModal'>
+                                <i class="icon fa-search" aria-hidden="true"></i> Search
+                            </button>
+                            <button id="nav_stepleft" class="btn btn-default nav_btn small">
+                                <i class="icon fa-step-backward" aria-hidden="true"></i>
+                            </button>
+                            <button id="nav_left" class="btn btn-default nav_btn small">
+                                <i class="icon fa-backward" aria-hidden="true"></i>
+                            </button>
+                            <button id="nav_right" class="btn btn-default nav_btn small">
+                                <i class="icon fa-forward" aria-hidden="true"></i>
+                            </button>
+                            <button id="nav_stepright" class="btn btn-default nav_btn small">
+                                <i class="icon icon fa-step-forward" aria-hidden="true"></i>
+                            </button>
+						</div>
+                        <div class="btn-group pull-right padding-right-10">
+                            <button type="button" style="line-height: 0.5px;" class="btn btn-sm btn-info waves-effect waves-light"><i class="icon fa-download" aria-hidden="true"></i>&nbsp; Import</button>
+                            <button type="button" style="line-height: 0.5px;" class="btn btn-sm btn-info dropdown-toggle waves-effect waves-light" id="ColorDropdown3" data-toggle="dropdown" aria-expanded="false">
+                            <span class="caret"></span>
+                            <span class="sr-only">Info</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-info" style="font-size: 12px;" aria-labelledby="ColorDropdown3" role="menu">
+                                <li><a target="_blank" href="{% url 'processing_transaction:index' %}?selectprocess=potocv&datefrom={% now "Y-m" %}-01&dateto={% now "Y-m-d" %}" class="waves-effect waves-light padding-bottom-5 padding-top-5">Purchase Order</a></li>
+                                <li><a target="_blank" href="{% url 'processing_transaction:index' %}?selectprocess=apvtocv&datefrom={% now "Y-m" %}-01&dateto={% now "Y-m-d" %}" class="waves-effect waves-light padding-bottom-5 padding-top-5">Accounts Payable Voucher</a></li>
+                                <!--{% if perms.checkvoucher.add_cvmain %}<li><a target="_blank" href="{% url 'checkvoucher:create' %}?import_modal=true" class="waves-effect waves-light padding-bottom-5 padding-top-5">Petty Cash Replenishment</a></li>{% endif %}-->
+                            </ul>
+                        </div>
+                    </h3>
+                    <div style="padding-top: 10px; padding-right: 10px; padding-bottom: 50px;">
+                        {% if perms.checkvoucher.add_cvmain %}
+                            <a href="{% url 'checkvoucher:create' %}" class="floatright" target="_blank">
+                                <button type="button" class="btn btn-success btn-round btn-sm waves-effect waves-light">
+                                    <i class="icon fa-plus-square" aria-hidden="true"></i>&nbsp; New CV
+                                </button></a>
+                        {% endif %}
+                        {% if perms.checkvoucher.delete_cvmain and object.cvstatus == 'F' and object.isdeleted == 0 and object.status == 'A' %}
+                        <a href="{% url 'checkvoucher:delete' object.id %}" class="floatright">
+                            <button type="button" id="delete" class="btn btn-round btn-info btn-sm waves-effect
+                            waves-light get_report">
+                                <i class="icon fa-trash" aria-hidden="true"></i>&nbsp; Cancel
+                            </button>
+                        </a>
+                        {% endif %}
+                        <div class="btn-group floatright">
+                            <button type="button" class="btn btn-round btn-sm btn-info waves-effect waves-light"><i class="icon fa-file-pdf-o" aria-hidden="true"></i>&nbsp; Print</button>
+                            <button type="button" class="btn btn-round btn-sm btn-info dropdown-toggle waves-effect waves-light" id="ColorDropdown3" data-toggle="dropdown" aria-expanded="false">
+                            <span class="caret"></span>
+                            <span class="sr-only">Info</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-info" style="font-size: 12px;" aria-labelledby="ColorDropdown3" role="menu">
+                                <li><a href="{% url 'checkvoucher:pdf' object.id %}" target="_blank" class="waves-effect waves-light">Transaction</a></li>
+                                <li><a href="{% url 'checkvoucher:voucher' object.id %}" target="_blank" class="waves-effect waves-light">Voucher</a></li>
+                                <li><a href="{% url 'checkvoucher:preprintedvoucher' object.id %}" target="_blank" class="waves-effect waves-light">Pre-printed Voucher</a></li>
+                            </ul>
+                        </div>
+                        <a href="{% url 'checkvoucher:detail' object.id %}" class="floatright">
+                            <button type="button" id="get_details" class="btn btn-round btn-info btn-sm waves-effect
+                            waves-light get_report">
+                                <i class="icon fa-info-circle" aria-hidden="true"></i>&nbsp; View
+                            </button>
+                        </a>
+                        {% if savedcvsubtype == 'PCR' %}
+                            <a class="floatright">
+                                <button type="button" id="get_details" class="btn btn-round btn-info btn-sm waves-effect
+                                waves-light get_report" data-toggle='modal' data-target='#repPCVModal'>
+                                    <i class="icon fa-info-circle" aria-hidden="true"></i>&nbsp; View PCV Replenishments
+                                </button>
+                            </a>
+                        {% endif %}
+
+                        {% if object.actualapprover_id == user.id or object.designatedapprover.id == user.id or user.is_superuser %}
+                            {% if object.cvstatus != 'R' %}
+
+                                {% if object.cvstatus == 'A' or object.cvstatus == 'F' %}
+                                <a href="#" class="floatright">
+                                    <button type="button" id="trandisapproved" class="btn btn-round btn-danger btn-sm waves-effect
+                                    waves-light get_report">
+                                        <i class="icon fa-check" aria-hidden="true"></i>&nbsp; Disapproved
+                                    </button>
+                                </a>
+                                {% endif %}
+                                {% if object.cvstatus == 'A' %}
+                                <a href="#" class="floatright">
+                                    <button type="button" id="tranposting" class="btn btn-round btn-warning btn-sm waves-effect
+                                    waves-light get_report">
+                                        <i class="icon fa-unlock-alt" aria-hidden="true"></i>&nbsp; Ready for Posting
+                                    </button>
+                                </a>
+                                {% endif %}
+
+                                {% if object.cvstatus == 'D' or object.cvstatus == 'F' %}
+                                <a href="#" class="floatright">
+                                    <button type="button" id="tranapproved" class="btn btn-round btn-success btn-sm waves-effect
+                                    waves-light get_report">
+                                        <i class="icon fa-check" aria-hidden="true"></i>&nbsp; Approved
+                                    </button>
+                                </a>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <form method="post" id="form-b">
+                        {% csrf_token %}
+                        {{ form.errors }}
+                        <input type="hidden" name="secretkey" id="secretkey" value="{{ secretkey }}"/>
+                        <div class="col-sm-12">
+                            <div class="row-lg">
+                                <div class="form-group  col-sm-2">
+                                    <input type="hidden" id="id_originalcvstatus" name="originalcvstatus"
+                                           value="{{ originalcvstatus }}" data-actualstatus="{{ originalcvstatus }}">
+                                            <!-- change actualstatus data attribute upon ajax status change -->
+                                    <label class="control-label" for="id_cvnum">Number</label>
+                                    <input type="text" class="form-control input-sm" id="id_cvnum" name="cvnum" placeholder="CVxxxxxxx" value="{{ form.cvnum.value|default:'' }}" readonly="readonly">
+                                    <span class="help-block form-error">{{ form.cvnum.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-2">
+                                    <label class="control-label" for="id_cvdate">CV Date</label>
+                                    <input type="text" class="form-control input-sm date-yyyymmdd datepicker" readonly="readonly" style="padding: 5px 10px; background: white;" id="id_cvdate" name="cvdate" placeholder="YYYY-MM-DD" data-validation="required" value="{% if form.cvdate.value %}{{ form.cvdate.value|date:'Y-m-d' }}{% else %}{% now "Y-m-d" %}{% endif %}">
+                                    <span class="help-block form-error">{{ form.cvdate.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-2 {{ form.cvtype.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_cvtype">CV Type</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_cvtype" name="cvtype">
+                                        <option value="">-- Select --</option>
+                                        {% for cvtype in cvtype %}
+                                            <option value="{{ cvtype.id }}" {% if form.cvtype.value|add:"0" == cvtype.id %} selected="selected" {% endif %}>{{ cvtype.description }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block form-error">{{ form.cvtype.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-3 {{ form.cvsubtype.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_cvtype">CV Subtype</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_cvsubtype" name="cvsubtype">
+                                        <option value="">-- Select --</option>
+                                        {% for cvsubtype in cvsubtype %}
+                                            <option value="{{ cvsubtype.id }}" {% if form.cvsubtype.value|add:"0" == cvsubtype.id %} selected="selected" {% endif %}>{{ cvsubtype.description }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block form-error">{{ form.cvtype.errors.as_text }}</span>
+                                </div>
+{#                                <div class="form-group col-sm-3">#}
+{#                                    <label class="control-label" for="id_refap">Reference&nbsp;AP</label>#}
+{#                                    <input type="text" style="background: white;" class="form-control input-sm" id="id_refap" name="refap" readonly="readonly" value="{{ form.refap.value|default:'N/A' }}">#}
+{#                                    <span class="help-block form-error">{{ form.refap.errors.as_text }}</span>#}
+{#                                </div>#}
+                                <div class="form-group col-sm-3 {{ form.cvstatus.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_cvstatus">CV Status</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_cvstatus" name="cvstatus">
+                                        {% if form.cvstatus.value == "F" %}
+                                        <option value="F">For Approval</option>
+                                        {% endif %}
+                                        {% if form.cvstatus.value == "A" %}
+                                        <option value="A">Approved</option>
+                                        {% endif %}
+                                        {% if form.cvstatus.value == "D" %}
+                                        <option value="D">Disapproved</option>
+                                        {% endif %}
+                                        {% if form.jvstatus.value == "R" %}
+                                        <option value="R">Ready for Posting</option>
+                                        {% endif %}
+                                    </select>
+                                    <span class="help-block form-error">{{ form.cvstatus.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-4 {{ form.payee.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_payee">Payee</label>
+                                    {% if originalcvstatus != 'R' %}
+                                        <select class="form-control input-sm select2" id="id_payee" name="payee" data-validation="required">
+                                            {% if payee.id != None %}
+                                                <option value="{{ payee.id }}">{{ payee.name }}</option>
+                                            {% endif %}
+                                        </select>
+                                    {% else %}
+                                        <input type="text" class="form-control input-sm" readonly="readonly" style="background: white;" value="{{ payee.name }}">
+                                    {% endif %}
+                                    <span class="help-block form-error">{{ form.payee.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-5">
+                                    <label class="control-label" for="id_bankaccount">Bank Account</label>
+                                    <select id="id_bankaccount" class="form-control input-sm select2" data-validation="required" name="bankaccount">
+                                        <option value="">-- Select --</option>
+                                        {% for bankaccount in bankaccount %}
+                                            <option value="{{ bankaccount.id }}" {% if form.bankaccount.value|add:0 == bankaccount.id %} selected="selected" {% endif %}>{{ bankaccount.code }} [{{ bankaccount.bank.description }} - {{ bankaccount.bankaccounttype.description }}, {{ bankaccount.bankbranch.description }}]</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block form-error">{{ form.bankaccount.errors.as_text }}</span>
+                                </div>
+{#                                <div class="form-group col-sm-3 {{ form.disbursingbranch.errors|yesno:'has-error,' }}">#}
+{#                                    <label class="control-label" for="id_disbursingbranch">Disbursing Branch</label>#}
+{#                                    <select class="form-control input-sm" data-validation="required" id="id_disbursingbranch" name="disbursingbranch">#}
+{#                                        <option value="">-- Select --</option>#}
+{#                                        {% for disbursingbranch in disbursingbranch %}#}
+{#                                            <option value="{{ disbursingbranch.id }}" {% if form.disbursingbranch.value|add:0 == disbursingbranch.id %} selected="selected" {% endif %}>[{{ disbursingbranch.branch }}] {{ disbursingbranch.bank.code }}, {{ disbursingbranch.address1 }}</option>#}
+{#                                        {% endfor %}#}
+{#                                    </select>#}
+{#                                    <span class="help-block form-error">{{ form.disbursingbranch.errors.as_text }}</span>#}
+{#                                </div>#}
+                                <div class="form-group col-sm-2">
+                                    <label class="control-label" for="id_refnum">Reference #</label>
+                                    <input type="text" style="background: white;" class="form-control input-sm" id="id_refnum" name="refnum" placeholder="Reference #" value="{{ form.refnum.value|default:'' }}">
+                                    <span class="help-block form-error">{{ form.refnum.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-1">
+                                    <input type="checkbox" id="id_confi" name="confi" value="1" {% if confi == 1  %} checked="checked" {% endif %}> Confi<br>
+                            <input type="checkbox" id="id_winvoice" name="winvoice" value="1" {% if winvoice == 1  %} checked="checked" {% endif %}> with Invoice<br>
+                            <input type="checkbox" id="id_wor" name="wor" value="1" {% if wor == 1  %} checked="checked" {% endif %}> with OR
+                                </div>
+                                <div class="form-group col-sm-2 {{ form.branch.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_branch">Branch</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_branch" name="branch">
+                                        <option value="">-- Select --</option>
+                                        {% for branch in branch %}
+                                            <option value="{{ branch.id }}" {% if form.branch.value|add:0 == branch.id %} selected="selected" {% endif %}>{{ branch.description }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block form-error">{{ form.branch.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-2">
+                                    <label class="control-label" for="id_checknum">Check Number</label>
+                                    <input type="text" style="background: white;" class="form-control input-sm" id="id_checknum" data-validation="required" name="checknum" value="{{ form.checknum.value|default:'' }}">
+                                    <span class="help-block form-error">{{ form.checknum.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-2">
+                                    <label class="control-label" for="id_checkdate">Check Date</label>
+                                    <input type="text" class="form-control input-sm date-yyyymmdd datepicker month" readonly="readonly" style="padding: 5px 10px; background: white;" id="id_checkdate" name="checkdate" placeholder="YYYY-MM-DD" data-validation="required" value="{% if form.checkdate.value %}{{ form.checkdate.value|date:'Y-m-d' }}{% else %}{% now "Y-m-d" %}{% endif %}">
+                                    <span class="help-block form-error">{{ form.checkdate.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-2">
+                                    <label class="control-label" for="id_ornum">OR Number</label>
+                                    <input type="text" style="background: white;" class="form-control input-sm" id="id_ornum" name="ornum" value="{{ form.ornum.value|default:'' }}">
+                                    <span class="help-block form-error">{{ form.ornum.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-4 {{ form.designatedapprover.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_designatedapprover">Approver</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_designatedapprover" name="designatedapprover">
+                                        <option value="">-- Select --</option>
+                                        {% for designatedapprover in designatedapprover %}
+                                            <option value="{{ designatedapprover.user_id }}" {% if actualapprover %} {% if actualapprover|add:0 == designatedapprover.user_id %} selected="selected" {% endif %} {% else %} {% if form.designatedapprover.value|add:0 == designatedapprover.user_id %} selected="selected" {% endif %} {% endif %}>{{ designatedapprover.firstname }} {{ designatedapprover.lastname }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-sm-12"></div>
+                                <div class="form-group col-sm-3 {{ form.amount.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_amount">Amount</label>
+                                    <input type="text" class="form-control input-sm amount text-right" id="id_amount" name="amount"
+                                           maxlength="26" data-validation="required" value="{{ form.amount.value|floatformat:'2'|intcomma }}" style="background: white;">
+                                    <span class="help-block form-error">{{ form.amount.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-5">
+                                    <label class="control-label" for="id_amountinwords">Amount&nbsp;in&nbsp;Words</label>
+                                    <input type="text" style="background: white;" class="form-control input-sm" id="id_amountinwords" name="amountinwords" readonly="readonly" value="{{ form.amountinwords.value|default:'' }}">
+                                    <span class="help-block form-error">{{ form.amountinwords.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-3 {{ form.currency.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_currency">Currency</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_currency" name="currency">
+                                        <option value="">-- Select --</option>
+                                        {% for currency in currency %}
+                                            <option value="{{ currency.id }}" data-rate="{{ currency.fxrate|floatformat:2 }}" {% if form.currency.value|add:0 == currency.id %} selected="selected" {% endif %}>[{{ currency.symbol }}]&nbsp;&nbsp;&nbsp;{{ currency.description }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block form-error">{{ form.currency.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-1 {{ form.fxrate.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_fxrate">FX Rate</label>
+                                    <input type="text" class="form-control input-sm amount text-right" id="id_fxrate" name="fxrate"
+                                           data-validation="required" value="{{ form.fxrate.value|floatformat:2 }}" style="background: white;">
+                                    <span class="help-block form-error">{{ form.fxrate.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-3 {{ form.vat.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_vat" style="display: block;">VAT</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_vat" name="vat"  style="width: 65%; display: inline-block;" data-vatrate="RATE: {{ form.vatrate.value|floatformat:2 }}%">
+                                        <option value="">-- Select --</option>
+                                        {% for vat in vat %}
+                                            <option value="{{ vat.id }}" data-rate="{{ vat.rate }}" {% if form.vat.value|add:0 == vat.id %} selected="selected" {% endif %}>[{{ vat.code }}]&nbsp;&nbsp;{{ vat.description }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span id="vatrate" class="text-success small floatright" style="display: inline; margin-top: 10px;"><strong>RATE</strong></span>
+                                    <span class="help-block form-error">{{ form.vat.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-5 {{ form.atc.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_atc" style="display: block;">ATC</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_atc" name="atc" style="width: 80%; display: inline-block;" data-atcrate="RATE: {{ form.atcrate.value|floatformat:2 }}%">
+                                        <option value="">-- Select --</option>
+                                        {% for atc in atc %}
+                                            <option value="{{ atc.id }}" data-rate="{{ atc.rate }}" {% if form.atc.value|add:0 == atc.id %} selected="selected" {% endif %}>[{{ atc.code }}]&nbsp;&nbsp;{{ atc.description }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span id="atcrate" class="text-success small floatright" style="display: inline; margin-top: 10px;"><strong>RATE</strong></span>
+                                    <span class="help-block form-error">{{ form.atc.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-2 {{ form.inputvattype.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_inputvattype">Input&nbsp;VAT&nbsp;Type</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_inputvattype" name="inputvattype">
+                                        <option value="">-- Select --</option>
+                                        {% for inputvattype in inputvattype %}
+                                            <option value="{{ inputvattype.id }}" {% if form.inputvattype.value|add:0 == inputvattype.id %} selected="selected" {% endif %}>{{ inputvattype.description }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block form-error">{{ form.inputvattype.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-2 {{ form.deferredvat.errors|yesno:'has-error,' }}">
+                                    <label class="control-label" for="id_deferredvat">Deferred VAT</label>
+                                    <select class="form-control input-sm" data-validation="required" id="id_deferredvat" name="deferredvat">
+                                        {% for id,name in form.fields.deferredvat.choices %}
+                                            <option value="{{ id }}"{% if form.deferredvat.value == id %} selected{% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block form-error">{{ form.deferredvat.errors.as_text }}</span>
+                                </div>
+                                <div class="form-group col-sm-12">
+                                    <label class="control-label" for="id_particulars">Particulars</label>
+                                    <textarea data-fv-field="standard_content" class="form-control input-sm" id="id_particulars" name="particulars" style="resize: vertical; background-color: white;"
+                                              rows="2" data-validation="required">{{ form.particulars.value|default:'' }}</textarea>
+                                    <span class="help-block form-error">{{ form.particulars.errors.as_text }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 margin-bottom-10 row">
+                            <div class="col-sm-6">
+                                {% if object.status == 'A' %}
+                                    {% if object.cvstatus == 'A' %}
+                                    <button type="button" class="btn btn-round btn-info">Approved</button>
+                                    {% elif object.cvstatus == 'R' %}
+                                    <button type="button" class="btn btn-round btn-info">Ready for Posting</button>
+                                    {% else %}
+                                    <button type="submit" class="btn btn-round btn-success" id="validateButton">Submit</button>
+                                    {% endif %}
+                                {% elif object.status == 'C' %}
+                                <button type="button" class="btn btn-round btn-danger">Cancelled JV</button>
+                                {% elif object.status == 'O' %}
+                                <button type="button" class="btn btn-round btn-info">Posted JV</button>
+                                {% endif %}
+                            </div>
+
+                                <div class="col-sm-6">
+                                    <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="manualbutton"><i class="icon fa-plus-square" aria-hidden="true"></i> Manual Entry</button>
+                                    {% if selectedcvsubtype != 'IAP' %}
+                                    <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="autobutton"><i class="icon fa-refresh" aria-hidden="true"></i> Auto Entry</button>
+                                    {% endif %}
+                                </div>
+
+                        </div>
+                    </form>
+
+                    <!-- Accounting entry start -->
+                    <div class="col-sm-12" id="entryview" style="display: none">
+                        <div class="panel panel-bordered">
+                            <div class="shade"><div class="loader two-color"></div></div>
+                            <div class="panel-body">
+                                <h4>Manual Accounting Entry</h4>
+                                <div id="waitingbar" class="animatebar-bar progress-bar-success" style="width: 95%;">
+                                    <div class="animatebar-bar-percent">95%</div>
+                                </div>
+                                <div id="manualentryview">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-12">
+                        <div class="panel">
+                            <div class="panel-body">
+                                <!-- Start Editable Section -->
+                                <table class="table table-striped margin-bottom-0">
+                                    <thead>
+                                        <tr>
+                                            <th width="5%"></th>
+                                            <th width="15%">Chart of Account</th>
+                                            <th width="55%">Title</th>
+                                            <th width="10%" style="text-align: right;">Debit&nbsp;</th>
+                                            <th width="10%" style="text-align: right;">Credit&nbsp;</th>
+                                            <th width="15%" class="actionrowhead"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="datatable">
+                                    {{ datatable|safe }}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th>
+                                                <strong>Total</strong>
+                                            </th>
+                                            <th></th>
+                                            <th></th>
+                                            <th id="total_debitamount" class="text-align-right"><strong>0.00</strong></th>
+                                            <th id="total_creditamount" class="text-align-right"><strong>0.00</strong></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Accounting entry end -->
+                </div>
+                </div>
+            <div class="col-md-12 small">
+                <div class="col-sm-1">Created&nbsp;by:</div><div class="col-sm-2"><b>{{ footers.0 }}</b></div>
+                <div class="col-sm-1">Modified&nbsp;by:</div><div class="col-sm-2"><b>{{ footers.2 }}</b></div>
+                <div class="col-sm-1">Posted&nbsp;by:</div><div class="col-sm-2"><b>{{ footers.4|default:'N/A' }}</b></div>
+                <div class="col-sm-1">Closed&nbsp;by:</div><div class="col-sm-2"><b>{{ footers.6|default:'N/A' }}</b></div>
+                <div class="col-sm-1">Create&nbsp;date:</div><div class="col-sm-2"><b>{{ footers.1 }}</b></div>
+                <div class="col-sm-1">Modify&nbsp;date:</div><div class="col-sm-2"><b>{{ footers.3 }}</b></div>
+                <div class="col-sm-1">Post&nbsp;date:</div><div class="col-sm-2"><b>{{ footers.5|default:'N/A' }}</b></div>
+                <div class="col-sm-1">Close&nbsp;date:</div><div class="col-sm-2"><b>{{ footers.7|default:'N/A' }}</b></div>
+            </div>
+{#            <div class="col-sm-12 padding-left-0 padding-right-0">#}
+{#                <div class="col-sm-3"><strong>Created By: </strong> {{ datainfo.enterby }} {{ datainfo.enterdate }}</div>#}
+{#                <div class="col-sm-3"><strong>Modified By: </strong>{{ datainfo.modifyby }} {{ datainfo.modifydate }}</div>#}
+{#                <div class="col-sm-3"><strong>Posted By: </strong>{{ datainfo.postby|default:'' }} {{ datainfo.postdate|default:'' }}</div>#}
+{#                <div class="col-sm-3"><strong>Closed By: </strong>{{ datainfo.closeby|default:'' }} {{ datainfo.closedate|default:'' }}</div>#}
+{#            </div>#}
+            <div class="clearfix"></div>
+            <div id="repPCVModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">Imported Requests for Petty Cash Replenishment</h4>
+                        </div>
+                        <div class="modal-body" style="overflow:hidden;">
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    {% if reppcvmain %}
+                                    <table class="table table-hover small">
+                                        <thead>
+                                            <tr>
+                                                <th><span>Number</span></th>
+                                                <th><span>Date</span></th>
+                                                <th><span>Requestor</span></th>
+                                                <th class="text-right"><span>Amount</span></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for data in reppcvmain %}
+                                            <tr>
+                                                <td class="item-reppcvnum" data-id="{{ data.id }}"><a href="{% url 'replenish_pcv:index' %}?id={{ data.id }}&number={{ data.reppcvnum }}&date={{ data.reppcvdate|date:"Y-m-d" }}" target="_blank">{{ data.reppcvnum }}</a></td>
+                                                <td>{{ data.reppcvdate|date:"Y-m-d" }}</td>
+                                                <td>{{ data.enterby.first_name }}&nbsp;{{ data.enterby.last_name }}</td>
+                                                <td style="text-align: right;" class="item-amount">{{ data.amount|floatformat:2|intcomma }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <thead>
+                                            <tr>
+                                                <th class="text-right" colspan="3" style="border-bottom: none"><b>TOTAL AMOUNT</b></th>
+                                                <th class="text-right" id="totalamount" style="border-bottom: none"><b>{{ reppcv_total_amount|floatformat:2|intcomma }}</b></th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                    {% else %}
+                                        There are no imported requests for Petty Cash replenishment.
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+{#                            <button type="button" class="btn btn-info" id="importreppcvconfirm" disabled="disabled">Import</button>#}
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="lookupModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">Payee Lookup</h4>
+                        </div>
+                        <div class="modal-body" style="overflow:hidden;">
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <select class="form-control input-sm ajaxselect2 col-sm-12" style="width: 565px;"
+                                            id="id_payeelookup" name="payeelookup">
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-info" id="payeeconfirm" disabled="disabled">Confirm</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="approvalModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title"><span id="approvedisapprove"></span></h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>
+                                <input type="hidden" id="id_main">
+                                <input type="hidden" id="id_type">
+                                <input type="hidden" id="id_responseselect">
+                                <label class="control-label" for="id_approverremarks">Remarks:</label>
+                                <textarea name="approverremarks" id="id_approverremarks" class="form-control" rows="3">{{ form.approverremarks.value.strip }}</textarea>
+                                <br>
+                                <label class="control-label" for="id_responsedate"></label>
+                                <input type="text" class="form-control input-sm date-yyyymmdd datepicker week"
+                                       readonly="readonly" style="padding: 5px 10px; background: white" id="id_responsedate" name="responsedate"
+                                       value="{% if form.responsedate.value %}{{ form.responsedate.value|date:'Y-m-d' }}{% else %}{% now "Y-m-d" %}{% endif %}">
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-info" disabled="disabled" id="approveconfirm">Confirm</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal" id="approveclose">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="releaseModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">CV Release Details</h4>
+                        </div>
+                        <div class="modal-body" style="overflow:hidden;">
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <label class="control-label" for="id_employeelookup">Released By:</label>
+                                    <select class="form-control input-sm select2 col-sm-12" id="id_releaseby"
+                                            name="releaseby" style="width: 565px;">
+                                        <option value="">-- Select --</option>
+                                            {% for designatedapprover in designatedapprover %}
+                                                <option value="{{ designatedapprover.id }}" {% if request.user.id == designatedapprover.id %} selected="selected" {% endif %}>{{ designatedapprover.first_name }} {{ designatedapprover.last_name }}</option>
+                                            {% endfor %}
+                                    </select>
+                                    <br><br>
+                                    <label class="control-label" for="id_releasedate">Released To:</label>
+                                    <input type="text" class="form-control input-sm" id="id_releaseto" name="releaseto" value="{{ releaseto|default:'' }}">
+                                    <br>
+                                    <label class="control-label" for="id_releasedate">Released On:</label>
+                                    <input type="text" class="form-control input-sm date-yyyymmdd datepicker week" readonly="readonly"
+                                           style="padding: 5px 10px; background: white" id="id_releasedate" name="releasedate"
+                                           value="{% if form.releasedate.value %}{{ form.releasedate.value|date:'Y-m-d' }}{% else %}{% now "Y-m-d" %}{% endif %}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-info" id="releaseconfirm">Confirm</button>
+                            <button type="button" class="btn btn-default" id="releaseclose" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accounting Entry Start -->
+<div class="modal fade modal-message" id="modal-row">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" id="btnclosebreakdown" aria-label="Close">
+                <span aria-hidden="true">x</span>
+                </button>
+                <h4 class="modal-title">Breakdown Entry</h4>
+            </div>
+            <div class="modal-body" id="breakdowndata">
+            </div>
+        </div>
+    </div>
+</div>
+<div id="autoentry-success" class="custom-alert success">Auto-entry is successful.</div>
+<div id="release-success" class="custom-alert success">CV #{{ cvnum }} has been tagged as RELEASED.</div>
+<div id="approve-success" class="custom-alert success">CV #{{ cvnum }} has been tagged as APPROVED.</div>
+<div id="disapprove-success" class="custom-alert success">CV #{{ cvnum }} has been tagged as DISAPPROVED.</div>
+<div id="check-pcvrep-error" class="custom-alert danger">No imported PCV replenishment requests. Auto-entry failed.</div>
+<div id="zero-debit-credit-error" class="custom-alert danger">Debit and Credit amounts must not be zero.</div>
+<div id="not-equal-debit-credit-error" class="custom-alert danger">Debit and Credit amounts must be equal.</div>
+<div id="not-equal-accounting-entries-total-amount-error" class="custom-alert danger">Total amounts of items and accounting entries must be equal.</div>
+<div id="unbalanced-entries-error" class="custom-alert danger">You have unbalanced entry(ies). Please review your entry(ies).</div>
+<!-- Accounting Entry End -->
+{% include "checkvoucher/search.html" %}
+{% endblock page-content %}
+{% block extra_js %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+    <script src="{% static 'js/jquery.validate.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+
+            $(document).on('blur', '#id_amount', function(){
+
+            $.ajax({
+                url: "{% url 'checkvoucher:remanualcvautoentry' %}",
+                type: "post",
+                data: {'bankaccount': $("#id_bankaccount").val(),
+                       'branch': $("#id_branch").val(),
+                       'amount': $("#id_amount").val(),
+                       'secretkey': $("#secretkey").val(),
+                       'table': "cvdetailtemp",
+                       'csrfmiddlewaretoken': "{{csrf_token}}"
+                },
+                success: function(response){
+                    $("#datatable").html(response['datatable']);
+
+                }, error: function(response) {
+                    console.debug(response);
+
+                }
+            });
+        });
+
+
+        $(document).on('change', '#id_bankaccount', function(){
+
+            $.ajax({
+                url: "{% url 'checkvoucher:remanualcvautoentry' %}",
+                type: "post",
+                data: {'bankaccount': $("#id_bankaccount").val(),
+                       'branch': $("#id_branch").val(),
+                       'amount': $("#id_amount").val(),
+                       'secretkey': $("#secretkey").val(),
+                       'table': "cvdetailtemp",
+                       'csrfmiddlewaretoken': "{{csrf_token}}"
+                },
+                success: function(response){
+                    $("#datatable").html(response['datatable']);
+
+                }, error: function(response) {
+                    console.debug(response);
+
+                }
+            });
+        });
+
+            var approved = $('#id_cvstatus').val() != 'F';
+            var approverResponse = "";
+            var released = $('#id_cvstatus').val() == 'R';
+
+            var words = toWords($("#id_amount").val());
+                $("#id_amountinwords").val(words);
+
+            $("#id_cvsubtype option:selected").siblings().attr('disabled','disabled');
+
+            if($('#id_fxrate').val() == 0.00)
+                $('#id_fxrate').val($('#id_currency option:selected').attr('data-rate'));
+
+            if($('#id_originalcvstatus').val() == 'R'){
+                $("#id_cvdate").prop("readonly", true);
+                $("#id_cvdate").datepicker("destroy");
+                $("#id_cvdate").removeClass("datepicker").removeAttr('id');
+                $("#id_checkdate").prop("readonly", true);
+                $("#id_checkdate").datepicker("destroy");
+                $("#id_checkdate").removeClass("datepicker").removeAttr('id');
+                $("#id_cvtype option:selected").siblings().attr('disabled','disabled');
+                $("#id_cvsubtype option:selected").siblings().attr('disabled','disabled');
+                $("#id_branch option:selected").siblings().attr('disabled','disabled');
+                $("#id_bankaccount option:selected").siblings().attr('disabled','disabled');
+                $("#id_disbursingbranch option:selected").siblings().attr('disabled','disabled');
+                $("#id_currency option:selected").siblings().attr('disabled','disabled');
+                $("#id_vat option:selected").siblings().attr('disabled','disabled');
+                $("#id_atc option:selected").siblings().attr('disabled','disabled');
+                $("#id_inputvattype option:selected").siblings().attr('disabled','disabled');
+                $("#id_deferredvat option:selected").siblings().attr('disabled','disabled');
+                $("#id_designatedapprover option:selected").siblings().attr('disabled','disabled');
+                $("#id_refnum").prop("readonly", true);
+                $("#id_checknum").prop("readonly", true);
+                $("#id_amount").prop("readonly", true);
+                $("#id_fxrate").prop("readonly", true);
+                $("#id_particulars").prop("readonly", true);
+
+                $("#autobutton").hide();
+                $("#manualbutton").hide();
+                $(".actionrowhead").hide();
+                $(".actionrow").hide();
+            }
+
+            if($('#id_originalcvstatus').val() != 'F'){
+                $("#id_designatedapprover option:selected").siblings().attr('disabled','disabled');
+            }
+
+            if($("#id_vat").val() != '')    $('#vatrate').html("<strong>" + $("#id_vat").data('vatrate') + "</strong>");
+            else                            showRate("#id_vat", "vatrate", "RATE");
+
+            if($("#id_atc").val() != '')    $('#atcrate').html("<strong>" + $("#id_atc").data('atcrate') + "</strong>");
+            else                            showRate("#id_atc", "atcrate", "RATE");
+
+            $("#id_atc").change(function(){
+                showRate("#id_atc", "atcrate", "RATE");
+            });
+
+            $("#id_currency").change(function(){
+                $('#id_fxrate').val($('#id_currency option:selected').attr('data-rate'));
+            });
+
+            $("#id_cvstatus").change(function(){
+                if($(this).val() == 'A' || $(this).val() == 'D' || $(this).val() == 'R'){
+                    var valid = true;
+                    var blankRequiredFields = "";
+                    $("[data-validation='required']").each(function(){
+                        if($(this).val() == ''){
+                            valid = false;
+                            blankRequiredFields += "\n*" + $('label[for="' + this.id + '"]').html();
+                        }
+                    });
+                    if(!valid){
+                        alert("Please fill-up the following required fields to proceed: " +
+                            blankRequiredFields);
+                        $('#id_cvstatus').val($('#id_originalcvstatus').data('actualstatus'));
+                    }
+                    else {
+                        var valid2 = true;
+                        if (($(this).val() == 'A') || $(this).val() == 'R'){
+                            var total_creditamount = $("#total_creditamount").text().replace(',', '');
+                            var total_debitamount = $("#total_debitamount").text().replace(',', '');
+                            var total_cvamount = $("#id_amount").val().replace(',', '');
+
+                            if (parseFloat(total_creditamount) == '0.00' && parseFloat(total_debitamount) == '0.00') {
+                                customAlert($('#zero-debit-credit-error'));
+                                valid2 = false;
+                                $('#id_cvstatus').val($('#id_originalcvstatus').data('actualstatus'));
+                            }
+                            if (parseFloat(total_creditamount) != parseFloat(total_debitamount)) {
+                                customAlert($('#not-equal-debit-credit-error'));
+                                valid2 = false;
+                                $('#id_cvstatus').val($('#id_originalcvstatus').data('actualstatus'));
+                            }
+                            if (parseFloat(total_creditamount) != parseFloat(total_cvamount)) {
+                                customAlert($('#not-equal-accounting-entries-total-amount-error'));
+                                valid2 = false;
+                                $('#id_cvstatus').val($('#id_originalcvstatus').data('actualstatus'));
+                            }
+                            var checkbreakdownstatus = $('#breaktabledata').find('td').hasClass('unbalancebreakdown');
+                            if (checkbreakdownstatus) {
+                                customAlert($('#unbalanced-entries-error'));
+                                valid2 = false;
+                                $('#id_cvstatus').val($('#id_originalcvstatus').data('actualstatus'));
+                            }
+                        }
+                        if(valid2){
+                            if (($(this).val() == 'A') || $(this).val() == 'D') {
+                                if ($(this).val() == 'A') {
+                                    $("#approvedisapprove").text("Approve Check Voucher");
+                                    $("label[for='id_responsedate']").text("Approved On:");
+                                    approverResponse = "APPROVED";
+                                }
+                                else if ($(this).val() == 'D') {
+                                    $("#approvedisapprove").text("Disapprove Check Voucher");
+                                    $("label[for='id_responsedate']").text("Disapproved On:");
+                                    approverResponse = "DISAPPROVED";
+                                }
+                                $("#approvalModal").modal('show');
+                            }
+                            else if ($(this).val() == 'R') {
+                                $("#releaseModal").modal('show');
+                                $("#id_releaseby option:selected").siblings().attr('disabled', 'disabled');
+                            }
+                        }
+                    }
+                }
+
+            });
+
+            $("#id_vat").change(function(){
+                showRate("#id_vat", "vatrate", "RATE");
+            });
+
+            $('#approveconfirm').click(function(){
+                if($('#id_approverremarks').val() != '' && $('#id_responsedate').val() != ''){
+                    if (confirm('Are you sure you want to tag this CV transaction as ' + approverResponse + '?')){
+                        $.ajax({
+                            url: "{% url 'checkvoucher:approve' %}",
+                            type: "post",
+                            data: {'cvnum': $('#id_cvnum').val(),
+                                   'approverremarks': $('#id_approverremarks').val(),
+                                   'responsedate': $('#id_responsedate').val(),
+                                   'approverresponse': approverResponse == 'APPROVED' ? 'A' : approverResponse == 'DISAPPROVED' ? 'D' : '',
+                                   'originalcvstatus': $('#id_originalcvstatus').val(),
+                                   'backtoinprocess': $('#id_originalcvstatus').val() == 'R' && approverResponse == 'APPROVED' ? 1 : 0
+                            },
+                            success: function(response) {
+                                //alert("CV #" + response.cvnum + " has been tagged as " + approverResponse + ".");
+                                if(approverResponse == 'APPROVED')
+                                    customAlert($('#approve-success'));
+                                if(approverResponse == 'DISAPPROVED')
+                                    customAlert($('#disapprove-success'));
+                                $("#approvalModal .close").click();
+                                approved = true;
+                                $('#id_originalcvstatus').data('actualstatus', response.newcvstatus);
+                            },
+                            error: function(response) {
+                                console.debug(response);
+                            }
+                        });
+                    }
+                }
+            });
+
+            $("#detailsbutton").click(function (){
+                $("#detailentry").show();
+            });
+
+            $('#id_payee').on('change', function(e){
+                $.ajax({
+                    url: "{% url 'supplier:getsupplierdata' %}",
+                    type: "post",
+                    data: {'supplierid': $('#id_payee').val()
+                    },
+                    success: function(response) {
+                        $('#id_vat').val(response.vat);
+                        $('#id_atc').val(response.atc);
+                        $('#id_inputvattype').val(response.inputvattype);
+                        $('#id_deferredvat').val(response.deferredvat);
+                        $('#id_currency').val(response.currency);
+                        $('#id_fxrate').val(parseFloat(response.fxrate).toFixed(2));
+                        showRate("#id_vat", "vatrate", "RATE");
+                        showRate("#id_atc", "atcrate", "RATE");
+                        $('#id_bankaccount').val(response.bankaccount).trigger('change.select2');
+                        $('#id_disbursingbranch').val(response.bankbranchdisburse);
+                    },
+                    error: function(response) {
+                        console.debug(response);
+                    }
+                });
+            });
+
+            $('#releaseconfirm').click(function(){
+                if($('#id_releaseby').val() != '' && $('#id_releasedate').val() != ''){
+                    if (confirm('Are you sure you want to tag this CV transaction as RELEASED?')){
+                        $.ajax({
+                            url: "{% url 'checkvoucher:release' %}",
+                            type: "post",
+                            data: {'cvnum': $('#id_cvnum').val(),
+                                   'releaseby': $('#id_releaseby').val(),
+                                   'releaseto': $('#id_releaseto').val(),
+                                   'releasedate': $('#id_releasedate').val()
+                            },
+                            success: function(){
+                                customAlert($('#release-success'));
+                                $("#releaseModal .close").click();
+                                released = true;
+                                $('#id_originalcvstatus').data('actualstatus', 'R');
+                            },
+                            error: function(response){
+                                console.debug(response);
+                            }
+                        });
+                    }
+                }
+            });
+
+            $("#releaseModal").on("hidden.bs.modal", function (){revertCVStatus();});
+
+            $("#approvalModal").on("hidden.bs.modal", function (){revertCVStatus();});
+
+            $('#id_approverremarks, #id_responsedate').on('input', function(){
+                if($('#id_approverremarks').val() == '' || $('#id_responsedate').val() == '')
+                    $('#approveconfirm').prop('disabled', true);
+                else
+                    $('#approveconfirm').prop('disabled', false);
+            });
+
+            $("#autobutton").click(function(){
+                if($('.item-amount').length == 0){
+                    //customAlert($('#check-pcvrep-error'), 1500);
+                    //this means CV is created manually, check if bank account or branch has value
+                    if($('#id_bankaccount').val() == '' && $('#id_branch').val() == '') {
+                        customAlert($('#required-fields-error'));
+                    }
+                    else if($('#id_amount').val() == '' || $('#id_amount').val() == '0.0'){
+                        customAlert($('#required-amount-error'));
+                    }
+                    else {
+                        if($(".detaildelete")[0]) {
+                            if (confirm("The currently added accounting entries will be deleted. Are you sure you want to proceed?")) {
+                                autoEntry('manual');
+                            }
+                        }
+                        else {
+                            autoEntry('manual');
+                        }
+                    }
+                }
+                else {
+                    autoEntry('pcv_import');
+                }
+            });
+
+            function autoEntry(create_method){
+                if(create_method == 'pcv_import'){
+                    var data = {'checked_reppcvmain[]': [],
+                                'cvnum': $("#id_cvnum").val(),
+                                'secretkey': $("#secretkey").val(),
+                                'table': "cvdetailtemp",
+                                'csrfmiddlewaretoken': "{{csrf_token}}"};
+                    $('.item-reppcvnum').each(function(){
+                        data['checked_reppcvmain[]'].push($(this).data('id'));
+                    });
+
+                    $("#repPCVModal .close").click();
+
+                    $('.shade').fadeIn();
+                    $.ajax({
+                        url: "{% url 'checkvoucher:importreppcv' %}",
+                        type: "post",
+                        data: data,
+                        success: function(response){
+                            $("#datatable").html(response['datatable']);
+                            customAlert($('#autoentry-success'));
+                            $('.shade').fadeOut();
+                        }, error: function(response) {
+                            console.debug(response);
+                            $('.shade').fadeOut();
+                        }
+                    });
+                }
+                else if(create_method == 'manual'){
+                    $('.shade').fadeIn();
+                    $.ajax({
+                        url: "{% url 'checkvoucher:manualcvautoentry' %}",
+                        type: "post",
+                        data: {'bankaccount': $("#id_bankaccount").val(),
+                               'branch': $("#id_branch").val(),
+                               'amount': $("#id_amount").val(),
+                               'cvnum': $("#id_cvnum").val(),
+                               'secretkey': $("#secretkey").val(),
+                               'table': "cvdetailtemp",
+                               'csrfmiddlewaretoken': "{{csrf_token}}"
+                        },
+                        success: function(response){
+                            $("#datatable").html(response['datatable']);
+                            customAlert($('#autoentry-success'));
+                            $('.shade').fadeOut();
+                        }, error: function(response) {
+                            console.debug(response);
+                            $('.shade').fadeOut();
+                        }
+                    });
+                }
+            }
+
+            function revertCVStatus(){
+                $('#id_cvstatus').val($('#id_originalcvstatus').data('actualstatus'));
+            }
+
+            function showRate(field, rateSpan, defaultText){
+                var rateValue = rateSpan == "fxrate" ? parseFloat($(field + " option:selected").data('rate')).toFixed(2) :
+                        parseFloat($(field + " option:selected").data('rate')).toFixed(2) + '%';
+                $('#' + rateSpan).html("<strong>" + defaultText + ": " + rateValue + "</strong>");
+                if($(field + " option:selected").text() == "-- Select --"){
+                    $('#' + rateSpan).html("<strong>" + defaultText + "</strong>");
+                }
+            }
+
+            $("#id_amount").on('keyup', function(){
+                var words = toWords($(this).val());
+                $("#id_amountinwords").val(words);
+            });
+
+            $(document).ready(function() {
+                $("#importprfselect2").select2({
+                    dropdownParent: $("#myModal")
+                });
+            });
+
+            // Accounting entry start
+            $.ajax({
+                url: "{% url 'acctentry:maccountingentry' %}",
+                type: "post",
+                data: {'csrfmiddlewaretoken': "{{csrf_token}}",
+                       'table': "cvdetailtemp"},
+                success: function(response){
+                    $("#manualentryview").html(response['viewhtml']);
+                    $("#waitingbar").hide();
+                }, error: function(response) {
+                    console.debug(response);
+                }
+            });
+
+            $("#manualbutton").unbind().click(function (){
+                $("#entryview").show();
+                $.ajax({
+                    url: "{% url 'acctentry:maccountingentry' %}",
+                    type: "post",
+                    data: {'csrfmiddlewaretoken': "{{csrf_token}}",
+                           'table': "cvdetailtemp"},
+                    success: function(response){
+                        $("#manualentryview").html(response['viewhtml']);
+                        $("#waitingbar").hide();
+                    }, error: function(response) {
+                        console.debug(response);
+                    }
+                });
+            });
+
+            $("#validateButton").on('click', function() {
+                var total_creditamount = $("#total_creditamount").text().replace(',', '');
+                var total_debitamount = $("#total_debitamount").text().replace(',', '');
+                var total_cvamount = $("#id_amount").val().replace(',', '');
+
+                if (parseFloat(total_creditamount) == '0.00' && parseFloat(total_debitamount) == '0.00') {
+                    customAlert($('#zero-debit-credit-error'));
+                    event.preventDefault();
+                    return false;
+                }
+                if (parseFloat(total_creditamount) != parseFloat(total_debitamount)) {
+                    customAlert($('#not-equal-debit-credit-error'));
+                    event.preventDefault();
+                    return false;
+                }
+                /**if (parseFloat(total_creditamount) != parseFloat(total_cvamount)) {
+                    customAlert($('#not-equal-accounting-entries-total-amount-error'));
+                    event.preventDefault();
+                    return false;
+                }**/
+                var checkbreakdownstatus = $('#breaktabledata').find('td').hasClass('unbalancebreakdown');
+                if (checkbreakdownstatus) {
+                    customAlert($('#unbalanced-entries-error'));
+                    event.preventDefault();
+                    return false;
+                }
+            });
+            // Accounting entry end
+        });
+    </script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/jquery.maskMoney.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/custom-maskMoney.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        $('.select2').select2({});
+        ajaxselect2("supplier_payee", "id_payee");
+
+        $("#trandisapproved").on('click', function() {
+
+            var con = confirm('Are you sure you want to disapproved this transaction?');
+
+            if (con) {
+                var id = {{ object.pk }};
+                 $.ajax({
+                    url: "{% url 'checkvoucher:disapprove' %}",
+                    type: "post",
+                    data: {'id': id, 'reason': 'Transaction disapproved'},
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(response) {
+                        console.debug(response);
+                    }
+                });
+            }
+        });
+
+        $("#tranapproved").on('click', function() {
+
+            var con = confirm('Are you sure you want to approved this transaction?');
+
+            if (con) {
+                var id = {{ object.pk }};
+                 $.ajax({
+                    url: "{% url 'checkvoucher:approve' %}",
+                    type: "post",
+                    data: {'id': id, 'reason': 'Transaction approved'},
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(response) {
+                        console.debug(response);
+                    }
+                });
+            }
+        });
+
+        $("#tranposting").on('click', function() {
+
+            var con = confirm('Are you sure you want to set this transaction ready for posting?');
+
+            if (con) {
+                var id = {{ object.pk }};
+                 $.ajax({
+                    url: "{% url 'checkvoucher:posting' %}",
+                    type: "post",
+                    data: {'id': id, 'reason': 'Transaction approved'},
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(response) {
+                        console.debug(response);
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock extra_js %}

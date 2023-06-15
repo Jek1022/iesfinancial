@@ -1,0 +1,635 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% load mathfilters %}
+{% load humanize %}
+{% block page-title %} Posting of Transactions {% endblock page-title %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
+    <style>
+        td{
+            vertical-align: middle !important;
+        }
+        .checkbox label {
+            padding-left: 5px;
+        }
+        .price-list{
+            background-color: white;
+        }
+        .price-list .price-price{
+            font-size: 14px !important;
+            text-align: left;
+            color: #76838f !important;
+        }
+        .price-title.bg-teal-a400:before {
+            background: #00bfa5;
+        }
+        .price-list .price-title{
+            padding-top: 5px;
+            letter-spacing: 1px;
+        }
+        .price-title:before {
+            position: relative;
+            display: block;
+            width: 14px;
+            height: 14px;
+            content: '';
+            top: 42px;
+            transform: rotate(45deg);
+            text-align: center;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        .price-footer{
+            margin-top: 40px;
+        }
+        .fa-spin {
+          -webkit-animation: fa-spin 0.5s infinite linear;
+          animation: fa-spin 0.5s infinite linear;
+        }
+        @-webkit-keyframes fa-spin {
+          0% {
+            -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+          }
+          100% {
+            -webkit-transform: rotate(359deg);
+            transform: rotate(359deg);
+          }
+        }
+        @keyframes fa-spin {
+          0% {
+            -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+          }
+          100% {
+            -webkit-transform: rotate(359deg);
+            transform: rotate(359deg);
+          }
+        }
+        .white{
+            background-color: white !important;
+            color: #76838f !important;
+        }
+        .sp-series{
+            font-size: 20px;
+        }
+        .spinner-2{
+            vertical-align: middle;
+            font-size: 25px !important;
+            margin-left: 11px;
+            margin-top: -1px;
+        }
+        .sp-title{
+            font-size: 17px;
+        }
+        .tr_transition{
+            display: none;
+            position: absolute;
+            margin: auto;
+            left: 0;
+            right: 0;
+        }
+        .tr_wait{
+            display: block;
+        }
+        .tr_content > p{
+            text-align: left;
+        }
+        #loading_full{
+            display: none;
+        }
+    </style>
+{% endblock extra_css %}
+{% block page-content %}
+{% block content %}
+<div id="trans_step_verify">
+    <div class="container-fluid">
+        <div class="row">
+
+            {% if last.month == 12  and count == 2  %}
+            <div class="col-md-12">
+                <div class="page-wrap">
+                    <div class="col-md-12">
+                        <div class="price-list margin-sm-0">
+                            <div class="price-header">
+                                <div class="price-title bg-teal-a400">LAST YEAR END CLOSED {{ yearend_year|upper }}</div>
+                            </div>
+                            <div class="price-header">
+                                <div class="price-title bg-teal-a400">NEED TO CLOSE WHOLE YEAR OF JAN-DEC {{ toclose_year|upper }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else  %}
+            <div class="col-md-12">
+                <div class="page-wrap">
+                    <div class="col-md-12">
+                        <div class="price-list margin-sm-0">
+                            <div class="price-header">
+                                <div class="price-title bg-teal-a400">STEP 1: VERIFICATION</div>
+                                <div class="price-price teal-a400" id="formupload">
+                                    <div class="col-md-4 select_holder" id="transtype_holder">
+                                        <label class="control-label small" for="transtype">Transaction Type:</label>
+                                        <select class="form-control input-sm" style="width: 100%" id="id_transtype">
+                                            <option value="ap" label="AP">Accounts Payable</option>
+                                            <option value="cv" label="CV">Check Voucher</option>
+                                            <option value="jv" label="JV">Journal Voucher</option>
+                                            <option value="or" label="OR">Official Receipt</option>
+                                        </select>
+                                        <br><br>
+                                    </div>
+                                    <div class="col-md-4 select_holder" id="datefrom_holder">
+                                        <label class="control-label small" for="id_datefrom">Date FROM:</label>
+                                        <input type="text" class="form-control datepicker_esp white" readonly="readonly"
+                                               style="padding: 5px 10px" id="id_datefrom" name="datefrom" placeholder="YYYY-MM-DD"
+                                               value="{{ datefrom }}">
+                                        <br><br>
+                                    </div>
+                                    <div class="col-md-4 select_holder" id="dateto_holder">
+                                        <label class="control-label small" for="id_dateto">Date TO:</label>
+                                        <input type="text" class="form-control datepicker_esp white" readonly="readonly"
+                                               style="padding: 5px 10px" id="id_dateto" name="dateto" placeholder="YYYY-MM-DD"
+                                               value="{{ dateto }}">
+                                        <br><br>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="price-footer">
+                                <button type="button" class="btn btn-info waves-effect waves-light" id="trans_verify">
+                                    <i class="icon fa-exchange font-16 margin-right-10" aria-hidden="true" style="vertical-align: middle"></i>
+                                    Verify
+                                </button>
+                                <button type="button" disabled="disabled" class="btn btn-info" style="display: none;" id="trans_verify_loading">
+                                    <i class="icon fa-spinner fa-spin font-16 margin-right-10" aria-hidden="true" style="vertical-align: middle"></i>
+                                    VERIFYING ...
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+<br><br>
+{% if last.month == 12  and count == 2  %}
+{% else %}
+<div id="trans_step_post">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-wrap">
+                    <div class="col-md-12">
+                        <div class="price-list margin-sm-0">
+                            <div class="price-header">
+                                <div class="price-title bg-teal-a400">STEP 2: FINALIZE AND POST</div>
+                                <div class="price-price teal-a400" id="formupload">
+                                    <div class="col-md-12 ">
+                                        <div class="page-wrap" style="margin-bottom: 30px;">
+                                            <div class="row traingle">
+                                                <div class="col-md-3 col-sm-6 col-xs-12" id="trans_ap">
+                                                    <div class="step-box">
+                                                        <span class="sp-series gray-back tr_transition tr_wait">
+                                                            <i class="icon fa-book font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i>
+                                                        </span>
+                                                        <span class="sp-series info-back tr_transition tr_load">
+                                                            <span><i class="icon fa-circle-o-notch fa-spin font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i></span>
+                                                        </span>
+                                                        <span class="sp-series gray-back tr_transition tr_failed">
+                                                            <i class="icon fa-close font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i>
+                                                        </span>
+                                                        <span class="sp-series info-back tr_transition tr_success">
+                                                            <span><i class="icon fa-check  font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i></span>
+                                                        </span>
+                                                        <span class="sp-series" style="visibility: hidden; border: 4px transparent;"></span>
+                                                        <div class="sp-circle step-col gray-back tr_content">
+                                                            <span class="sp-title">Accounts Payable</span><br><br>
+                                                            <p>
+                                                                Items checked: <span class="text-warning item_count">-</span><br>
+                                                                Elapsed: <span class="text-warning elapsed_count">-</span>
+                                                                <br><br>
+                                                                <span class="trans_message text-danger"></span>
+                                                                <span class="trans_message text-success"></span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 col-sm-6 col-xs-12" id="trans_cv">
+                                                    <div class="step-box">
+                                                        <span class="sp-series gray-back tr_transition tr_wait">
+                                                            <i class="icon fa-book font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i>
+                                                        </span>
+                                                        <span class="sp-series info-back tr_transition tr_load">
+                                                            <span><i class="icon fa-circle-o-notch fa-spin font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i></span>
+                                                        </span>
+                                                        <span class="sp-series gray-back tr_transition tr_failed">
+                                                            <i class="icon fa-close font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i>
+                                                        </span>
+                                                        <span class="sp-series info-back tr_transition tr_success">
+                                                            <span><i class="icon fa-check  font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i></span>
+                                                        </span>
+                                                        <span class="sp-series" style="visibility: hidden; border: 4px transparent;"></span>
+                                                        <div class="sp-circle step-col gray-back tr_content">
+                                                            <span class="sp-title">Check Voucher</span><br><br>
+                                                            <p>
+                                                                Items checked: <span class="text-warning item_count">-</span><br>
+                                                                Elapsed: <span class="text-warning elapsed_count">-</span>
+                                                                <br><br>
+                                                                <span class="trans_message text-danger"></span>
+                                                                <span class="trans_message text-success"></span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 col-sm-6 col-xs-12" id="trans_jv">
+                                                    <div class="step-box">
+                                                        <span class="sp-series gray-back tr_transition tr_wait">
+                                                            <i class="icon fa-book font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i>
+                                                        </span>
+                                                        <span class="sp-series info-back tr_transition tr_load">
+                                                            <span><i class="icon fa-circle-o-notch fa-spin font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i></span>
+                                                        </span>
+                                                        <span class="sp-series gray-back tr_transition tr_failed">
+                                                            <i class="icon fa-close font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i>
+                                                        </span>
+                                                        <span class="sp-series info-back tr_transition tr_success">
+                                                            <span><i class="icon fa-check  font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i></span>
+                                                        </span>
+                                                        <span class="sp-series" style="visibility: hidden; border: 4px transparent;"></span>
+                                                        <div class="sp-circle step-col gray-back tr_content">
+                                                            <span class="sp-title">Journal Voucher</span><br><br>
+                                                            <p>
+                                                                Items checked: <span class="text-warning item_count">-</span><br>
+                                                                Elapsed: <span class="text-warning elapsed_count">-</span>
+                                                                <br><br>
+                                                                <span class="trans_message text-danger"></span>
+                                                                <span class="trans_message text-success"></span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 col-sm-6 col-xs-12" id="trans_or">
+                                                    <div class="step-box">
+                                                        <span class="sp-series gray-back tr_transition tr_wait">
+                                                            <i class="icon fa-book font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i>
+                                                        </span>
+                                                        <span class="sp-series info-back tr_transition tr_load">
+                                                            <span><i class="icon fa-circle-o-notch fa-spin font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i></span>
+                                                        </span>
+                                                        <span class="sp-series gray-back tr_transition tr_failed">
+                                                            <i class="icon fa-close font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i>
+                                                        </span>
+                                                        <span class="sp-series info-back tr_transition tr_success">
+                                                            <span><i class="icon fa-check  font-16 margin-right-10 spinner-2" aria-hidden="true" style="vertical-align: middle"></i></span>
+                                                        </span>
+                                                        <span class="sp-series" style="visibility: hidden; border: 4px transparent;"></span>
+                                                        <div class="sp-circle step-col gray-back tr_content">
+                                                            <span class="sp-title">Official Receipt</span><br><br>
+                                                            <p>
+                                                                Items checked: <span class="text-warning item_count">-</span><br>
+                                                                Elapsed: <span class="text-warning elapsed_count">-</span>
+                                                                <br><br>
+                                                                <span class="trans_message text-danger"></span>
+                                                                <span class="trans_message text-success"></span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <br><br>
+                                                    <div id="loading_load" class="animatebar clearfix">
+                                                        <div class="animatebar-bar progress-bar-info"></div>
+                                                        <div class="animatebar-bar-percent"></div>
+                                                    </div>
+                                                    <div id="loading_full" class="animatebar clearfix">
+                                                        <div class="animatebar-bar progress-bar-warning" style="width: 100%">
+                                                            <div class="animatebar-title progress-bar-warning"><span></span></div>
+                                                        </div>
+                                                        <div class="animatebar-bar-percent">100%</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="price-footer">
+                                <button type="button" class="btn btn-info waves-effect waves-light" id="trans_post" disabled="disabled">
+                                    <i class="icon fa-check-square-o font-16 margin-right-10" aria-hidden="true" style="vertical-align: middle"></i>
+                                    Post
+                                </button>
+                                <button type="button" disabled="disabled" class="btn btn-info" style="display: none;" id="trans_post_loading">
+                                    <i class="icon fa-spinner fa-spin font-16 margin-right-10" aria-hidden="true" style="vertical-align: middle"></i>
+                                    POSTING ...
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+<br><br><br>
+<input type="hidden" id="batchkey">
+<input type="hidden" id="datefrom_hidden">
+<input type="hidden" id="dateto_hidden">
+<select multiple="" id="transtype_hidden" style="display: none">
+    <option value="ap">Accounts Payable</option>
+    <option value="cv">Check Voucher</option>
+    <option value="jv">Journal Voucher</option>
+    <option value="or">Official Receipt</option>
+</select>
+<div id="ubModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="shade"><div class="loader two-color"></div></div>
+        <div class="modal-content">
+            <div class="modal-body small">
+                <table class="table" id="ub_trans">
+                    <thead>
+                    <tr>
+                        <th colspan="5">Unbalanced Error</th>
+                    </tr>
+                    <tr>
+                        <th>Number</th>
+                        <th>Date</th>
+                        <th style="text-align: right">Debit</th>
+                        <th style="text-align: right">Credit</th>
+                        <th style="text-align: right">Margin</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <br><br>
+                <table class="table" id="ud_trans">
+                    <thead>
+                    <tr>
+                        <th colspan="2">Department Error</th>
+                    </tr>
+                    <tr>
+                        <th>Number</th>
+                        <th>Date</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+{% endblock page-content %}
+{% block extra_js %}
+    {% load staticfiles %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'js/jquery.maskMoney.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/custom-maskMoney.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+    <script>
+    $(function () {
+        $('.datepicker_esp').datepicker({
+            numberOfMonths: 1,
+            autoclose: true,
+            format: 'yyyy-mm-dd',
+        });
+        $(document).on('click', '#trans_verify', function(){
+            <!--$('html, body').animate({scrollTop: $('#trans_step_post').offset().top -80 }, 'slow');-->
+            $('#trans_verify').hide();
+            $('#trans_verify_loading').fadeIn();
+            $('.select_holder').hide();
+            $('#trans_post').attr('disabled', 'disabled');
+
+            $('#loading_load').fadeIn();
+            $('#loading_full').hide();
+
+            $('#trans_ap').find('.tr_transition').hide();
+            $('#trans_ap').find('.tr_content').removeClass('gray-back').addClass('info-back');
+            $('#trans_ap').find('.tr_load').show();
+
+            $.ajax({
+                url: "{% url 'transactionposting:verifytransactions' %}",
+                type: "post",
+                dataType: "json",
+                start_time: new Date().getTime(),
+                data: {
+                    'csrfmiddlewaretoken': "{{csrf_token}}",
+                    'type': "ap",
+                    'id_datefrom': $('#id_datefrom').val(),
+                    'id_dateto': $('#id_dateto').val(),
+                    'id_transtype': $('#id_transtype').val()
+                },
+                success: function(response) {
+                    //--------------- ACCOUNTS PAYABLE ---------------
+                    reply = response.response;
+                    item_count = response.item_count;
+                    message = response.message;
+                    udlist = response.ud_list;
+                    udtype = response.ud_type;
+                    ublist = response.ub_list;
+                    ubtype = response.ub_type;
+
+                    $('#ub_trans tbody').html('');
+                    $('#ud_trans tbody').html('');
+
+                    posttransition($('#trans_ap'), $('#trans_cv'), reply, item_count, message, this.start_time, udlist, udtype, ublist, ubtype);
+
+                    $('#batchkey').val(response.batchkey);
+                    $('#datefrom_hidden').val($('#id_datefrom').val());
+                    $('#dateto_hidden').val($('#id_dateto').val());
+                    $('#transtype_hidden').val($('#id_transtype').val());
+
+                    $.ajax({
+                        url: "{% url 'transactionposting:verifytransactions' %}",
+                        type: "post",
+                        dataType: "json",
+                        start_time: new Date().getTime(),
+                        data: {
+                            'csrfmiddlewaretoken': "{{csrf_token}}",
+                            'type': "cv",
+                            'batchkey': $('#batchkey').val(),
+                            'id_datefrom': $('#id_datefrom').val(),
+                            'id_dateto': $('#id_dateto').val(),
+                            'id_transtype': $('#id_transtype').val()
+                        },
+                        success: function(response) {
+                            //--------------- CHECK VOUCHER ---------------
+                            reply = response.response;
+                            item_count = response.item_count;
+                            message = response.message;
+                            udlist = response.ud_list;
+                            udtype = response.ud_type;
+                            ublist = response.ub_list;
+                            ubtype = response.ub_type;
+                            posttransition($('#trans_cv'), $('#trans_jv'), reply, item_count, message, this.start_time, udlist, udtype, ublist, ubtype);
+
+                            $.ajax({
+                                url: "{% url 'transactionposting:verifytransactions' %}",
+                                type: "post",
+                                dataType: "json",
+                                start_time: new Date().getTime(),
+                                data: {
+                                    'csrfmiddlewaretoken': "{{csrf_token}}",
+                                    'type': "jv",
+                                    'batchkey': $('#batchkey').val(),
+                                    'id_datefrom': $('#id_datefrom').val(),
+                                    'id_dateto': $('#id_dateto').val(),
+                                    'id_transtype': $('#id_transtype').val()
+                                },
+                                success: function(response) {
+                                    //--------------- JOURNAL VOUCHER ---------------
+                                    reply = response.response;
+                                    item_count = response.item_count;
+                                    message = response.message;
+                                    udlist = response.ud_list;
+                                    udtype = response.ud_type;
+                                    ublist = response.ub_list;
+                                    ubtype = response.ub_type;
+                                    posttransition($('#trans_jv'), $('#trans_or'), reply, item_count, message, this.start_time, udlist, udtype, ublist, ubtype);
+
+                                    $.ajax({
+                                        url: "{% url 'transactionposting:verifytransactions' %}",
+                                        type: "post",
+                                        dataType: "json",
+                                        start_time: new Date().getTime(),
+                                        data: {
+                                            'csrfmiddlewaretoken': "{{csrf_token}}",
+                                            'type': "or",
+                                            'batchkey': $('#batchkey').val(),
+                                            'id_datefrom': $('#id_datefrom').val(),
+                                            'id_dateto': $('#id_dateto').val(),
+                                            'id_transtype': $('#id_transtype').val()
+                                        },
+                                        success: function(response) {
+                                            //--------------- OFFICIAL RECEIPT ---------------
+                                            reply = response.response;
+                                            item_count = response.item_count;
+                                            message = response.message;
+                                            udlist = response.ud_list;
+                                            udtype = response.ud_type;
+                                            ublist = response.ub_list;
+                                            ubtype = response.ub_type;
+                                            posttransition($('#trans_or'), '', reply, item_count, message, this.start_time, udlist, udtype, ublist, ubtype);
+
+                                            $('#trans_verify_loading').hide();
+                                            $('#trans_verify').fadeIn();
+                                            $('.select_holder').fadeIn();
+                                            if($('.tr_success:visible').length == 4){
+                                                $('#trans_post').removeAttr('disabled');
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '#trans_post', function(){
+            $('#trans_verify').hide();
+            $('#trans_verify_loading').fadeIn();
+            $('.select_holder').hide();
+            $('#trans_post').hide();
+            $('#trans_post_loading').fadeIn();
+
+            $('#loading_load').fadeIn();
+            $('#loading_full').hide();
+            posting(0);
+        });
+
+        <!--$('#id_transtype').select2({-->
+            <!--maximumSelectionLength: 1,-->
+            <!--templateSelection: function(item) {-->
+                <!--return $(item.element).attr('label');-->
+            <!--}-->
+        <!--});-->
+
+        function posttransition(tr_content, tr_after, reply, item_count, message, elapsed, udlist, udtype, ublist, ubtype){
+            tr_content.find('.tr_transition').hide();
+
+            if(reply == 'success'){
+                tr_content.find('.tr_success').show();
+                tr_content.find('.item_count').html(item_count);
+                tr_content.find('.elapsed_count').html(((new Date().getTime() - elapsed) / 1000).toFixed(1) + " sec");
+                tr_content.find('.trans_message.text-success').html(message);
+                tr_content.find('.trans_message.text-danger').html('');
+            }
+            else{
+                tr_content.find('.tr_failed').show();
+                tr_content.find('.tr_content').removeClass('info-back').addClass('gray-back');
+                tr_content.find('.trans_message.text-danger').html("<a href='#_' data-toggle='modal' data-target='#ubModal' class='text-danger'>" + message + "</a>");
+                tr_content.find('.trans_message.text-success').html('');
+
+                if(ubtype != null){
+                    for(i=0;i<ublist.length;i++){
+                        $('#ub_trans tbody').append("<tr><td><a href='"+ublist[i][0]+"' target='_blank'>"+ubtype+"-"+ublist[i][1]+"</a></td>" +
+                            "<td>"+ublist[i][2]+"</td>" +
+                            "<td align='right'>"+ublist[i][3]+"</td>" +
+                            "<td align='right'>"+ublist[i][4]+"</td>" +
+                            "<td align='right'>"+ublist[i][5]+"</td>" +
+                            "</tr>");
+                    }
+                }
+
+                if(udtype != null) {
+                    for (i=0;i<udlist.length;i++) {
+                        $('#ud_trans tbody').append("<tr><td><a href='" + udlist[i][0] + "' target='_blank'>" + udtype + "-" + udlist[i][1] + "</a></td>" +
+                            "<td>" + udlist[i][2] + "</td>" +
+                            "</tr>");
+                    }
+                }
+            }
+
+            if(tr_after != ''){
+                tr_after.find('.tr_transition').hide();
+                tr_after.find('.tr_content').removeClass('gray-back').addClass('info-back');
+                tr_after.find('.tr_load').show();
+            }
+        }
+
+        function posting(){
+            $.ajax({
+                url: "{% url 'transactionposting:posttransactions' %}",
+                type: "post",
+                dataType: "json",
+                start_time: new Date().getTime(),
+                data: {
+                    'csrfmiddlewaretoken': "{{csrf_token}}",
+                    'batchkey': $('#batchkey').val(),
+                    'datefrom': $('#datefrom_hidden').val(),
+                    'dateto': $('#dateto_hidden').val(),
+                    'transtype': $('#transtype_hidden').val(),
+                    'id_transtype': $('#id_transtype').val()
+                },
+                success: function(response) {
+                    $('.animatebar-bar').css({'width': response.percentage + '%'});
+                    $('.animatebar-bar-percent').html(response.percentage + '%');
+                    if(response.percentage < 100){
+                        posting();
+                    }
+                    else{
+                        $('#trans_verify').fadeIn();
+                        $('#trans_verify_loading').hide();
+                        $('.select_holder').fadeIn();
+                        $('#trans_post').fadeIn();
+                        $('#trans_post_loading').hide();
+
+                        $('#loading_load').hide();
+                        $('#loading_full').fadeIn();
+{#                        $('.progress-bar-warning span').html("Success! " + response.total + " accounts processed.");#}
+                        $('.progress-bar-warning span').html("Success!");
+                    }
+                }
+            });
+        }
+	});
+    </script>
+{% endblock extra_js %}

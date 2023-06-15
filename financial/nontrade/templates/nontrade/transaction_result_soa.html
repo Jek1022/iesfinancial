@@ -1,0 +1,108 @@
+{% load humanize %}
+{% load mathfilters %}
+{% load custom %}
+<div class="col-md-12 col-sm-12 col-xs-12">
+    <div class="page-wrap">
+        <h3>RESULTS</h3>
+        <table class="table table-striped table-bordered" style="font-size:12px">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Number</th>
+                    <th style="width:300px;">Particulars</th>
+                    <th>Debit Amount</th>
+                    <th>Credit Amount</th>
+                    <th>Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td colspan="4" class="text-right"><b><i>beginning balance as of 2018-12-31</i></b></td>
+                <td class="text-right"></td>
+                <td class="text-right"></td>
+                {% if beg > 0 %}
+                <td class="text-right"><b><i>{{ beg|floatformat:2|intcomma }}</i></b></td>
+                {% else %}
+                <td class="text-right text-danger"><b><i>( {{ beg|abs|floatformat:2|intcomma }} )</i></b></td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right"><b><i>transaction balance below {{ dfrom}}</i></b></td>
+                <td class="text-right"></td>
+                <td class="text-right"></td>
+                {% if transbeg > 0 %}
+                <td class="text-right"><b><i>{{ transbeg|floatformat:2|intcomma }}</i></b></td>
+                {% else %}
+                <td class="text-right text-danger"><b><i>( {{ transbeg|abs|floatformat:2|intcomma }} )</i></b></td>
+                {% endif %}
+            </tr>
+            {% for key, item in datalist.items %}
+            <tr>
+                <td class="text-left">{{ item.document_date|date:'Y-m-d' }}</td>
+                <td class="text-left">{{ item.document_type }}</td>
+                <td class="text-left">{{ item.document_num }}</td>
+                <td class="text-left">{{ item.particulars }}</td>
+                <td class="text-right">{{ item.debitamount|floatformat:2|intcomma }}</td>
+                <td class="text-right">{{ item.creditamount|floatformat:2|intcomma }}</td>
+                {% if item.balance >= 0 %}
+                <td class="text-right">{{ item.balance|floatformat:2|intcomma }}</td>
+                {% else %}
+                <td class="text-right text-danger">( {{ item.balance|abs|floatformat:2|intcomma }} )</td>
+                {% endif%}
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4" class="text-right"><b><i>ending balance</i></b></td>
+                <td class="text-right"></td>
+                <td class="text-right"></td>
+                {% if end > 0 %}
+                <td class="text-right"><b><i>{{ end|floatformat:2|intcomma }}</i></b></td>
+                {% else %}
+                <td class="text-right text-danger"><b><i>( {{ end|abs|floatformat:2|intcomma }} )</i></b></td>
+                {% endif %}
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
+<div class="clearfix"></div>
+
+<script>
+    $(function () {
+
+        $('.tagbutton').on('click', function(e) {
+            var id = $(this).data('id');
+            var reftype = $('#reftype'+id).val();
+            var refnum = $('#refnum'+id).val();
+            <!--var refdate = $('#refdate'+id).val();-->
+
+            $.ajax({
+                url: "{% url 'nontrade:tagging' %}",
+                type: "get",
+                dataType: "json",
+                data: {
+                    'csrfmiddlewaretoken': "{{csrf_token}}",
+                    'id': id,
+                    'reftype': reftype,
+                    'refnum': refnum,
+                    <!--'refdate': refdate-->
+                },
+                success: function(response) {
+                    if (response['status'] == '1') {
+                        alert(response['msg']);
+                        $('#refdate'+id).html(response['tdate']);
+                        return false;
+                    } else {
+                        alert(response['msg']);
+                        return false;
+                    }
+                }
+            });
+        });
+
+
+    });
+</script>
+

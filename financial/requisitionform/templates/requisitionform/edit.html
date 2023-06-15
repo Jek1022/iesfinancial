@@ -1,0 +1,397 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% block page-title %} Requisition Form {% endblock page-title %}
+{% block page-content %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/select2/css/select2.css' %}" />
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/bootstrap-wysihtml5-0.0.2.css' %}" />
+    <style>
+        .select2-results__option {
+            font-size: 12px;
+        }
+        .form-control.input-sm.date-yyyymmdd.datepicker.week {
+            background-color: white;
+        }
+    </style>
+{% endblock extra_css %}
+<div class="panel">
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="margin-bottom-20">
+                    <form method="post" id="form-b">
+                        {% csrf_token %}
+                        <input type="hidden" name="secretkey" id="id_secretkey" value="{{ secretkey }}"/>
+                        <input type="hidden" name="totalquantity" id="id_totalquantity" value="0"/>
+                        <div class="row col-md-12 row-lg margin-bottom-20">
+                            <h3 class="panel-title" style="padding-bottom: 0px;">UPDATE</h3>
+                            {% if perms.requisitionform.delete_rfmain and object.rfstatus == 'F' and object.isdeleted == 0 and object.status == 'A' %}
+                            <a href="{% url 'requisitionform:delete' object.id %}" class="floatright">
+                                <button type="button" id="delete" class="btn btn-round btn-info btn-sm waves-effect
+                                waves-light get_report">
+                                    <i class="icon fa-trash" aria-hidden="true"></i>&nbsp; Cancel
+                                </button>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'requisitionform:pdf' object.id %}" target="_blank" class="floatright">
+                                <button type="button" id="get_pdf" class="btn btn-round btn-info btn-sm waves-effect
+                                waves-light get_report">
+                                    <i class="icon fa-file-pdf-o" aria-hidden="true"></i>&nbsp; Print
+                                </button>
+                            </a>
+                            {% if object.rfstatus == 'A' and prfs %}
+                            <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" data-toggle="modal"
+                                data-target="#myModal"><i class="icon fa-list-ul" aria-hidden="true"></i>&nbsp; PRF</button>
+                            {% endif %}
+                            <a href="{% url 'requisitionform:detail' object.id %}" class="floatright">
+                                <button type="button" id="get_details" class="btn btn-round btn-info btn-sm waves-effect
+                                waves-light get_report">
+                                    <i class="icon fa-info-circle" aria-hidden="true"></i>&nbsp; View
+                                </button>
+                            </a>
+                        </div>
+                        <div class="row col-md-6 row-lg margin-left-10">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_rfnum">Number</label>
+                                <input type="text" class="form-control input-sm" id="id_rfnum" name="rfnum" placeholder="RFxxxxxxx" value="{{ form.rfnum.value|default:'' }}" readonly="readonly">
+                                <span class="help-block form-error">{{ form.rfnum.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_rfdate">RF Date</label>
+                                <input type="text" class="form-control input-sm date-yyyymmdd datepicker week" readonly="readonly" style="padding: 5px 10px" id="id_rfdate" name="rfdate" placeholder="YYYY-MM-DD" data-validation="required" value="{{ form.rfdate.value|date:'Y-m-d'|default:'' }}">
+                                <span class="help-block form-error">{{ form.rfdate.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.inventoryitemtype.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_inventoryitemtype">Type</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_inventoryitemtype" name="inventoryitemtype">
+{#                                    <option value="">-- Select --</option>#}
+                                    {% for inventoryitemtype in inventoryitemtype %}
+                                        <option value="{{ inventoryitemtype.id }}" {% if form.inventoryitemtype.value|add:0 == inventoryitemtype.id %} selected="selected" {% endif %}>{{ inventoryitemtype.description }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.inventoryitemtype.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group  col-sm-4">
+                                <label class="control-label" for="id_rftype">RF Type</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_rftype" name="rftype">
+                                    {% for id,name in form.fields.rftype.choices %}
+                                        <option value="{{ id }}"{% if form.rftype.value == id %} selected{% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.rftype.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.urgencytype.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_urgencytype">Urgency</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_urgencytype" name="urgencytype">
+                                    {% for id,name in form.fields.urgencytype.choices %}
+                                        <option value="{{ id }}"{% if form.urgencytype.value == id %} selected{% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.urgencytype.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_dateneeded">Date Needed</label>
+                                <input type="text" class="form-control input-sm date-yyyymmdd datepicker" style="padding: 5px 10px" id="id_dateneeded" name="dateneeded" placeholder="YYYY-MM-DD" value="{{ form.dateneeded.value|date:'Y-m-d'|default:'' }}" data-validation="required">
+                                <span class="help-block form-error">{{ form.dateneeded.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-6 {{ form.department.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_department">Department</label>
+                                <select class="form-control input-sm select2" data-validation="required" id="id_department" name="department">
+                                    <option value="">-- Select --</option>
+                                    {% for department in department %}
+                                        <option value="{{ department.id }}" {% if form.department.value|add:0 == department.id %} selected="selected" {% endif %}>{{ department.departmentname }} ({{ department.code }})</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.department.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-6 {{ form.designatedapprover.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_designatedapprover">Approver</label>
+                                <select class="form-control input-sm select2" data-validation="required" id="id_designatedapprover" name="designatedapprover">
+{#                                    <option value="1">Rey Kenneth Molina</option>#}
+                                    <option value="">-- Select --</option>
+                                    {% for designatedapprover in designatedapprover %}
+                                        <option value="{{ designatedapprover.id }}" {% if form.designatedapprover.value|add:0 == designatedapprover.id %} selected="selected" {% endif %}>{{ designatedapprover.first_name }} {{ designatedapprover.last_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.designatedapprover.errors.as_text }}</span>
+                            </div>
+                        </div>
+                        <div class="row col-md-6 row-lg margin-left-10">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_refnum">Reference #</label>
+                                <input type="text" class="form-control input-sm" maxlength="150" id="id_refnum" name="refnum" placeholder="Reference #" value="{{ form.refnum.value|default:'' }}">
+                                <span class="help-block form-error">{{ form.refnum.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4 {{ form.branch.errors|yesno:'has-error,' }}">
+                                <label class="control-label" for="id_branch">Branch</label>
+                                <select class="form-control input-sm" data-validation="required" id="id_branch" name="branch">
+                                    {#                                    <option value="">-- Select --</option>#}
+                                    {% for branch in branch %}
+                                        <option value="{{ branch.id }}" {% if form.branch.value|add:0 == branch.id %} selected="selected" {% endif %}>{{ branch.description }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block form-error">{{ form.branch.errors.as_text }}</span>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label class="control-label" for="id_rfstatus">RF Status</label>
+                                <input type="text" class="form-control input-sm" id="id_rfstatus" value="{{ rfstatus }}"
+                                       readonly="readonly" {% if rfstatus == 'Approved' %} style="font-weight: bolder;" {% endif %}>
+                            </div>
+                            <div class="form-group col-sm-12">
+                                <label class="control-label" for="id_particulars">Particulars</label>
+                                <textarea data-fv-field="standard_content" class="form-control" id="id_particulars" name="particulars" rows="5" data-validation="required">{{ form.particulars.value|default:'' }}</textarea>
+                                <span class="help-block form-error">{{ form.particulars.errors.as_text }}</span>
+                            </div>
+                        </div>
+                        <div class="row row-lg margin-left-10">
+                        </div>
+                        <div class="row row-lg margin-left-10">
+
+                        </div>
+                        <div class="col-sm-12 margin-bottom-10">
+                            <div class="col-sm-6">
+                                <button type="submit" class="btn btn-round btn-success" id="validateButton">Submit</button>
+                            </div>
+                            <div class="col-sm-6">
+                                {% if rfstatus != 'Approved' %}
+                                <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="detailsbutton"><i class="icon fa-plus-square" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Items</button>
+                                {% endif %}
+{#                                <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright"><i class="icon fa-refresh" aria-hidden="true"></i> Auto Entry</button>#}
+                            </div>
+                        </div>
+                        </form>
+                        <div class="col-sm-12" id="detailentry" style="display: none">
+                            <div class="panel panel-bordered">
+                                <div class="shade"><div class="loader two-color"></div></div>
+                                <div class="panel-body">
+                                    <h4>Requisition Form Details</h4>
+                                    <div id="detailsentryview">
+                                        {% include "requisitionform/rfdetails.html" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12">
+                            <div class="panel">
+                                <div class="shade"><div class="loader two-color"></div></div>
+                                <div class="panel-body">
+                                    <!-- Start Editable Section -->
+                                    <table class="floatright margin-bottom-10">
+                                        <tr>
+                                            <td width="200px">
+                                                <label class="control-label float-left">Total&nbsp;Requested&nbsp;Qty:</label>
+                                            </td>
+                                            <td class="text-align-right">
+                                                <label class="control-label">
+                                                    <span id="totalrequestedquantity" class="text-right">0</span>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        {% if rfstatus == 'Approved' %}<tr>
+                                            <td width="200px">
+                                                <label class="control-label float-left">Total&nbsp;PRF&nbsp;Qty:</label>
+                                            </td>
+                                            <td class="text-align-right">
+                                                <label class="control-label">
+                                                    <span id="totalprfquantity">0</span>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <label class="control-label float-left">Total&nbsp;Remaining&nbsp;Qty:</label>
+                                            </td>
+                                            <td class="text-align-right">
+                                                <label class="control-label">
+                                                    <span id="totalremainingquantity">0</span>
+                                                </label>
+                                            </td>
+                                        </tr>{% endif %}
+                                    </table>
+                                    <table class="table table-striped margin-bottom-0 small" id="summary">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th style="width:120px">Item Code</th>
+                                                <th>Item Name</th>
+                                                <th style="width:350px">Remarks</th>
+                                                <th style="width:150px; text-align: center">Unit of Measure</th>
+                                                <th style="width:120px; text-align: center">Requested Qty</th>
+                                                {% if rfstatus != 'Approved' %}<th style="width:50px"></th>{% endif %}
+                                                {% if rfstatus == 'Approved' %}
+                                                    <th style="width:100px; text-align: right">PRF Qty</th>
+                                                    <th style="width:100px; text-align: right">Remaining Qty</th>
+                                                {% endif %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for rfdetailtemp in rfdetailtemp %}
+                                                <tr>
+                                                    <td>{{ rfdetailtemp.item_counter }}</td>
+                                                    <td>{{ rfdetailtemp.invitem_code }}</td>
+                                                    <td>{{ rfdetailtemp.invitem_name }}</td>
+                                                    <td><div><div class='col-sm-11 row'><textarea class='form-control input-sm input-remarks' id='id_temp_remarks[{{ rfdetailtemp.item_counter }}]' name='temp_remarks' form='form-b'>{{ rfdetailtemp.remarks }}</textarea></div>
+                                                        <div class='col-sm-1'><button class='btn showRemarks' data-toggle='modal' data-target='#remarksModal' data-itemno='{{ rfdetailtemp.item_counter }}'>...</button></div></div></td>
+                                                    <td><select class='form-control input-sm tbl-um' required style='width: 100%' id='id_temp_item_um' name='temp_item_um' form='form-b'>
+                                                        {% for unitofmeasure in unitofmeasure %}
+                                                            <option value='{{ unitofmeasure.code }}' {% if unitofmeasure.code == rfdetailtemp.invitem_unitofmeasure_code %} selected="selected"
+                                                            {% endif %}>{{ unitofmeasure.description }} ({{ unitofmeasure.code }})</option>
+                                                        {% endfor %}</select></td>
+                                                    <td><input type='number' name='temp_quantity' form='form-b' step='any' class='form-control input-sm tblInputQuantity text-right' value='{{ rfdetailtemp.quantity }}'></td>
+                                                    {% if rfstatus != 'Approved' %}<td>
+                                                        <button class='btn remove_item' data-itemno='{{ rfdetailtemp.item_counter }}' data-itemid='{{ rfdetailtemp.invitem.id }}'><i class='icon fa-remove' aria-hidden='true'></i></button>
+                                                    </td>{% endif %}
+                                                    {% if rfstatus == 'Approved' %}
+                                                    <td style="width:100px; text-align: right"><strong>{{ rfdetailtemp.prftotalquantity }}</strong></td>
+                                                    <td style="width:100px; text-align: right"><strong>{{ rfdetailtemp.prfremainingquantity }}</strong></td>
+                                                    {% endif %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+<div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Dependent PRFs</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <table class="table table-striped margin-bottom-0 small">
+                        <thead>
+                            <tr>
+                                <th>PRF No.</th>
+                                <th>Status</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in prfs %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'purchaserequisitionform:detail' data.3 %}" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
+                                            <i class="icon md-search" aria-hidden="true">&nbsp;&nbsp;</i> {{ data.0 }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if data.1 == 'F' %}
+                                            For Approval
+                                        {% elif data.1 == 'A' %}
+                                            Approved
+                                        {% elif data.1 == 'D' %}
+                                            Disapproved
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ data.2 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="remarksModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"> <span id="modal-header-title">Remarks</span></h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <input type="hidden" id="remarks_itemno">
+                    <textarea name="remarks" id="id_modal_remarks" class="form-control remarks-editor" rows="10"></textarea>
+                    <br>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" id="save_remarks">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="item-select" class="custom-alert danger">Please select an item.</div>
+<div id="item-quantity" class="custom-alert danger">Please enter requested quantity.</div>
+<div id="item-select-quantity" class="custom-alert danger">Please select an item and enter the requested quantity.</div>
+{% endblock page-content %}
+{% block extra_js %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+    <script src="{% static 'js/jquery.validate.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/libs/js/wysihtml5-0.3.0_rc2.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/bootstrap-wysihtml5-0.0.2.min.js' %}"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            reorderItems();
+
+            var i = 1;
+            $.each($('.input-remarks'), function() {
+                var editor = new wysihtml5.Editor("id_temp_remarks[" + i + "]");
+                i += 1;
+            });
+
+            $("#detailsbutton").click(function (){
+                $("#detailentry").show();
+            });
+
+            summary = $("#summary tbody");
+
+            function reorderItems(){
+                len = summary.find('tr').find('td:eq(0)').length;
+                for(i=0;i<len;i++){
+                    summary.find('tr:eq('+i+')').find('td:eq(0)').html(i+1);
+                }
+            }
+
+            $("#form-b").submit(function(event){
+                if($('.tblInputQuantity').length == 0) {
+                    alert("Please add at least one item.");
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/jquery.maskMoney.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/custom-maskMoney.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        $('.select2').select2({});
+
+        $(document).ready(function() {
+            var rfstatus = "{{ rfstatus }}";
+
+            if(rfstatus == "Approved"){
+                $("#id_rfdate").prop("readonly", true);
+                $("#id_rfdate").datepicker("destroy");
+                $("#id_rfdate").removeClass("datepicker").removeAttr('id');
+                $("#id_refnum").prop("readonly", true);
+                $("#id_branch option:selected").siblings().attr('disabled','disabled');
+                $("#id_urgencytype option:selected").siblings().attr('disabled','disabled');
+                $("#id_dateneeded").prop("readonly", true);
+                $("#id_dateneeded").datepicker("destroy");
+                $("#id_dateneeded").removeClass("datepicker").removeAttr('id');
+                $("#id_department option:selected").siblings().attr('disabled','disabled');
+                $("#id_designatedapprover option:selected").siblings().attr('disabled','disabled');
+                $(".tbl-um option:selected").siblings().attr('disabled','disabled');
+                $(".tblInputQuantity").prop("readonly", true);
+            }
+        });
+    </script>
+{% endblock extra_js %}

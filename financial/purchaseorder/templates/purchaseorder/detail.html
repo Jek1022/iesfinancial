@@ -1,0 +1,458 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% load humanize %}
+{% block page-title %} Purchase Order {% endblock page-title %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/css/dashboard/dashboard.css' %}" />
+    <style>
+        .text-name-profile.text-info {
+            width: 30%;
+        }
+        .detail-profile {
+            width: 50%;
+        }
+        .heading-top-index-2 {
+            padding-right: 20px;
+            padding-left: 20px;
+        }
+        .vattable td {
+            text-align: right;
+
+        }
+        .vattable td:first-child {
+            width: 170px;
+            padding-right: 20px;
+        }
+        .vattable td input {
+            width: 100px;
+            text-align: right;
+        }
+        .widgett {
+            margin-bottom: 10px;
+        }
+    </style>
+{% endblock extra_css %}
+{% block page-content %}
+<div class="page-content container-fluid page">
+    <div class="row">
+        <div class="row col-md-8">
+            <div class="col-md-12">
+                <!-- Start Profile Tab Section -->
+                <div class="nav-tabs nav-tabs-animate border-profile">
+                    <div class="pull-right">
+                        <a href="{% url 'purchaseorder:pdf' object.id %}" target="_blank"><button type="button" id="get_pdf" class="btn btn-info btn-sm waves-effect waves-light get_report">
+                            <i class="icon fa-file-pdf-o" aria-hidden="true"></i>&nbsp; Print
+                        </button></a>
+                    </div>
+                    <ul class="nav nav-tabs nav-profile">
+                        <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Main Details</a></li>
+                    </ul>
+                    <div class="tab-content padding-top-0">
+                        <div class="tab-pane active" id="profiles" role="tabpanel">
+                            <div class="panel top-profile skill-profile margin-bottom-25">
+                                <div class="panel-body">
+                                    <!-- <h4 class="list-title">Personal Information</h4> -->
+                                    <div class="row">
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Number </b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span><b>{{ object.ponum }}</b></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Date&nbsp;Requested</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.podate }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>PO&nbsp;Type</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.get_potype_display }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Reference&nbsp;Number</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.refnum|default:' - ' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Urgency</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.get_urgencytype_display }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Date&nbsp;Needed</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.dateneeded }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Supplier</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span><b>{{ object.supplier_name }}</b></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Particulars </b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.particulars }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Credit&nbsp;Terms</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.creditterm.description }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>VAT</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.vat.description }}&nbsp;({{ object.vatrate }}%)</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>ATC</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.atc.description }}&nbsp;({{ object.atcrate }}%)</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Withholding&nbsp;Tax</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.wtax.description }}&nbsp;({{ object.wtaxrate }}%)</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Currency</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.currency.description }}&nbsp;({{ object.currency.symbol }})</span><br>
+                                                <span class="small" style="margin-left: 265px;"><b>FX&nbsp;RATE:&nbsp;&nbsp;&nbsp;{{ object.fxrate }}</b></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Input&nbsp;VAT&nbsp;Type </b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.inputvattype.description }}</span><br>
+                                                <span class="small" style="margin-left: 265px;"><b>Input VAT Deferred:&nbsp;&nbsp;&nbsp;{{ object.get_deferredvat_display|upper }}</b></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12"><br></div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>PO&nbsp;Status</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span class="{% if object.postatus == 'F' %} text-primary
+                                                             {% elif object.postatus == 'A' %} text-success
+                                                             {% elif object.postatus == 'D' %} text-danger
+                                                             {% endif %}"><b>{{ object.get_postatus_display }}</b></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Assigned&nbsp;Approver</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.designatedapprover.first_name }}&nbsp;{{ object.designatedapprover.last_name }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Actual&nbsp;Approver</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.actualapprover.first_name|default:' - ' }}&nbsp;{{ object.actualapprover.last_name }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Response&nbsp;Date</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.responsedate|default:' - ' }}</</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Approver&nbsp;Remarks</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span>{{ object.approverremarks|default:' - ' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Status</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                <span class="{% if object.status == 'A' %} text-success
+                                                             {% else %} text-danger
+                                                             {% endif %}"><b>{{ object.get_status_display }}</b></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 col-xs-12">
+                                            <div class="first-name-profile">
+                                                <span class="text-info row col-md-2 margin-right-90"><b>Transaction</b></span>
+                                                <span class="text-info row col-md-2"><b>: </b></span>
+                                                {% if object.isfullyapv == 1 %}
+                                                <span class="text-danger"><b>CLOSED</b></span>
+                                                {% else %}
+                                                <span class="text-success"><b>OPEN</b></span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="nav-tabs nav-tabs-animate border-profile">
+                    <ul class="nav nav-tabs nav-profile">
+                        <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Items</a></li>
+                    </ul>
+                    <div class="tab-content padding-top-0">
+                        <div class="tab-pane active" id="profiles" role="tabpanel">
+                            <div class="panel top-profile skill-profile margin-bottom-35">
+                                <div class="panel-body" style="overflow: auto; width: 100%">
+                                    <!-- <h4 class="list-title">Personal Information</h4> -->
+                                    <table class="table table-striped margin-bottom-0 small" id="summary">
+                                        <thead>
+                                            <tr class="small">
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">Code</th>
+                                                <th style="min-width: 150px; text-align: center; vertical-align: middle;">Name</th>
+                                                <th style="min-width: 120px; text-align: center; vertical-align: middle;">Remarks</th>
+                                                <th style="text-align: center; vertical-align: middle;">Unit&nbsp;of&nbsp;Measure</th>
+                                                <th style="text-align: center; vertical-align: middle;">PRF&nbsp;No.</th>
+                                                <th style="min-width: 80px; text-align: center; vertical-align: middle;">Branch</th>
+                                                <th style="text-align: center; vertical-align: middle;">Department</th>
+                                                <th style="min-width: 140px; text-align: center; vertical-align: middle;">Expiration&nbsp;Date</th>
+                                                <th style="min-width: 200px; text-align: center; vertical-align: middle;">Employee</th>
+                                                <th style="text-align: center; vertical-align: middle;">Asset&nbsp;No.</th>
+                                                <th style="text-align: center; vertical-align: middle;">Serial&nbsp;No.</th>
+                                                <th style="text-align: center; vertical-align: middle;">Currency</th>
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">Unit&nbsp;Cost</th>
+                                                <th style="text-align: center; vertical-align: middle;">Quantity</th>
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">Gross&nbsp;Amount</th>
+                                                <th style="text-align: center; vertical-align: middle;">Discount&nbsp;Rate</th>
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">Discount&nbsp;Amount</th>
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">VATable</th>
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">VAT-Exempt</th>
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">VAT&nbsp;Zero-Rated</th>
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">Add&nbsp;VAT</th>
+                                                <th style="min-width: 100px; text-align: center; vertical-align: middle;">Total&nbsp;Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for podetail in podetail %}
+                                                <tr>
+                                                    <td>{{ podetail.invitem_code }}</td>
+                                                    <td>{{ podetail.invitem_name }}</td>
+                                                    <td>{{ podetail.remarks }}</td>
+                                                    <td>{{ podetail.invitem_unitofmeasure }}</td>
+                                                    <td style="text-align: center;">{{ podetail.prfdetail.prfmain.prfnum|default:' - ' }}</td>
+                                                    <td style="text-align: center;">{{ podetail.branch.code }}</td>
+                                                    <td style="text-align: center;">{{ podetail.department.code }}</td>
+                                                    <td style="text-align: center;">{{ podetail.expirationdate|date|default:' - ' }}</td>
+                                                    <td>{{ podetail.employee.firstname|default:' - ' }}&nbsp;{{ podetail.employee.lastname }}</td>
+                                                    <td>{{ podetail.assetnum|default:' - ' }}</td>
+                                                    <td>{{ podetail.serialnum|default:' - ' }}</td>
+                                                    <td style="text-align: center;">{{ podetail.currency.symbol }}</td>
+                                                    <td style="text-align: right;">{{ podetail.unitcost|floatformat:2|intcomma }}</td>
+                                                    <td style="text-align: right;">{{ podetail.quantity|intcomma }}</td>
+                                                    <td style="text-align: right;">{{ podetail.grossamount|floatformat:2|intcomma }}</td>
+                                                    <td style="text-align: right;">{% if podetail.discountrate %}{{ podetail.discountrate }}%{% else %}-{% endif %}</td>
+                                                    <td style="text-align: right;">{{ podetail.discountamount|floatformat:2|intcomma }}</td>
+                                                    <td style="text-align: right;">{{ podetail.vatable|floatformat:2|intcomma }}</td>
+                                                    <td style="text-align: right;">{{ podetail.vatexempt|floatformat:2|intcomma }}</td>
+                                                    <td style="text-align: right;">{{ podetail.vatzerorated|floatformat:2|intcomma }}</td>
+                                                    <td style="text-align: right;">{{ podetail.vatamount|floatformat:2|intcomma }}</td>
+                                                    <td style="text-align: right;">{{ podetail.netamount|floatformat:2|intcomma }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--  End Profile Tab Section -->
+            </div>
+        </div>
+        <div class="row col-md-4">
+            <div class="col-md-12">
+                <div class="nav-tabs nav-tabs-animate border-profile">
+                    <ul class="nav nav-tabs nav-profile">
+                        <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Reference Transaction</a></li>
+                    </ul>
+                    <div class="tab-content padding-top-0">
+                        <div class="tab-pane active" id="ref" role="tabpanel">
+                            <div class="panel top-profile skill-profile margin-bottom-25">
+                                <div class="panel-body">
+                                    Accounts Payable Voucher
+                                    <div class="master-degree small">
+                                        {% for data in aptrans %}
+                                            <a href="{% url 'accountspayable:detail' data.apmain.id %}" target="_blank">AP#{{ data.apmain.apnum }}</a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="nav-tabs nav-tabs-animate border-profile">
+                    <ul class="nav nav-tabs nav-profile">
+                        <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Summary</a></li>
+                    </ul>
+                    <div class="tab-content padding-top-0">
+                        <div class="tab-pane active" id="profiles" role="tabpanel">
+                            <div class="panel top-profile skill-profile margin-bottom-25">
+                                <div class="panel-body" style="padding:10px">
+                                    <div class="widgett widgett-article widgett-shadow">
+                                        <div class="heading-top-index-2">
+                                            <table class="vattable">
+                                                <tr>
+                                                    <td><small><b>Quantity:</b></small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm" id="totalQty" disabled="disabled" value="{{ object.totalquantity|intcomma }}"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><small><b>Amount:</b></small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.grossamount|intcomma }}"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><small><b>Discount:</b></small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm discount" disabled="disabled" value="{{ object.discountamount|intcomma }}"></td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="heading-top-index-2">
+                                            <table class="vattable">
+                                                <tr>
+                                                    <td><small>VATable&nbsp;Purchase:</small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatable|intcomma }}"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><small>VAT-Exempt&nbsp;Purchase:</small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatexempt|intcomma }}"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><small>VAT&nbsp;Zero&nbsp;-&nbsp;Rated&nbsp;Purchase:</small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatzerorated|intcomma }}"></td>
+                                                </tr>
+                                                <tr><td colspan="0"><br></td></tr>
+                                                <tr>
+                                                    <td><small><b>Total&nbsp;Purchase:</b></small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatable|intcomma }}"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><small><b>Add&nbsp;VAT:</b></small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatamount|intcomma }}"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><small><b>Total&nbsp;Amount:</b></small></td>
+                                                    <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.netamount|intcomma }}"></td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="nav-tabs nav-tabs-animate border-profile">
+                    <ul class="nav nav-tabs nav-profile">
+                        <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Imported PRF(s)</a></li>
+                    </ul>
+                    <div class="tab-content padding-top-0">
+                        <div class="tab-pane active" id="profiles" role="tabpanel">
+                            <div class="panel top-profile skill-profile">
+                                <div class="panel-body" style="padding:5px;padding-top:30px;padding-bottom:30px;">
+                                    <div id="prfcontainer" class="col-md-12 col-sm-12 col-xs-12 col-lg-12 prf-container">
+                                        <div class="shade"><div class="loader two-color"></div></div>
+                                        {% for data in podata %}
+                                            <div class="widgett widgett-article widgett-shadow">
+                                                <div class="widgett-header cover padding-0 bg-grey-600">
+                                                    <div class="background-cover padding-10" style="color:white">
+                                                        PRF - {{ data.prfmain.prfnum }}
+                                                        <a href="{% url 'purchaserequisitionform:detail' data.prfmain.pk %}" target="_blank"><button type="button" class="close"><i class="icon fa-search" aria-hidden="true"></i></button></a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="nav-tabs nav-tabs-animate border-profile">
+                    <ul class="nav nav-tabs nav-profile">
+                        <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Activity Log</a></li>
+                    </ul>
+                    <div class="tab-content padding-top-0">
+                        <div class="tab-pane active" id="profiles" role="tabpanel">
+                            <div class="panel top-profile skill-profile margin-bottom-25">
+                                        <div class="panel-body small">
+                                    <div class="master-degree">
+                                        <span class="degree-name text-info">Created&nbsp;By:</span>
+                                        <div class="univer-profile">{{ object.enterby }}</div>
+                                        <div class="univer-profile">{{ object.enterdate }}</div>
+                                    </div>
+                                    <div class="master-degree">
+                                        <span class="degree-name text-info">Modified&nbsp;By:</span>
+                                        <div class="univer-profile">{{ object.modifyby }}</div>
+                                        <div class="univer-profile">{{ object.modifydate }}</div>
+                                    </div>
+                                    <div class="master-degree">
+                                        <div class="iconlist">
+                                            {% if object.isfullyapv != 1 %}
+                                            {% if perms.purchaseorder.change_pomain and object.isdeleted == 0 %}
+                                                <a href="{% url 'purchaseorder:update' object.pk %}" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to Edit" title="" aria-describedby="tooltip850155">
+                                                    <button type="button" class="btn btn-floating btn-success btn-sm waves-effect waves-float waves-light">
+                                                        <i class="icon_pencil" aria-hidden="true"></i>
+                                                    </button>
+                                                </a>
+                                            {% endif %}
+                                            {% if perms.purchaseorder.delete_pomain and object.postatus == 'F' and object.isdeleted == 0 and object.status == 'A' %}
+                                                <a href="{% url 'purchaseorder:delete' object.pk %}" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to Cancel" title="" aria-describedby="tooltip850155">
+                                                    <button type="button" class="btn btn-floating btn-danger btn-sm waves-effect waves-float waves-light">
+                                                        <i class="icon_trash" aria-hidden="true"></i>
+                                                    </button>
+                                                </a>
+                                            {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock page-content %}

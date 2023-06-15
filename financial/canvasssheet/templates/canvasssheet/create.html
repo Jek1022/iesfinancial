@@ -1,0 +1,304 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% block page-title %} Canvass Sheet {% endblock page-title %}
+{% block page-content %}
+{% block extra_css %}
+    {% include "canvasssheet/createcss.html" %}
+{% endblock extra_css %}
+<div class="panel">
+    <div class="panel-heading">
+        <h3 class="panel-title">Create</h3>
+    </div>
+    <div class="panel-body container-fluid">
+        <div class="row">
+            <div class="margin-bottom-20">
+                <form method="post" id="form-b">
+                    {% csrf_token %}
+                    {{ form.errors }}
+                    <input type="hidden" name="secretkey" id="id_secretkey" value="{{ secretkey }}"/>
+                    <div class="row col-md-5 row-lg margin-left-10">
+                        <div class="form-group col-sm-6">
+                            <label class="control-label" for="id_csnum">Number</label>
+                            <input type="text" class="form-control input-sm" id="id_csnum" placeholder="csxxxxxxx" disabled="disabled">
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label class="control-label" for="id_csdate">CS Date</label>
+                            <input type="text" class="form-control input-sm date-yyyymmdd datepicker closemonth" data-mindate="{{ validtransaction|date:'Y,m,d' }}" id="id_csdate" name="csdate" placeholder="YYYY-MM-DD" data-validation="required" value="{{ form.csdate.value|default:'' }}" readonly="readonly">
+                            <span class="help-block form-error">{{ form.csdate.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-12 {{ form.designatedapprover.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_designatedapprover">Approver</label>
+                            <select class="form-control input-sm select2" data-validation="required" id="id_designatedapprover" name="designatedapprover">
+                                <option value="">-- Select --</option>
+                                {% for designatedapprover in designatedapprover %}
+                                    <option value="{{ designatedapprover.id }}" {% if form.designatedapprover.value|add:0 == designatedapprover.id %} selected="selected" {% endif %}>{{ designatedapprover.first_name }} {{ designatedapprover.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.urgencytype.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label class="control-label" for="id_csstatus">CS Status</label>
+                            <input type="text" class="form-control input-sm" id="id_csstatus" value="FOR APPROVAL" disabled="disabled">
+                        </div>
+                        <div class="form-group col-sm-6 {{ form.cstype.errors|yesno:'has-error,' }}">
+                            <label class="control-label" for="id_cstype">CS Type</label>
+                            <select class="form-control input-sm" data-validation="required" id="id_cstype" name="cstype">
+                                {% for id,name in form.fields.cstype.choices %}
+                                    <option value="{{ id }}"{% if form.cstype.value == id %} selected {% endif %}>{% ifequal id ""%}-- Select --{% else %}{{ name }}{% endifequal %}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.cstype.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group col-sm-12">
+                            <label class="control-label" for="id_particulars">Particulars</label>
+                            <textarea data-fv-field="standard_content" class="form-control" id="id_particulars" name="particulars" rows="2" data-validation="required">{{ form.particulars.value|default:'' }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="widgett widgett-article widgett-shadow">
+                            <div class="heading-top-index-2">
+                                <table class="vattable">
+                                    <tr>
+                                        <td><small><b>Quantity:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm" id="totalQty" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Amount:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" id="grossAmt" disabled="disabled" value="0"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="heading-top-index-2">
+                                <table class="vattable">
+                                    <tr>
+                                        <td><small>VATable&nbsp;Purchase:</small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" id="vatAble" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>VAT-Exempt&nbsp;Purchase:</small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" id="vatExempt" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>VAT&nbsp;Zero&nbsp;-&nbsp;Rated&nbsp;Purchase:</small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" id="vatZero" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr><td colspan="0"><br></td></tr>
+                                    <tr>
+                                        <td><small><b>Total&nbsp;Purchase:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" id="totalPurchase" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Add&nbsp;VAT:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" id="addVat" disabled="disabled" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small><b>Total&nbsp;Amount:</b></small></td>
+                                        <td class="form-group form-material"><input type="text" class="form-control input-sm amount" id="totalAmt" disabled="disabled" value="0"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row col-md-3 row-lg margin-left-10">
+                        <label class="control-label" for="id_cstype">PRF(s) Imported</label><br>
+                        <div id="prfcontainer" class="col-md-12 col-sm-12 col-xs-12 col-lg-12 prf-container">
+                            <div class="shade"><div class="loader two-color"></div></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 margin-bottom-10">
+                        <div class="col-sm-6">
+                            <button type="button" class="btn btn-round btn-success" id="validateButton">Submit</button>
+                        </div>
+                        <div class="col-sm-6">
+                            <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="importbutton" data-toggle="modal" data-target="#myModal"><i class="icon fa-download" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Import PRF</button>
+                            <button type="button" class="btn btn-round btn-info btn-sm waves-effect waves-light floatright" id="detailsbutton"><i class="icon fa-plus-square" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Add Items</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="col-sm-12" id="detailentry" style="display: none">
+                    <div class="panel panel-bordered">
+                        <div class="shade"><div class="loader two-color"></div></div>
+                        <div class="panel-body">
+                            <h4>Add Items</h4>
+                            <div id="detailsentryview">
+                                {% include "canvasssheet/createdetails.html" %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="panel">
+                        <div class="shade"><div class="loader two-color"></div></div>
+                        <div class="panel-body" style="overflow: auto; width: 100%">
+                            <table class="col-sm-6 table margin-bottom-0" id="summary" style="border: 1px solid #e0e0e0;">
+                                {% include "canvasssheet/createhead.html" %}
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="tempForm"></div>
+
+            <div class="clearfix"></div>
+            <div id="myModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">Select Purchase Requisition Form</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>
+                                <select name="" id="importrfselect2" class="form-control input-sm select2" style="width: 100%;">
+                                    <option value="">-- Select --</option>
+                                    {% for prfmain in prfmain %}
+                                        <option value="{{ prfmain.prfnum }}"
+                                                data-refnum="{{ prfmain.prfnum }}"
+                                                data-urgency="{{ prfmain.get_urgencytype_display }}"
+                                                data-dateneeded="{{ prfmain.dateneeded }}"
+                                                data-approver="{{ prfmain.actualapprover }}">{{ prfmain.prfnum }} | {{ prfmain.prfdate|date:"Y-m-d" }} | {{ prfmain.get_urgencytype_display }} | Date needed: {{ prfmain.dateneeded|date:"Y-m-d" }}</option>
+                                    {% endfor %}
+                                </select>
+                                <br><br>
+                                <table class="col-md-12 table-bordered" id="importrfpreview">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: center"><small><b>PRF No.</b></small></th>
+                                            <th style="text-align: center"><small><b>Urgency Type</b></small></th>
+                                            <th style="text-align: center"><small><b>Actual Approver</b></small></th>
+                                            <th style="text-align: center"><small><b>Date Needed</b></small></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td align="middle"> - </td>
+                                            <td align="middle"> - </td>
+                                            <td align="middle"> - </td>
+                                            <td align="middle"> - </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <br><br>
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-info" id="importconfirm" data-dismiss="modal" disabled="disabled">Confirm</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="myModal2" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="shade"><div class="loader two-color"></div></div>
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">Select Supplier</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="form-group col-sm-2">
+                                    <label class="control-label small">Code</label>
+                                    <input type="text" id="imp_suppliercode" class="form-control input-sm" placeholder="Code">
+                                </div>
+                                <div class="form-group col-sm-4">
+                                    <label class="control-label small">Name</label>
+                                    <input type="text" id="imp_suppliername" class="form-control input-sm" placeholder="Name">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label class="control-label small">Type</label>
+                                    <select id="imp_suppliertype" class="form-control input-sm">
+                                        <option value="0">All</option>
+                                        {% for data in suppliertype %}
+                                             <option value="{{ data.id }}">{{ data.description }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label class="control-label small">Industry</label>
+                                    <select id="imp_industry" class="form-control input-sm">
+                                        <option value="0">All</option>
+                                        {% for data in industry %}
+                                             <option value="{{ data.id }}">{{ data.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-9"></div>
+                                <div class="col-md-3">
+                                    <button id="imp_suppliersubmit" class="btn btn-info btn-sm waves-effect waves-light col-md-12"><i class="icon fa-search" aria-hidden="true"></i> Search</button>
+                                </div>
+                            </div>
+                            <br><br>
+                            <table class="table" id="imp_suppliertable">
+                                <thead>
+                                    <tr class="small">
+                                        <th style="min-width: 250px;">Supplier</th>
+                                        <th>Address</th>
+                                        <th style="min-width: 200px;">Contact Info</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="supplier-success" class="custom-alert success">Supplier added.</div>
+            <div id="supplier-danger" class="custom-alert danger">Supplier already exists!</div>
+            <div id="supplier-item-danger" class="custom-alert danger">All items must have a supplier!</div>
+            <div id="item-danger" class="custom-alert danger">Please add at least one item!</div>
+            <div id="add-item-danger" class="custom-alert danger">Item and item quantity are required!</div>
+        </div>
+    </div>
+</div>
+<div id="remarksModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"> <span id="modal-header-title">Remarks</span></h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <input type="hidden" id="remarks_itemno">
+                    <textarea name="remarks" id="id_modal_remarks" class="form-control remarks-editor" rows="10"></textarea>
+                    <br>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" id="save_remarks">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock page-content %}
+{% block extra_js %}
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/js/custom-datepicker.js' %}"></script>
+    <script src="{% static 'js/jquery.validate.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'js/jquery.maskMoney.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/custom-maskMoney.js' %}" type="text/javascript"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/libs/js/wysihtml5-0.3.0_rc2.min.js' %}"></script>
+    <script src="{% static 'financial-layout/assets/plugin/bootstrap-wysihtml5-0.0.2/bootstrap-wysihtml5-0.0.2.min.js' %}"></script>
+    <script src="{% static 'js/ajaxselect2.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        var sd = $('#id_csdate').data('mindate');
+        var d = new Date(sd);
+        d.setDate(d.getDate());
+        $('.datepicker.closemonth').each(function(){
+            $(this).datepicker('setStartDate', d);
+        });
+        $('.select2').select2({});
+        ajaxselect2("inventoryitem_SI", "id_item_name");
+    </script>
+{% endblock extra_js %}

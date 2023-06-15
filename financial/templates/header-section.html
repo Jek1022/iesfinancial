@@ -1,0 +1,75 @@
+{% load staticfiles %}
+
+<div class="main-header navbar navbar-default navbar-fixed-top navbar-inverse navbar-mega">
+    <div class="navbar-header">
+      <!--  Template Logo -->
+      <a class="navbar-brand" href="/">
+      <img class="navbar-brand-logo navbar-brand-logo-normal" src="{% static 'financial-layout/assets/images/logo.png' %}" title="Porish" alt="logo">
+      </a>
+    </div>
+    <div class="navbar-container container-fluid">
+        <div class="collapse navbar-collapse navbar-block navbar-collapse-toolbar" id="site-navbar-collapse">
+           <!--  Menu -->
+            {% regroup userpermission by mainmoduledescp as mainmodule_list %}
+           <ul class="nav navbar-nav navbar-toolbar">
+              <!--  Mega Menu -->
+               {% for mainmodule in mainmodule_list %}
+              <li class="dropdown dropdown-fw dropdown-mega">
+                 <a href="javascript:void(0)" class="dropdown-toggle waves-effect waves-light" data-hover="dropdown" data-toggle="dropdown"><i class="layout-icon {{ mainmodule.list.0.mainiconfile }}" aria-hidden="true"></i><span class="mega-text">{{ mainmodule.grouper }} </span><span class="arrow_carrot-down"></span></a>
+                 <ul class="dropdown-menu" role="menu">
+                    <li>
+                       <div class="mega-menu-content">
+                          <div class="row">
+                              {% for module in mainmodule.list %}
+                               <div class="col-sm-12 col-md-3 col-lg-2 col-xs-12">
+                                   <ul class="list-menu">
+                                       <li><a class="waves-effect waves-light" href="/{{module.app_label}}/"><i class="arrow_triangle-right" aria-hidden="true"></i>{{ module.modulename }}</a></li>
+                                   </ul>
+                               </div>
+                              {% endfor %}
+                          </div>
+                       </div>
+                    </li>
+                 </ul>
+              </li>
+               {% endfor %}
+           </ul>
+
+           <!-- Side Menu -->
+           <ul class="nav navbar-nav navbar-toolbar navbar-right">
+            <li class="dropdown">
+               <!--  Profile Section -->
+               <a class="navbar-avatar dropdown-toggle waves-effect waves-light" data-toggle="dropdown" href="javascript:void(0)" data-animation="scale-up" role="button">
+               <span class="avatar avatar-online">
+               <img src="{% static 'financial-layout/assets/images/global/img_240x265.png' %}" alt="Profile Image">
+               <i></i>
+               </span>
+               </a>
+               <ul class="dropdown-menu position-absolute" role="menu">
+                  <li role="presentation">
+                     <a href="javascript:void(0)" role="menuitem"><i class="icon icon_profile" aria-hidden="true"></i> {{ request.user.get_full_name }}</a>
+                  </li>
+                 <!-- <li role="presentation">
+                     <a href="javascript:void(0)" role="menuitem"><i class="icon icon_balance" aria-hidden="true"></i> Billing</a>
+                  </li>-->
+                  <li role="presentation">
+                     <a href="{% url 'password_change' %}" role="menuitem"><i class="icon icon_cog" aria-hidden="true"></i> Change Password</a>
+                  </li>
+                  <li class="divider" role="presentation"></li>
+                  <li role="presentation">
+                     <a href="{% url 'django.contrib.auth.views.logout' %}?next=/login" role="menuitem"><i class="icon icon_lock_alt" aria-hidden="true"></i> Logout</a>
+                  </li>
+               </ul>
+            </li>
+            <li id="toggleFullscreen">
+               <!--  Full Screen -->
+               <a class="icon icon-fullscreen waves-effect waves-light" id="toggle" data-toggle="fullscreen" href="javascript:void(0)" role="button">
+               <i aria-hidden="true" class="arrow_expand"></i>
+               </a>
+            </li>
+
+         </ul>
+        </div>
+
+     </div>
+</div>

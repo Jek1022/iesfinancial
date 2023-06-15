@@ -1,0 +1,600 @@
+{% extends 'base-form.html' %}
+{% load staticfiles %}
+{% block page-title %} Purchase Requisition Form {% endblock page-title %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'financial-layout/assets/css/dashboard/dashboard.css' %}" />
+    <style>
+        .text-name-profile.text-info
+        {
+            width: 40%;
+        }
+        .detail-profile
+        {
+            width: 60%;
+        }
+        .select2-results__option[aria-selected] {
+            font-size: 12px;
+        }
+        .select2-container--default .select2-results__option[aria-disabled=true] {
+            display: none;
+        }
+        .vattable td, .temp_quantity, .temp_fxrate, .temp_amount {
+            text-align: right;
+        }
+        .vattable td:first-child {
+            width: 170px;
+            padding-right: 20px;
+        }
+        .vattable td input {
+            width: 100px;
+            text-align: right;
+        }
+        .heading-top-index-2 {
+            padding: 8px 30px;
+            padding-right: 15px;
+            padding-left: 45px;
+        }
+        .approver_icon{
+            cursor: pointer;
+        }
+    </style>
+{% endblock extra_css %}
+{% block page-content %}
+<div class="page-content container-fluid page">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Start Profile Tab Section -->
+            <div class="nav-tabs nav-tabs-animate border-profile">
+                <div class="pull-right">
+                    <a href="{% url 'purchaserequisitionform:pdf' object.id %}" target="_blank"><button type="button" id="get_pdf" class="btn btn-info btn-sm waves-effect waves-light get_report">
+                        <i class="icon fa-file-pdf-o" aria-hidden="true"></i>&nbsp; Print
+                    </button></a>
+                    {% if object.prfstatus == 'A' and pos %}
+                        <button type="button" class="btn btn-info btn-sm waves-effect waves-light" data-toggle="modal"
+                            data-target="#myModal"><i class="icon fa-list-ul" aria-hidden="true"></i>&nbsp; PO</button>
+                    {% endif %}
+                </div>
+                <ul class="nav nav-tabs nav-profile">
+                    <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Main Details</a></li>
+                </ul>
+                <div class="tab-content padding-top-0">
+                    <div class="tab-pane active" id="profiles" role="tabpanel">
+                        <div class="panel top-profile skill-profile margin-bottom-25">
+                            <div class="panel-body small">
+                                <!-- <h4 class="list-title">Personal Information</h4> -->
+                                <div class="row">
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Number&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.prfnum }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">PRF&nbsp;Date&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.prfdate }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">PRF&nbsp;Type&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.prftype }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Inv.&nbsp;Item&nbsp;Type&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.inventoryitemtype.description }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Urgency&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.get_urgencytype_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Date&nbsp;Needed&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.dateneeded }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Branch&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.branch.description }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Department&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.department.departmentname }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Particulars&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.particulars }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Remarks&nbsp;: </span>
+                                            <span class="detail-profile">
+                                                <a href="#_" data-remarks="{{ data.remarks|default:'' }}" data-target="#r_Modal" data-toggle="modal">
+                                                    <i class="icon fa-comments-o" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;View
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Designated&nbsp;Approver&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.designatedapprover.first_name }} {{ object.designatedapprover.last_name }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <br><span class="text-name-profile text-info">Actual&nbsp;Approver&nbsp;: </span>
+                                            <span class="detail-profile">{% if object.actualapprover == None %} - {% else %}{{ object.actualapprover.first_name }} {{ object.actualapprover.last_name }} {% endif %}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Response&nbsp;Date&nbsp;: </span>
+                                            <span class="detail-profile">{{ object.responsedate|default:' - ' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">PRF Status&nbsp;: </span>
+                                            <span class="detail-profile
+                                                {% if object.prfstatus == 'F' %}
+                                                    text-primary
+                                                {% elif object.prfstatus == 'A' %}
+                                                    text-success
+                                                {% elif object.prfstatus == 'D' %}
+                                                    text-danger
+                                                {% endif %}"><b>
+                                                    {{ object.get_prfstatus_display }}
+                                            </b></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div class="first-name-profile">
+                                            <span class="text-name-profile text-info">Status&nbsp;: </span>
+                                            <span class="detail-profile"><b>{{ object.get_status_display }}</b></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <ul class="nav nav-tabs nav-profile">
+                <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Summary</a></li>
+            </ul>
+            <div class="widgett widgett-article widgett-shadow">
+                <div class="heading-top-index-2">
+                    <table class="vattable">
+                        <tr>
+                            <td><small><b>Quantity:</b></small></td>
+                            <td class="form-group form-material"><input type="text" class="form-control input-sm" disabled="disabled" value="{{ object.quantity }}"></td>
+                        </tr>
+                        <tr>
+                            <td><small><b>Amount:</b></small></td>
+                            <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ totalamount.amount__sum }}"></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="heading-top-index-2">
+                    <table class="vattable">
+                        <tr>
+                            <td><small>VATable&nbsp;Purchase:</small></td>
+                            <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatable }}"></td>
+                        </tr>
+                        <tr>
+                            <td><small>VAT-Exempt&nbsp;Purchase:</small></td>
+                            <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatexempt }}"></td>
+                        </tr>
+                        <tr>
+                            <td><small>VAT&nbsp;Zero&nbsp;-&nbsp;Rated&nbsp;Purchase:</small></td>
+                            <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatzerorated }}"></td>
+                        </tr>
+                        <tr><td colspan="0"><br></td></tr>
+                        <tr>
+                            <td><small><b>Total&nbsp;Purchase:</b></small></td>
+                            <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.grossamount }}"></td>
+                        </tr>
+                        <tr>
+                            <td><small><b>Add&nbsp;VAT:</b></small></td>
+                            <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.vatamount }}"></td>
+                        </tr>
+                        <tr>
+                            <td><small><b>Total&nbsp;Amount:</b></small></td>
+                            <td class="form-group form-material"><input type="text" class="form-control input-sm amount" disabled="disabled" value="{{ object.netamount }}"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class="nav-tabs nav-tabs-animate border-profile">
+                <ul class="nav nav-tabs nav-profile">
+                    <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">Levels of Approval</a></li>
+                </ul>
+                <div class="tab-content padding-top-0">
+                    <div class="tab-pane active" id="profiles" role="tabpanel">
+                        <div class="panel top-profile skill-profile margin-bottom-25">
+                            <div class="panel-body">
+                                <div class="col-md-2 small" style="line-height: 30px">
+                                    <i class="icon fa-clock-o" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Waiting/Pending<br>
+                                    <i class="icon fa-thumbs-o-up" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Approved<br>
+                                    <i class="icon fa-thumbs-o-down" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Disapproved<br>
+                                    <i class="icon fa-square" style="color: #c9c9c9" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;No Approval needed<br>
+                                </div>
+                                <div class="col-md-10">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <td rowspan="2" style="vertical-align: middle; text-align: center">Budget</td>
+                                            <td colspan="6" align="center">Management Levels</td>
+                                        </tr>
+                                        <tr>
+                                            <td align="center">1</td>
+                                            <td align="center" {% if object.approverlevel_required < 2 %}class="active"{% endif %}>2</td>
+                                            <td align="center" {% if object.approverlevel_required < 3 %}class="active"{% endif %}>3</td>
+                                            <td align="center" {% if object.approverlevel_required < 4 %}class="active"{% endif %}>4</td>
+                                            <td align="center" {% if object.approverlevel_required < 5 %}class="active"{% endif %}>5</td>
+                                            <td align="center" {% if object.approverlevel_required < 6 %}class="active"{% endif %}>6</td>
+                                        </tr>
+                                        <tr>
+                                            <td align="center">
+                                                <i class="icon approver_icon
+                                                    {% if object.approverlevelbudget_response == 'A' %} fa-thumbs-o-up
+                                                    {% elif object.approverlevelbudget_response == 'D' %} fa-thumbs-o-down
+                                                    {% else %} fa-clock-o
+                                                    {% endif %}
+                                                    " aria-hidden="true"
+                                                        data-approver="{{ object.approverlevelbudget.first_name }} {{ object.approverlevelbudget.last_name }}"
+                                                        data-date="{{ object.approverlevelbudget_responsedate|default:'-' }}"
+                                                        data-target="#a_Modal" data-toggle="modal">
+                                                </i>
+                                            </td>
+                                            <td align="center">
+                                                <i class="icon approver_icon
+                                                    {% if object.approverlevel1_response == 'A' %} fa-thumbs-o-up
+                                                    {% elif object.approverlevel1_response == 'D' %} fa-thumbs-o-down
+                                                    {% else %} fa-clock-o
+                                                    {% endif %}
+                                                    " aria-hidden="true"
+                                                        data-approver="
+                                                            {% if object.actualapprover != None %}
+                                                                {{ object.actualapprover.first_name }} {{ object.actualapprover.last_name }}
+                                                            {% else %}
+                                                                {{ object.designatedapprover.first_name }} {{ object.designatedapprover.last_name }}
+                                                            {% endif %}"
+                                                        data-date="{{ object.approverlevel1_responsedate|default:'-' }}"
+                                                        data-target="#a_Modal" data-toggle="modal">
+                                                </i>
+                                            </td>
+                                            <td align="center" {% if object.approverlevel_required < 2 %}class="active"{% endif %}>
+                                                {% if object.approverlevel_required >= 2 %}
+                                                    <i class="icon approver_icon
+                                                        {% if object.approverlevel2_response == 'A' %} fa-thumbs-o-up
+                                                        {% elif object.approverlevel2_response == 'D' %} fa-thumbs-o-down
+                                                        {% else %} fa-clock-o
+                                                        {% endif %}
+                                                        " aria-hidden="true"
+                                                            data-approver="{{ object.approverlevel2.first_name }} {{ object.approverlevel2.last_name }}"
+                                                            data-date="{{ object.approverlevel2_responsedate|default:'-' }}"
+                                                            data-target="#a_Modal" data-toggle="modal">
+                                                    </i>
+                                                {% endif %}
+                                            </td>
+                                            <td align="center" {% if object.approverlevel_required < 3 %}class="active"{% endif %}>
+                                                {% if object.approverlevel_required >= 3 %}
+                                                    <i class="icon approver_icon
+                                                        {% if object.approverlevel3_response == 'A' %} fa-thumbs-o-up
+                                                        {% elif object.approverlevel3_response == 'D' %} fa-thumbs-o-down
+                                                        {% else %} fa-clock-o
+                                                        {% endif %}
+                                                        " aria-hidden="true"
+                                                            data-approver="{{ object.approverlevel3.first_name }} {{ object.approverlevel3.last_name }}"
+                                                            data-date="{{ object.approverlevel3_responsedate|default:'-' }}"
+                                                            data-target="#a_Modal" data-toggle="modal">
+                                                    </i>
+                                                {% endif %}
+                                            </td>
+                                            <td align="center" {% if object.approverlevel_required < 4 %}class="active"{% endif %}>
+                                                {% if object.approverlevel_required >= 4 %}
+                                                    <i class="icon approver_icon
+                                                        {% if object.approverlevel4_response == 'A' %} fa-thumbs-o-up
+                                                        {% elif object.approverlevel4_response == 'D' %} fa-thumbs-o-down
+                                                        {% else %} fa-clock-o
+                                                        {% endif %}
+                                                        " aria-hidden="true"
+                                                            data-approver="{{ object.approverlevel4.first_name }} {{ object.approverlevel4.last_name }}"
+                                                            data-date="{{ object.approverlevel4_responsedate|default:'-' }}"
+                                                            data-target="#a_Modal" data-toggle="modal">
+                                                    </i>
+                                                {% endif %}
+                                            </td>
+                                            <td align="center" {% if object.approverlevel_required < 5 %}class="active"{% endif %}>
+                                                {% if object.approverlevel_required >= 5 %}
+                                                    <i class="icon approver_icon
+                                                        {% if object.approverlevel5_response == 'A' %} fa-thumbs-o-up
+                                                        {% elif object.approverlevel5_response == 'D' %} fa-thumbs-o-down
+                                                        {% else %} fa-clock-o
+                                                        {% endif %}
+                                                        " aria-hidden="true"
+                                                            data-approver="{{ object.approverlevel5.first_name }} {{ object.approverlevel5.last_name }}"
+                                                            data-date="{{ object.approverlevel5_responsedate|default:'-' }}"
+                                                            data-target="#a_Modal" data-toggle="modal">
+                                                    </i>
+                                                {% endif %}
+                                            </td>
+                                            <td align="center" {% if object.approverlevel_required < 6 %}class="active"{% endif %}>
+                                                {% if object.approverlevel_required >= 6 %}
+                                                    <i class="icon approver_icon
+                                                        {% if object.approverlevel6_response == 'A' %} fa-thumbs-o-up
+                                                        {% elif object.approverlevel6_response == 'D' %} fa-thumbs-o-down
+                                                        {% else %} fa-clock-o
+                                                        {% endif %}
+                                                        " aria-hidden="true"
+                                                            data-approver="{{ object.approverlevel6.first_name }} {{ object.approverlevel6.last_name }}"
+                                                            data-date="{{ object.approverlevel6_responsedate|default:'-' }}"
+                                                            data-target="#a_Modal" data-toggle="modal">
+                                                    </i>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--  End Profile Tab Section -->
+        </div>
+        <div class="col-md-8">
+            <div class="nav-tabs nav-tabs-animate border-profile">
+                <ul class="nav nav-tabs nav-profile">
+                    <li role="presentation" class="active"><a data-toggle="tab" href="#profiles" aria-controls="profiles" role="tab">PRF Items</a></li>
+                </ul>
+                <div class="tab-content padding-top-0">
+                    <div class="tab-pane active" id="profiles" role="tabpanel">
+                        <div class="panel top-profile skill-profile margin-bottom-25">
+                            <div class="panel-body" >
+                                <table class="floatright margin-bottom-10 small">
+                                    <tr>
+                                        <td width="150px">
+                                            <label class="control-label float-left">Total&nbsp;Requested&nbsp;Qty:</label>
+                                        </td>
+                                        <td class="text-align-right">
+                                            <label class="control-label">{{ object.totalquantity }}</label>
+                                        </td>
+                                    </tr>
+                                    {% if object.prfstatus == 'A' %}<tr>
+                                        <td width="150px">
+                                            <label class="control-label float-left">Total&nbsp;PO&nbsp;Qty:</label>
+                                        </td>
+                                        <td class="text-align-right">
+                                            <label class="control-label">{{ totalpoquantity }}</label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="150px">
+                                            <label class="control-label float-left">Total&nbsp;Remaining&nbsp;Qty:</label>
+                                        </td>
+                                        <td class="text-align-right">
+                                            <label class="control-label">{{ object.totalremainingquantity }}</label>
+                                        </td>
+                                    </tr>{% endif %}
+                                </table><br><br>
+                                <div style="overflow: auto; width: 100%">
+                                    <table class="table table-striped margin-bottom-0 small" id="summary">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 10px; text-align: center">#</th>
+                                                <th style="min-width: 100px; text-align: left">Name</th>
+                                                <th style="min-width: 100px; text-align: left">Description</th>
+                                                <th style="min-width: 100px; text-align: left">Remarks</th>
+                                                <th style="text-align:right">RF No.</th>
+                                                <th style="min-width: 100px; text-align:right">Currency</th>
+                                                <th style="min-width: 100px; text-align:right">FX&nbsp;Rate</th>
+                                                <th style="min-width: 100px; text-align:right">Amount</th>
+                                                <th style="min-width: 200px; text-align: left">Deparment</th>
+                                                <th>Estimated&nbsp;delivery</th>
+                                                <th style="text-align: center; min-width: 250px;">Supplier</th>
+                                                <th style="text-align:right;width:90px">Quantity</th>
+                                                <th style="min-width: 100px; text-align: left">Unit&nbsp;of&nbsp;Measure</th>
+                                                <th class="text-right warning" style="padding-right: 30px">Unit&nbsp;Cost</th>
+                                                <th class="text-right info" style="width: 130px;">Nego&nbsp;Cost</th>
+                                                <th class="text-right info">Gross&nbsp;Amount</th>
+                                                <th class="text-right info">VAT&nbsp;Rate</th>
+                                                <th class="text-right info">VATable</th>
+                                                <th class="text-right info">VAT&nbsp;-&nbsp;Exempt</th>
+                                                <th class="text-right info">VAT&nbsp;Zero&nbsp;-&nbsp;Rated</th>
+                                                <th class="text-right info">Total&nbsp;Purchase</th>
+                                                <th class="text-right info">Add&nbsp;VAT</th>
+                                                <th class="text-right info">Total&nbsp;Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for prfdetail in prfdetail %}
+                                                <tr>
+                                                    <td>{{ prfdetail.item_counter }}</td>
+                                                    <td>{{ prfdetail.invitem_code }}</td>
+                                                    <td>{{ prfdetail.invitem_name }}</td>
+                                                    <td>{{ prfdetail.remarks }}</td>
+                                                    <td style="text-align:right">{{ prfdetail.rfdetail.rfmain.rfnum|default:'-' }}</td>
+                                                    <td style="text-align:right">{{ prfdetail.currency.symbol }}</td>
+                                                    <td style="text-align:right">{{ prfdetail.fxrate }}</td>
+                                                    <td style="text-align:right" class="amount">{{ prfdetail.amount }}</td>
+                                                    <td>{{ prfdetail.department_code }} <br> {{ prfdetail.department_name }}</td>
+                                                    <td>{{ prfdetail.estimateddateofdelivery|default:'-' }}</td>
+                                                    <td>{{ prfdetail.suppliername }}</td>
+                                                    <td style="text-align:right">{{ prfdetail.quantity }}</td>
+                                                    <td>{{ prfdetail.invitem_unitofmeasure_code }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.uc_cost }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.negocost }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.grossamount }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.vatrate }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.vatable }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.vatexempt }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.vatzerorated }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.grossamount }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.vatamount }}</td>
+                                                    <td style="text-align: right">{{ prfdetail.netamount }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--  End Profile Tab Section -->
+        </div>
+        <div class="col-md-4">
+            <div class="right-box-profile">
+                <h4 class="skill-title">Activity Logs</h4>
+                <div class="panel">
+                    <div class="panel-body small">
+                        <div class="master-degree">
+                            <span class="degree-name text-info">Created&nbsp;By:</span>
+                            <div class="univer-profile">{{ object.enterby }}</div>
+                            <div class="univer-profile">{{ object.enterdate }}</div>
+                        </div>
+                        <div class="master-degree">
+                            <span class="degree-name text-info">Modified&nbsp;By:</span>
+                            <div class="univer-profile">{{ object.modifyby }}</div>
+                            <div class="univer-profile">{{ object.modifydate }}</div>
+                        </div>
+                        <div class="master-degree">
+                            <div class="iconlist">
+                            {% if perms.purchaserequisitionform.change_prfmain %}
+                            <a href="{% url 'purchaserequisitionform:update' object.pk %}" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to Edit" title="" aria-describedby="tooltip850155">
+                                <button type="button" class="btn btn-floating btn-success btn-sm waves-effect waves-float waves-light">
+                                    <i class="icon_pencil" aria-hidden="true"></i>
+                                </button>
+                            </a>
+                            {% endif %}
+                            {% if perms.purchaserequisitionform.delete_prfmain and object.status != 'O' and object.prfstatus != 'A' and object.approverlevelbudget_response == None %}
+                            <a href="{% url 'purchaserequisitionform:delete' object.pk %}" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to Delete" title="" aria-describedby="tooltip850155">
+                                <button type="button" class="btn btn-floating btn-danger btn-sm waves-effect waves-float waves-light">
+                                    <i class="icon_trash" aria-hidden="true"></i>
+                                </button>
+                            </a>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Dependent POs</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <table class="table table-striped margin-bottom-0 small">
+                        <thead>
+                            <tr>
+                                <th>PO No.</th>
+                                <th>Status</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in pos %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'purchaseorder:detail' data.3 %}" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
+                                            <i class="icon md-search" aria-hidden="true">&nbsp;&nbsp;</i> {{ data.0 }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if data.1 == 'F' %}
+                                            For Approval
+                                        {% elif data.1 == 'A' %}
+                                            Approved
+                                        {% elif data.1 == 'D' %}
+                                            Disapproved
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ data.2 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="r_Modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Remarks History</h4>
+            </div>
+            <div class="modal-body">
+                <p id="response_history">{{ object.remarks|default:' - ' }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="a_Modal" class="modal fade" role="dialog">
+    <div class="modal-dialog" style="max-width: 300px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Approver Description</h4>
+            </div>
+            <div class="modal-body" style="text-align: center">
+                <small>Approver Name:</small><br><mark class="text-warning" id="approver_name"></mark><br><br>
+                <small>Date Approved/Disapproved:</small><br><mark class="text-warning" id="approver_date"></mark>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+$(function(){
+    $('#response_history').html($('#response_history').text());
+
+    $('.amount').each(function(){
+        $(this).val(parseFloat($(this).val()).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+        console.log($(this).text())
+        $(this).text($(this).text().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+    });
+
+    $('.approver_icon').on('click', function(){
+        $('#approver_name').text($(this).data('approver'));
+        $('#approver_date').text($(this).data('date'));
+    });
+})
+</script>
+{% endblock page-content %}

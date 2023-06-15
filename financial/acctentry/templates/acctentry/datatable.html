@@ -1,0 +1,155 @@
+{% for temp in datatemp %}
+<tr class="trd_data" id="trd_data_{{ temp.id }}">
+{#    <td>{{ temp.item_counter }}</td>#}
+    <td>{{ forloop.counter }}</td>
+    <td style="border-right: 1px solid #e0e0e0">{{ temp.accountcode }}</td>
+    <td style="border-right: 1px solid #e0e0e0">{{ temp.chartofaccountdesc }}</td>
+    <td class="text-align-right warning" style="border-right: 1px solid #e0e0e0">{{ temp.debitamount }}</td>
+    <td class="text-align-right warning" style="border-right: 1px solid #e0e0e0">{{ temp.creditamount }}</td>
+    <td class="actionrow">
+        <a href="#_" class="detailedit" id="detailedit" data-id="{{ temp.id }}" data-chartid="{{ temp.chartofaccount }}"><i class="icon fa-pencil" aria-hidden="true"></i></a>&nbsp;&nbsp;
+        <a href="#_" class="detaildelete" id="detaildelete" data-id="{{ temp.id }}" data-chartid="{{ temp.chartofaccount }}"><i class="icon fa-remove" aria-hidden="true"></i></a>
+    </td>
+</tr>
+<tr>
+    {% if temp.accountnumber or temp.departmentname or temp.employeecode or temp.suppliercode or temp.customercode or temp.unitcode or temp.branchcode or temp.productcode or temp.inputvatcode or temp.outputvatcode or temp.vatcode or temp.wtaxcode or temp.ataxcode or temp.reftype or temp.refnum or temp.refdate %}
+        <td colspan="3" style="padding: 0px;">
+            <table class="table" id="breaktabledata">
+                <tr>
+                    <td width="5%"></td>
+                    {% if temp.accountnumber %}
+                    <td style="vertical-align: top"><small><b>Account no.</b></small><br>{{ temp.accountnumber|default:'' }} ({{ temp.bankaccountcode|default:'' }})</td>
+                    {% endif %}
+                    {% if temp.departmentname %}
+                    <td style="vertical-align: top"><small><b>Department name</b></small><br>{{ temp.departmentname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.employeecode %}
+                    <td id="tdtarget_E{{ temp.id }}" style="vertical-align: top" {% if temp.employeebreakstatus == 1 %} class="unbalancebreakdown" style="background-color:#f2dede" {% endif %}>
+                        <small><b>Employee</b></small><br>{% if temp.employeestatus == 'Y' %}
+{#                            <a href="#_"  data-target="#modal-row" data-backdrop="static" data-keyboard="false" data-toggle="modal" class="breakdown" data-id="{{ temp.id }}" data-chart="{{ temp.chartofaccount }}" data-type="E">{{ temp.employeecode|default:'' }} - {{ temp.employeename|default:'' }}</a>#}
+                            <a href="#_"  data-target="#modal-row" data-backdrop="static" data-keyboard="false" data-toggle="modal" class="breakdown" data-id="{{ temp.id }}" data-chart="{{ temp.chartofaccount }}" data-type="E">{{ temp.employeename|default:'' }}</a>
+                        {% else %}
+{#                            {{ temp.employeecode|default:'' }} - {{ temp.employeename|default:'' }}#}
+                            {{ temp.employeename|default:'' }}
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    {% if temp.suppliercode %}
+                    <td id="tdtarget_S{{ temp.id }}" style="vertical-align: top" {% if temp.supplierbreakstatus == 1 %} class="unbalancebreakdown" style="background-color:#f2dede" {% endif %}>
+                        <small><b>Supplier</b></small><br>{% if temp.supplierstatus == 'Y' %}
+{#                            <a href="#_"  data-target="#modal-row" data-backdrop="static" data-keyboard="false" data-toggle="modal" class="breakdown" data-id="{{ temp.id }}" data-chart="{{ temp.chartofaccount }}" data-type="S">{{ temp.suppliercode|default:'' }} - {{ temp.suppliername|default:'' }}</a>#}
+                            <a href="#_"  data-target="#modal-row" data-backdrop="static" data-keyboard="false" data-toggle="modal" class="breakdown" data-id="{{ temp.id }}" data-chart="{{ temp.chartofaccount }}" data-type="S">{{ temp.suppliername|default:'' }}</a>
+                        {% else %}
+{#                            {{ temp.suppliercode|default:'' }} - {{ temp.suppliername|default:'' }}#}
+                            {{ temp.suppliername|default:'' }}
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    {% if temp.customercode %}
+                    <td id="tdtarget_C{{ temp.id }}" style="vertical-align: top" {% if temp.customerbreakstatus == 1 %} class="unbalancebreakdown" style="background-color:#f2dede" {% endif %}>
+                        <small><b>Customer</b></small><br>{% if temp.customerstatus == 'Y' %}
+{#                            <a href="#_" data-target="#modal-row" data-backdrop="static" data-keyboard="false" data-toggle="modal" class="breakdown" data-id="{{ temp.id }}" data-chart="{{ temp.chartofaccount }}" data-type="C">{{ temp.customercode|default:'' }} - {{ temp.customername|default:'' }}</a>#}
+                            <a href="#_" data-target="#modal-row" data-backdrop="static" data-keyboard="false" data-toggle="modal" class="breakdown" data-id="{{ temp.id }}" data-chart="{{ temp.chartofaccount }}" data-type="C">{{ temp.customername|default:'' }}</a>
+                        {% else %}
+{#                            {{ temp.customercode|default:'' }} - {{ temp.customername|default:'' }}#}
+                            {{ temp.customername|default:'' }}
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    {% if temp.unitcode %}
+                    <td style="vertical-align: top"><small><b>Unit</b></small><br>{{ temp.unitname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.branchcode %}
+                    <td style="vertical-align: top"><small><b>Branch</b></small><br>{{ temp.branchname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.productcode %}
+                    <td style="vertical-align: top"><small><b>Product</b></small><br>{{ temp.productname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.inputvatcode %}
+                    <td style="vertical-align: top"><small><b>Input VAT</b></small><br>{{ temp.inputvatname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.outputvatcode %}
+                    <td style="vertical-align: top"><small><b>Output VAT</b></small><br>{{ temp.outputvatname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.vatcode %}
+                    <td style="vertical-align: top"><small><b>VAT</b></small><br>{{ temp.vatname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.wtaxcode %}
+                    <td style="vertical-align: top"><small><b>WTax</b></small><br>{{ temp.wtaxname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.ataxcode %}
+                    <td style="vertical-align: top"><small><b>ATax</b></small><br>{{ temp.ataxname|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.reftype %}
+                    <td style="vertical-align: top"><small><b>Ref. Type</b></small><br>{{ temp.reftype|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.refnum %}
+                    <td style="vertical-align: top"><small><b>Ref. Num.</b></small><br>{{ temp.refnum|default:'' }}</td>
+                    {% endif %}
+                    {% if temp.refdate %}
+                    <td style="vertical-align: top"><small><b>Ref. Date</b></small><br>{{ temp.refdate|default:'' }}</td>
+                    {% endif %}
+                    <td></td>
+                </tr>
+            </table>
+        </td>
+        <td colspan="3"></td>
+    {% endif %}
+</tr>
+{% endfor %}
+<script>
+    $(function () {
+        $('#total_debitamount').text("{{ datatemptotal.0.totaldebitamount|default_if_none:'0.00' }}");
+        $('#total_creditamount').text("{{ datatemptotal.0.totalcreditamount|default_if_none:'0.00' }}");
+    });
+
+    $(".breakdown").click(function(){
+        $("#breakdowndata").html('');
+        $.ajax({
+            url: "{% url 'acctentry:breakdownentry' %}",
+            type: "post",
+            data: {'csrfmiddlewaretoken': "{{csrf_token}}",
+                'detailid': $(this).data('id'),
+                'chartid': $(this).data('chart'),
+                'datatype': $(this).data('type'),
+                'secretkey': $("#secretkey").val(),
+                'table': '{{ tablebreakdowntemp }}',
+                'tablemain': '{{ tabledetailtemp }}'
+            },
+            success: function(response) {
+                $("#breakdowndata").html(response['breakdowndata']);
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    });
+
+
+    $('.detaildelete').click(function(){
+        var id = $(this).data('id');
+        var ans = confirm('Are you sure you want to delete this data?');
+
+        if(ans){
+            $.ajax({
+                url: "{% url 'acctentry:deletedetail' %}",
+                type: "post",
+                data: {'csrfmiddlewaretoken': "{{csrf_token}}",
+                    'id': id,
+                    'secretkey': $("#secretkey").val(),
+                    'table': '{{ tabledetailtemp }}'
+                },
+                success: function(response){
+                    $("#datatable").html(response['datatable']);
+
+                    $('#btn_detailcancel').trigger('click');
+                },
+                error: function(response){
+                    console.log(response);
+                }
+
+            });
+        }
+    });
+</script>
+

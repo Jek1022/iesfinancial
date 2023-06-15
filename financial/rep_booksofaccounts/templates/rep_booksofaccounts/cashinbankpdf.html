@@ -1,0 +1,27 @@
+{% extends 'reports/base_books.html' %}
+{% load humanize %}
+{% block extra_css %}
+    <style>
+        td{
+            vertical-align: top;
+        }
+    </style>
+{% endblock %}
+
+{% block main_content %}
+    <table>
+    {% for data in data_list %}
+        <tr>
+            <td width="15%" style="padding-left: 5px;">{{ data.bankaccount__code|default:'' }}</td>
+            <td width="55%">{{ data.bankaccount__bank__code|default:'' }} {{ data.bankaccount__bankaccounttype__code|default:'' }}{% if data.bankaccount__code %}A{% endif %}</td>
+            <td width="15%" class="right">{% if data.debitdifference > 0 %}{{ data.debitdifference|floatformat:2|intcomma }}{% endif %}</td>
+            <td width="15%" class="right">{% if data.creditdifference > 0 %}{{ data.creditdifference|floatformat:2|intcomma }}{% endif %}</td>
+        </tr>
+    {% endfor %}
+    <tr style="padding-top: 5px;">
+        <td colspan="2" class="center"><b>t o t a l</b></td>
+        <td width="15%" class="right"><b><u>{{ report_total.debitdifference__sum|floatformat:2|intcomma }}</u></b></td>
+        <td width="15%" class="right"><b><u>{{ report_total.creditdifference__sum|floatformat:2|intcomma }}</u></b></td>
+    </tr>
+    </table>
+{% endblock main_content %}

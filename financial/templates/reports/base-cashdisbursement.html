@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% load humanize %}
+    {% load pdf_filters %}
+    <meta charset="UTF-8">
+    <title>{{ rc_headtitle }}</title>
+    <style>
+        @page {
+            size: {{ rc_pagesize }} {{ rc_orientation }};
+            {% if report == 'd' %}
+                @frame header_frame {
+                    -pdf-frame-content: header_content;
+                    left: 0.5cm;
+                    right: 0.5cm;
+                    top: 0.5cm;
+                    height: 3.4cm;
+                }
+            {% else %}
+                @frame header_frame {
+                    -pdf-frame-content: header_content;
+                    left: 0.5cm;
+                    right: 0.5cm;
+                    top: 0.5cm;
+                    height: 2.4cm;
+                }
+            {% endif  %}
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 0.5cm;
+                right: 0.5cm;
+                bottom: -2cm;
+                height: 3.5cm;
+            }
+            {% if rc_orientation == 'landscape' and rc_pagesize == 'letter' %}
+                {% if rc_fontsize == '10px' and report == 'd' %}
+                    @frame content_frame {
+                        top: 3.5cm; left: 0.5cm;
+                        width: 27cm;
+                        height: 16.4cm;
+                    }
+                {% else %}
+                    @frame content_frame {
+                        top: 3.3cm; left: 0.5cm;
+                        width: 27cm;
+                        height: 16.4cm;
+                    }
+                {% endif %}
+            {% elif rc_orientation == 'portrait' and rc_pagesize == 'letter'  %}
+                {% if rc_fontsize == '10px' and report == 'd' %}
+                    @frame content_frame {
+                        top: 3.8cm; left: 0.5cm;
+                        width: 20.5cm;
+                        height: 22.2cm;
+                    }
+                {% else %}
+                    @frame content_frame {
+                        top: 3.3cm; left: 0.5cm;
+                        width: 20.5cm;
+                        height: 22.5cm;
+                    }
+                {% endif %}
+            {% endif %}
+        }
+        body{
+            font-size: {{ rc_fontsize }};
+            font-family: {{ rc_font }};
+        }
+        .title{
+            font-size: 100%;
+            font-weight: bold;
+        }
+        .center{
+            text-align: center;
+        }
+        .left{
+            text-align: left;
+        }
+        .right{
+            text-align: right;
+        }
+        #footer_right{
+            margin-left: 30px;
+            width: 600px;
+        }
+    </style>
+    {% block extra_css %}{% endblock extra_css %}
+</head>
+<body>
+<div id="header_content">
+    <table>
+        <tr>
+            <td class="left" style="font-weight: bold">
+                {{ rc_param.description|upper }}<br>
+                {{ rc_headtitle }}<br>
+                ({{ rc_title }})<br>
+                for the period of {{ datefrom }} to {{ dateto }}
+            </td>
+            <td class="right" style="vertical-align: top">
+                run date: {{ datenow }}<br>
+                page <pdf:pagenumber /> of <pdf:pagecount />
+            </td>
+        </tr>
+    </table>
+    {% block main_content_header %}{% endblock %}
+</div>
+
+<div id="footer_content">
+    {% block extra_footer_content %}{% endblock extra_footer_content %}
+    <b>Checked by: _________________<br>
+    Date checked: ________________</b>
+</div>
+
+{% block main_content %}{% endblock %}
+</body>
+</html>

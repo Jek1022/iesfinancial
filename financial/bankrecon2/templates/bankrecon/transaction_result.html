@@ -1,0 +1,2117 @@
+{% load humanize %}
+{% load mathfilters %}
+{% load custom %}
+<br>
+{% block extra_css %}
+    <style>
+        .matched {
+                border-left: #8bc34a 4px solid;
+        }
+        input[type=search]::-webkit-search-cancel-button {
+            -webkit-appearance: searchfield-cancel-button;
+        }
+        .pointer {
+            cursor: pointer;
+        }
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    
+        input[type=number], 
+        .amount-right{
+            text-align: right;
+        }
+    </style>
+{% endblock extra_css %}
+
+<div class="col-md-12 col-sm-12 col-xs-12" id="bankrecon_result">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-3">
+                    
+                </div>
+                <div class="col-sm-3"></div>
+                <div class="col-sm-3 text-right" title="Full screen">
+                    <i class="fa fa-arrows-alt pointer" aria-hidden="true" id="full_screen"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-wrap">
+        <h3>PHILIPPINE DAILY INQUIRER, INC.</h3>
+        <h4>BANK RECONCILIATION TRANSACTION LISTING </h4>
+        <h4 style="text-transform:uppercase">AS OF {{ transdfrom }} to {{ transdto }}</h4>
+        <br>
+        <!-- <div class="row" style="margin-bottom: 9px;" id="search_row">
+            <div class="col-md-3">
+                <input type="search" class="form-control" id="booksearch" placeholder="Type to search..." style="margin-right: 5px;" />
+            </div>
+            <div class="col-md-3"></div>
+            <div class="col-md-3">
+                <input type="search" class="form-control" id="banksearch" placeholder="Type to search..." style="margin-right: 5px;" />
+            </div>
+            <div class="col-md-3">
+            </div>
+            
+        </div> -->
+        <div class="row">
+            <div class="col-md-6 text-center"><h4>Book</h4></div>
+            <div class="col-md-6 text-center"><h4>Bank</h4></div>
+        </div>
+        <br/>
+        <div class="row" style="margin-bottom: 9px;" id="search_row">
+            <div class="col-md-12">
+                <div class="col-md-6">
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="book_date_from">Date From:</label>
+                        <input type="text" class="form-control" id="book_date_from" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="book_date_to">Date To:</label>
+                        <input type="text" class="form-control" id="book_date_to" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-1" style="padding: 3px;">
+                        <label class="control-label small" for="book_type">Type:</label>
+                        <input type="text" class="form-control" id="book_type" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="book_refno">Ref. No.:</label>
+                        <input type="text" class="form-control" id="book_refno" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="book_checknumber">Check No.:</label>
+                        <input type="text" class="form-control" id="book_checknumber" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="book_amount">Amount:</label>
+                        <input type="text" class="form-control" id="book_amount" style="padding: 3px 6px;" />
+                        <input type="hidden" id="filter_balancecode" />
+                    </div>
+                    <div class="form-group col-md-1" style="padding: 3px;">
+                        <a class="btn btn-info waves-effect waves-dark" id="find_book" style="margin-top: 25px;">
+                            <i class="icon fa-search" aria-hidden="true"></i>
+                        </a>                        
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="bank_date_from">Date From:</label>
+                        <input type="text" class="form-control datepickerfrom" id="bank_date_from" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="bank_date_to">Date To:</label>
+                        <input type="text" class="form-control datepickerto" id="bank_date_to" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-1" style="padding: 3px;">
+                        <label class="control-label small" for="bank_type">Type:</label>
+                        <input type="text" class="form-control" id="bank_type" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="bank_refno">Ref. No.:</label>
+                        <input type="text" class="form-control" id="bank_refno" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="bank_checknumber">Check No.:</label>
+                        <input type="text" class="form-control" id="bank_checknumber" style="padding: 3px 6px;" />
+                    </div>
+                    <div class="form-group col-md-2" style="padding: 3px;">
+                        <label class="control-label small" for="bank_amount">Amount:</label>
+                        <input type="text" class="form-control" id="bank_amount" style="padding: 3px 6px;" />
+                        <input type="hidden" id="filter_bank_balancecode" />
+                    </div>
+                    <div class="form-group col-md-1" style="padding: 3px;">
+                        <a class="btn btn-info waves-effect waves-dark" id="find_bank" style="margin-top: 25px;">
+                            <i class="icon fa-search" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <button class="btn btn-default waves-effect waves-dark" id="batch_posting_book" title="Enter Ref. No. by batch in Book." data-toggle="modal" data-target="#bookBatchPostingModal">
+                                <i class="fa fa-clipboard" aria-hidden="true"></i>&nbsp;&nbsp;Batch Referencing
+                            </button>
+                            <button class="btn btn-default waves-effect waves-dark" id="save_posting_book" title="All entered Ref. No. will be saved.">
+                                <i class="fa fa-save" aria-hidden="true"></i>&nbsp;&nbsp;Save
+                            </button>
+                            <button class="btn btn-default waves-effect waves-dark" id="erase_book" title="All displayed Ref. No. will be erased.">
+                                <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear
+                            </button>
+                        </div>
+                        <div class="col-sm-2 text-left">
+                            
+                        </div>
+                        <div class="col-sm-4 text-center">
+                            <a class="waves-effect waves-dark" id="copy_book" title="Copy filters from book to bank." style="margin-top: 8px;">
+                                <i class="fa fa-clone" aria-hidden="true"></i>&nbsp;&nbsp;Copy
+                            </a>
+                            &nbsp;&nbsp;&nbsp;
+                            <a class="waves-effect waves-dark" id="reset_book" title="Clear filters and show all data." style="margin-top: 8px;">
+                                <i class="fa fa-repeat" aria-hidden="true"></i>&nbsp;&nbsp;Reset
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <a class="btn btn-default waves-effect waves-dark" id="batch_posting_bank" title="Enter Ref. No. by batch in Bank." data-toggle="modal" data-target="#bankBatchPostingModal">
+                                <i class="fa fa-clipboard" aria-hidden="true"></i>&nbsp;&nbsp;Batch Referencing
+                            </a>
+                            <a class="btn btn-default waves-effect waves-dark" id="save_posting_bank" title="All entered Ref. No. will be saved.">
+                                <i class="fa fa-save" aria-hidden="true"></i>&nbsp;&nbsp;Save
+                            </a>
+                            <a class="btn btn-default waves-effect waves-dark" id="erase_bank" title="All displayed Ref. No. will be erased.">
+                                <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear
+                            </a>
+                        </div>
+                        <div class="col-sm-2 text-left">
+                            
+                        </div>
+                        <div class="col-sm-4 text-center">
+                            <a class="waves-effect waves-dark" id="copy_bank" title="Copy filters from bank to book." style="margin-top: 8px;">
+                                <i class="fa fa-clone" aria-hidden="true"></i>&nbsp;&nbsp;Copy
+                            </a>
+                            &nbsp;&nbsp;&nbsp;
+                            <a class="waves-effect waves-dark" id="reset_bank" title="Clear filters and show all data." style="margin-top: 8px;">
+                                <i class="fa fa-repeat" aria-hidden="true"></i>&nbsp;&nbsp;Reset
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+        <!-- for peso -->
+        <div class="row" id="local_currency">
+             <!-- pdi_table -->
+            <div class="col-md-6" style="min-height: 500px; max-height: 600px; overflow: auto;">
+                <table class="table table-striped" id="pdi_table">
+                    <thead style="position: sticky; top: 0; z-index: 1; background: ghostwhite; border: none;">
+                        <tr class="border-0" id="pdi_table_header">
+                            <th style="color:#424242"></th>
+                            <th style="color:#424242">Date</th>
+                            <th style="color:#424242">Doc. Type</th>
+                            <th style="color:#424242">Doc. No.</th>
+                            <th style="color:#424242">Particulars</th>
+                            <th style="color:#424242">Debit</th>
+                            <th style="color:#424242">Credit</th>
+                            <th style="color:#424242">Ref. No.</th>
+                            <th style="color:#424242">Check No.</th>
+                        </tr>
+                    </thead>
+                    {% if record.is_currency_peso %}
+                    <tbody>
+                        
+                        {% for data in pdi_data %}
+                            {% if data.balancecode == 'subtotal' %}
+                                <tr class="subtotal" style="background-color: papayawhip; color: darkred; font-style: italic; font-weight: 500;">
+                                    <td>{{ data.count }}</td>
+                                    <td>{{ data.date|date:'m/d/Y' }}</td>
+                                    <td>{{ data.type }}</td>
+                                    <td class="bg-blue-200"></td>
+                                    <td style="letter-spacing: 5px;" class="text-center">sub-total</td>
+                                    <td class="text-right">{{ data.debit_amount|floatformat:2|intcomma }}</td>
+                                    <td class="text-right">{{ data.credit_amount|floatformat:2|intcomma }}</td>
+                                    <td class="bg-blue-200"></td>
+                                    <td class="bg-blue-200"></td>
+                                </tr>
+                            {% else %}
+                                <tr class="row_{{ data.id }}">
+                                    <td class="text-left counter"></td>
+                                    <td class="text-left pointer document-date">{{ data.document_date|date:"m/d/Y" }}</td>
+                                    <td class="text-left pointer document-type">{{ data.document_type }}</td>
+                                    <td class="text-left document-num">{{ data.document_num }}</td>
+                                    <td class="text-left particulars">{{ data.particulars }}</td>
+                                    {% if data.balancecode == 'D' %}
+                                        <td class="text-right pointer bookdebitamount">{{ data.amount|floatformat:2|intcomma }}</td>
+                                        <td class="text-right pointer bookcreditamount">0.00</td>
+                                    {% elif data.balancecode == 'C' %}
+                                        <td class="text-right pointer bookdebitamount">0.00</td>
+                                        <td class="text-right pointer bookcreditamount">{{ data.amount|floatformat:2|intcomma }}</td>
+                                    {% else %}
+                                        <td class="text-left"></td>
+                                        <td class="text-left"></td>
+                                    {% endif %}
+                                    <td class="text-center">
+                                        <input type="hidden" name="book_data_id" value="{{ data.id }}" />
+                                        {% if data.reference_number %}
+                                            <input type="text" class="input-sm book-refno-input" name="book_refno_input" value="{{ data.reference_number}}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                        {% else %}
+                                            <input type="text" class="input-sm book-refno-input" name="book_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                        {% endif %}
+                                    </td>
+                                    {% if data.document_checknum %}
+                                        <td class="text-left pointer document-checknum">{{ data.document_checknum }}</td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                        <!-- POSTED ROWS -->
+                        {% for posted in posted_with_subtotal %}
+                            {% if posted.balancecode == 'subtotal' %}
+                                <tr class="subtotal" style="background-color: papayawhip; color: darkred; font-style: italic; font-weight: 500;">
+                                    <td>{{ posted.count }}</td>
+                                    <td class="bg-blue-200"></td>
+                                    <td class="bg-blue-200"></td>
+                                    <td class="bg-blue-200"></td>
+                                    <td style="letter-spacing: 5px;" class="text-center">sub-total</td>
+                                    <td class="text-right">{{ posted.debit_amount|floatformat:2|intcomma }}</td>
+                                    <td class="text-right">{{ posted.credit_amount|floatformat:2|intcomma }}</td>
+                                    <td class="bg-blue-200"></td>
+                                    <td class="bg-blue-200"></td>
+                                </tr>
+                            {% else %}
+                                <tr class="row_{{ posted.id }}">
+                                    <td class="text-left counter"></td>
+                                    <td class="text-left pointer document-date">{{ posted.document_date|date:"m/d/Y" }}</td>
+                                    <td class="text-left pointer document-type">{{ posted.document_type }}</td>
+                                    <td class="text-left document-num">{{ posted.document_num }}</td>
+                                    <td class="text-left particulars">{{ posted.particulars }}</td>
+                                    {% if posted.balancecode == 'D' %}
+                                        <td class="text-right pointer bookdebitamount">{{ posted.amount|floatformat:2|intcomma }}</td>
+                                        <td class="text-right pointer bookcreditamount">0.00</td>
+                                    {% elif posted.balancecode == 'C' %}
+                                        <td class="text-right pointer bookdebitamount">0.00</td>
+                                        <td class="text-right pointer bookcreditamount">{{ posted.amount|floatformat:2|intcomma }}</td>
+                                    {% else %}
+                                        <td class="text-left"></td>
+                                        <td class="text-left"></td>
+                                    {% endif %}
+                                    <td class="text-center">
+                                        <input type="hidden" name="book_data_id" value="{{ posted.id }}" />
+                                        {% if posted.reference_number %}
+                                            <input type="text" class="input-sm book-refno-input" name="book_refno_input" value="{{ posted.reference_number }}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                        {% else %}
+                                            <input type="text" class="input-sm book-refno-input" name="book_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                        {% endif %}
+                                    </td>
+                                    {% if posted.document_checknum %}
+                                        <td class="text-left document-checknum">{{ posted.document_checknum }}</td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                    {% endif %}
+                </table>
+            </div>
+            <!-- bank_table -->
+            <div class="col-md-6" style="min-height: 500px; max-height: 600px; overflow: auto;">
+                <table class="table table-striped" id="bank_table">
+                    <thead style="position: sticky; top: 0; left: 0; z-index: 1; background: ghostwhite;">
+                        <tr class="border-0" id="bank_table_header">
+                            <th style="color:#424242;"></th>
+                            <th style="color:#424242">Date</th>
+                            <th style="color:#424242">Doc. Type</th>
+                            <th style="color:#424242">Doc. No.</th>
+                            <th style="color:#424242">Particulars</th>
+                            <th style="color:#424242">Debit</th>
+                            <th style="color:#424242">Credit</th>
+                            <th style="color:#424242">Ref. No.</th>
+                            <th style="color:#424242">Check No.</th>
+                        </tr>
+                    </thead>
+                    {% if record.is_currency_peso %}
+                        <tbody>
+                            {% for data in bank_data %}
+                                {% if data.transactioncode == 'subtotal' %}
+                                    <tr class="subtotal" style="background-color: papayawhip; color: darkred; font-style: italic; font-weight: 500;">
+                                        <td>{{ data.count }}</td>
+                                        <td>{{ data.date|date:'m/d/Y' }}</td>
+                                        <td class="bg-blue-200"></td>
+                                        <td class="bg-blue-200"></td>
+                                        <td style="letter-spacing: 5px;" class="text-center">sub-total</td>
+                                        <td class="text-right">{{ data.debit_amount|floatformat:2|intcomma }}</td>
+                                        <td class="text-right">{{ data.credit_amount|floatformat:2|intcomma }}</td>
+                                        <td class="bg-blue-200"></td>
+                                        <td class="bg-blue-200"></td>
+                                    </tr>
+                                {% else %}
+                                    <tr id="row_{{ forloop.counter }}">
+                                        <td class="text-left bank-row-count"></td>
+                                        <td class="text-left pointer bank-transaction-date">{{ data.transaction_date|date:"m/d/Y" }}</td>
+                                        <td class="text-left pointer bank-document-type"></td>
+                                        <td></td>
+                                        {% if data.branch %}
+                                            <td class="text-left bank-particulars">{{ data.particulars }} [{{ data.branch }}] </td>
+                                        {% else %}
+                                            <td class="text-left bank-particulars">{{ data.particulars }}</td>
+                                        {% endif %}
+                                        <td class="text-right pointer bankdebitamount">{{ data.debit_amount|floatformat:2|intcomma }}</td>
+                                        <td class="text-right pointer bankcreditamount">{{ data.credit_amount|floatformat:2|intcomma }}</td>
+                                        <td class="text-center">
+                                            <input type="hidden" name="bank_data_id" value="{{ data.id }}" />
+                                            {% if data.reference_number %}
+                                                <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" id="input_{{ forloop.counter }}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                            {% else %}
+                                                <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                            {% endif %}
+                                        </td>
+                                        {% if data.checknumber %}
+                                            <td class="text-left pointer bank-checknumber">{{ data.checknumber }}</td>
+                                        {% else %}
+                                            <td></td>
+                                        {% endif %}
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                            <!-- POSTED ROWS -->
+                            {% for posted in bank_posted_with_subtotal %}
+                                {% if posted.transactioncode == 'subtotal' %}
+                                    <tr class="subtotal" style="background-color: papayawhip; color: darkred; font-style: italic; font-weight: 500;">
+                                        <td>{{ posted.count }}</td>
+                                        <td class="bg-blue-200"></td>
+                                        <td class="bg-blue-200"></td>
+                                        <td class="bg-blue-200"></td>
+                                        <td style="letter-spacing: 5px;" class="text-center">sub-total</td>
+                                        <td class="text-right">{{ posted.debit_amount|floatformat:2|intcomma }}</td>
+                                        <td class="text-right">{{ posted.credit_amount|floatformat:2|intcomma }}</td>
+                                        <td class="bg-blue-200"></td>
+                                        <td class="bg-blue-200"></td>
+                                    </tr>
+                                {% else %}
+                                    <tr class="row_{{ posted.id }}">
+                                        <td class="text-left bank-row-count"></td>
+                                        <td class="text-left bank-transaction-date">{{ posted.transaction_date|date:"m/d/Y" }}</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="text-left particulars">{{ posted.particulars }}</td>
+                                        <td class="text-right bankdebitamount">{{ posted.debit_amount|floatformat:2|intcomma }}</td>
+                                        <td class="text-right bankcreditamount">{{ posted.credit_amount|floatformat:2|intcomma }}</td>
+                                        <td class="text-center">
+                                            <input type="hidden" name="bank_data_id" value="{{ posted.id }}" />
+                                            {% if posted.reference_number %}
+                                                <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" value="{{ posted.reference_number }}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                            {% else %}
+                                                <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                            {% endif %}
+                                        </td>
+                                        {% if posted.checknumber %}
+                                            <td class="text-left bank-checknumber">{{ posted.checknumber }}</td>
+                                        {% else %}
+                                            <td></td>
+                                        {% endif %}
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+
+                        </tbody>
+                    {% endif %}
+
+                    {% if not bank_data and not bank_posted_with_subtotal%}
+
+                        <a href="{% url 'bankrecon:upload' %}" target="_blank" class="btn btn-primary waves-effect waves-dark" style="position:absolute; margin: 30% 43%;">
+                            <i class="icon fa-upload" aria-hidden="true"></i>&nbsp;&nbsp;Upload
+                        </a>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Foreign currencies -->
+        <div class="row" id="usd_currency" style="display: none;">
+            <div class="col-md-6" style="min-height: 500px; max-height: 600px; overflow: auto;">
+                <table class="table table-striped" id="pdi_fxtable">
+                    <thead style="position: sticky; top: 0; z-index: 1; background: ghostwhite; border: none;">
+                        <tr class="border-0" id="pdi_table_header">
+                            <th style="color:#424242"></th>
+                            <th style="color:#424242">Date</th>
+                            <th style="color:#424242">Doc. Type</th>
+                            <th style="color:#424242">Doc. No.</th>
+                            <th style="color:#424242">Particulars</th>
+                            <th style="color:#424242">Debit (<span class="currency_longname"></span>)</th>
+                            <th style="color:#424242">Credit (<span class="currency_longname"></span>)</th>
+                            <th style="color:#424242">Debit (PHP)</th>
+                            <th style="color:#424242">Credit (PHP)</th>
+                            <th style="color:#424242">Ref. No.</th>
+                            <th style="color:#424242">Check No.</th>
+                        </tr>
+                    </thead>
+                    {% if record.is_currency_peso == 0 %}
+                    <tbody>
+                        {% for data in pdi_data %}
+                            <tr class="row_{{ data.id }}" id="{{ data.id }}">
+                                <td class="text-left counter"></td>
+                                <td class="text-left">{{ data.document_date|date:"m/d/Y" }}</td>
+                                <td class="text-left">{{ data.document_type }}</td>
+                                <td class="text-left">{{ data.document_num }}</td>
+                                <td class="text-left">{{ data.particulars }}</td>
+
+                                {% if data.fxamount and data.balancecode == 'D' %}
+                                    <td class="text-right bookdebit_dollar">{{ data.fxamount|floatformat:2|intcomma }}</td>
+                                {% elif data.balancecode == 'D' %}
+                                    <td class="text-right bookdebit_dollar">
+                                        <button class="btn btn-info btn-sm fxrate-btn" title="Enter FX rate" data-toggle='modal' id="posting" data-target='#fxrateModal'>
+                                            <i class="icon fa-exchange"> </i>&nbsp;&nbsp;&nbsp;Enter FX Rate
+                                        </button>
+                                    </td>
+                                {% else %}
+                                    <td class="text-right bookdebit_dollar">0.00</td>
+                                {% endif %}
+
+                                {% if data.fxamount and data.balancecode == 'C' %}
+                                    <td class="text-right bookcredit_dollar">{{ data.fxamount|floatformat:2|intcomma }}</td>
+                                {% elif data.balancecode == 'C' %}
+                                    <td class="text-right bookcredit_dollar">
+                                        <button class="btn btn-info btn-sm fxrate-btn" title="Enter FX rate" data-toggle='modal' id="posting" data-target='#fxrateModal'>
+                                            <i class="icon fa-exchange"> </i>&nbsp;&nbsp;&nbsp;Enter FX Rate
+                                        </button>
+                                    </td>
+                                {% else %}
+                                    <td class="text-right bookcredit_dollar">0.00</td>
+                                {% endif %}
+
+                                {% if data.balancecode == 'D' %}
+                                    <td class="text-right pointer bookdebitamount" >{{ data.amount|floatformat:2|intcomma }}</td>
+                                    <td class="text-right pointer bookcreditamount" >0.00</td>
+                                {% elif data.balancecode == 'C' %}
+                                    <td class="text-right pointer bookdebitamount" >0.00</td>
+                                    <td class="text-right pointer bookcreditamount" >{{ data.amount|floatformat:2|intcomma }}</td>
+                                {% else %}
+                                    <td class="text-right">0.00</td>
+                                    <td class="text-right">0.00</td>
+                                {% endif %}
+                                <td class="text-center">
+                                    <input type="hidden" name="book_data_id" value="{{ data.id }}" />
+                                    {% if data.reference_number %}
+                                        <input type="text" class="input-sm book-refno-input" name="book_refno_input" value="{{ data.reference_number}}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                    {% else %}
+                                        <input type="text" class="input-sm book-refno-input" name="book_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                    {% endif %}
+                                </td>
+                                {% if data.document_checknum %}
+                                    <td class="text-left pointer document-checknum">{{ data.document_checknum }}</td>
+                                {% else %}
+                                    <td></td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% endif %}
+                </table>
+            </div>
+            
+            <div class="col-md-6" style="min-height: 500px; max-height: 600px; overflow: auto;">
+                <table class="table table-striped" id="bank_fxtable">
+                    <thead style="position: sticky; top: 0; left: 0; z-index: 1; background: ghostwhite;">
+                        <tr class="border-0" id="bank_table_header">
+                            <th style="color:#424242;"></th>
+                            <th style="color:#424242">Date</th>
+                            <th style="color:#424242">Doc. Type</th>
+                            <th style="color:#424242">Doc. No.</th>
+                            <th style="color:#424242">Particulars</th>
+                            <th style="color:#424242">Debit (<span class="currency_longname"></span>)</th>
+                            <th style="color:#424242">Credit (<span class="currency_longname"></span>)</th>
+                            <th style="color:#424242">Ref. No.</th>
+                            <th style="color:#424242">Check No.</th>
+                        </tr>
+                    </thead>
+                    {% if record.is_currency_peso == 0 %}
+                        <tbody>
+                        
+                        {% for data in bank_data %}
+
+                            <tr class="none" id="row_{{ forloop.counter }}">
+                                <td class="text-left"></td>
+                                <td class="text-left">{{ data.transaction_date }}</td>
+                                <td class="text-left"></td>
+                                <td class="text-left"></td>
+                                <td class="text-left">{{ data.particulars }}</td>
+                                <td class="text-right pointer bankdebit_dollar">{{ data.debit_amount|floatformat:2|intcomma }}</td>
+                                <td class="text-right pointer bankcredit_dollar">{{ data.credit_amount|floatformat:2|intcomma }}</td>
+                                <td class="text-center">
+                                    <input type="hidden" name="bank_data_id" value="{{ data.id }}" />
+                                    {% if data.reference_number %}
+                                        <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" id="input_{{ forloop.counter }}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                    {% else %}
+                                        <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                    {% endif %}
+                                </td>
+                                {% if data.checknumber %}
+                                    <td class="text-left pointer bank-checknumber">{{ data.checknumber }}</td>
+                                {% else %}
+                                    <td></td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    {% endif %}
+
+                    {% if not bank_data %}
+                        <a href="{% url 'bankrecon:upload' %}" target="_blank" class="btn btn-primary waves-effect waves-dark" style="position:absolute; margin: 30% 43%;">
+                            <i class="icon fa-upload" aria-hidden="true"></i>&nbsp;&nbsp;Upload
+                        </a>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        <!-- END OF USD ROW -->
+    </div>
+    <div class="col-md-12 col-sm-12 col-xs-12" style="margin-top: -45px;">
+        <div class="col-md-6 text-right">
+            <div class="col-md-8">
+                Debit Total: <strong id="bookdebit_total"><span class="currency-symbol">&#8369;</span>{{ record.pdidebit_total|floatformat:2|intcomma }}</strong>
+            </div>
+            <div class="col-md-4">
+                Credit Total: <strong id="bookcredit_total"><span class="currency-symbol">&#8369;</span>{{ record.pdicredit_total|floatformat:2|intcomma }}</strong>
+            </div>
+        </div>
+        <div class="col-md-6 text-right">
+            <div class="col-md-8">
+                Debit Total: <strong id="bankdebit_total"><span class="currency-symbol">&#8369;</span>{{ record.bankdebit_total|floatformat:2|intcomma }}</strong>
+            </div>
+            <div class="col-md-4">
+                Credit Total: <strong id="bankcredit_total"><span class="currency-symbol">&#8369;</span>{{ record.bankcredit_total|floatformat:2|intcomma }}</strong>
+            </div>
+        </div>
+    </div>
+    <br>
+    <!-- <div class="col-md-12 col-sm-12 col-xs-12" style="border-top: #424242 1px dashed; padding: 4px;">
+        <div class="d-flex justify-content-between">
+            <div class="col-md-4 text-left">
+                {% if record.pdi_data_len > 1 %}
+                    <i class="small">** Total of transactions processed: <b id="pdi_total">{{ record.pdi_data_len }}</b> **</i>
+                {% else %}
+                    <i class="small">** Total of transaction processed: <b id="pdi_total">{{ record.pdi_data_len }}</b> **</i>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge bg-light-green-500" id="badge-matched"></span>Matched:
+                    </li>
+                
+                    <li class="list-group-item">
+                        <span class="badge bg-red-400" id="badge-unmatched"></span>Unmatched:
+                    </li>
+                    
+                    <br>
+                </ul>
+            </div>
+            <div class="col-md-4 text-right">
+                {% if record.bank_data_len > 1 %}
+                    <i class="small">** Total of transactions processed: <b id="bank_total">{{ record.bank_data_len }}</b> **</i>
+                {% else %}
+                    <i class="small">** Total of transaction processed: <b id="bank_total">{{ record.bank_data_len }}</b> **</i>
+                {% endif %}
+            </div>
+            <br>
+        </div>
+    </div> -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="col-md-6">
+                <!-- <a class="btn btn-primary waves-effect waves-dark" id="matched_rows" style="margin-top: 22px;">
+                    <i class="icon fa-th-list" aria-hidden="true"></i>&nbsp;&nbsp;Show Matched Rows
+                </a>
+                <a class="btn btn-primary waves-effect waves-dark" id="unmatched_rows" style="margin-top: 22px;">
+                    <i class="icon fa-th-list" aria-hidden="true"></i>&nbsp;&nbsp;Show Unmatched Rows
+                </a>
+                <a class="btn btn-primary waves-effect waves-dark" id="all_rows" style="margin-top: 22px;">
+                    <i class="icon fa-th-list" aria-hidden="true"></i>&nbsp;&nbsp;Show All Rows
+                </a>
+                <a class="btn btn-primary waves-effect waves-dark" id="multiple_pairs" style="margin-top: 22px;">
+                    <i class="icon fa-th-list" aria-hidden="true"></i>&nbsp;&nbsp;Show Multiple Pairs
+                </a> -->
+            </div>
+            <div class="col-md-6 text-right">
+                <form action="{% url 'bankrecon:reportxls' %}" method="POST" id="form_report" target="_blank" >
+                    {% csrf_token %}
+                    <input type="hidden" name="report_bank_account" id="report_bank_account"  />
+                    <input type="hidden" name="report_date_from" id="report_date_from" />
+                    <input type="hidden" name="report_date_to" id="report_date_to" />
+                    <input type="hidden" name="report_currency_details" id="report_currency_details" />
+                    <input type="hidden" name="report_book_data" id="report_book_data" />
+                    <input type="hidden" name="report_bank_data" id="report_bank_data" />
+
+                    <input type="hidden" name="report_bookdebit_total" id="report_bookdebit_total" />
+                    <input type="hidden" name="report_bookcredit_total" id="report_bookcredit_total" />
+                    <input type="hidden" name="report_bankdebit_total" id="report_bankdebit_total" />
+                    <input type="hidden" name="report_bankcredit_total" id="report_bankcredit_total" />
+
+                    <button type="button" id="get_xls" class="btn btn-info btn-sm waves-effect waves-light" style="margin-top: 22px;">
+                        <i class="icon fa-file-excel-o" aria-hidden="true"></i>&nbsp; XLS
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="clearfix"></div>
+<div id="fxrateModal" class="modal fade" role="dialog">
+    <div class="modal-dialog" style="width: 450px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Foreign Exchange Rate</h4>
+            </div>
+            <div class="modal-body" style="overflow:hidden;">
+                <br>
+                <div class="row">
+                    <div class="form-group col-md-12 extra-field">
+                        <div class="form-group col-md-8">
+                            <label class="control-label" for="fxmodal_doctype">Document Type:</label>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <span id="fxmodal_doctype"></span>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label class="control-label" for="fxmodal_docno">Document No.:</label>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <span id="fxmodal_docno"></span>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label class="control-label" for="fxmodal_date">Date:</label>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <span id="fxmodal_date"></span>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label class="control-label" for="fxmodal_phpamount">Amount (PHP):</label>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <span id="fxmodal_phpamount"></span>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label class="control-label" for="fxmodal_refno">Ref. No.:</label>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <span id="fxmodal_refno"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <br>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <input type="hidden" id="id_bookid" />
+                        <!-- <input type="hidden" value="" id="id_" /> -->
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-4">
+                                <label class="control-label" for="id_currency">Currency:</label>
+                            </div>
+                            <div class="form-group col-md-8">
+                                <input type="text" class="form-control input-sm"
+                                       readonly="readonly" style="padding: 5px 10px" id="id_currency" name="currency">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-4">
+                                <label class="control-label" for="id_fxrate">FX Rate:</label>
+                            </div>
+                            <div class="form-group col-md-8">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="basic-addon1">₱</span>
+                                    <input type="number" class="form-control input-sm" name="fxrate" id="id_fxrate" step="0.00001" aria-describedby="basic-addon1">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-4">
+                                <label class="control-label" for="id_fxamount">FX Amount:</label>
+                            </div>
+                            <div class="form-group col-md-8">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="basic-addon2"></span>
+                                    <input type="text" class="form-control input-sm amount-right" name="fxamount" id="id_fxamount" aria-describedby="basic-addon2">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-4">
+                                
+                            </div>
+                            <div class="form-group col-md-8">
+                                <div class="text-right">
+                                    <span id="state_findingmatch" style="display: none;"><i class="fa fa-spinner" aria-hidden="true"></i> Finding match...</span>
+                                    <span class="text-success" id="state_matchfound" style="display: none;"><i class="fa fa-check" aria-hidden="true"></i> Match found!</span>
+                                    <span id="state_suggestions" style="display: none;"> </span>
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        <br>
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-6">
+                                <label class="control-label" for="suggestions_list" id="suggestions_label"> </label>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <ul class="list-group text-right" id="suggestions_list">
+                                    
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div align="center">
+                    <button type="button" class="btn btn-sm btn-info" id="fx_save" title="This will be saved permanently.">Save</button>
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="bookBatchPostingModal" class="modal fade" role="dialog">
+    <div class="modal-dialog" style="width: 450px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Book Batch Referencing</h4>
+            </div>
+            <div class="modal-body" style="overflow:hidden;">
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-4">
+                                <label class="control-label" for="book_batch_refno">Ref. No.:</label>
+                            </div>
+                            <div class="form-group col-md-8">
+                                <input type="text" class="form-control input-sm"
+                                       style="padding: 5px 10px" id="book_batch_refno" name="book_batch_refno">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div align="center">
+                    <button type="button" class="btn btn-sm btn-info" id="book_batch_refno_post" title="Enter Ref. No. to all the displayed book data.">Confirm</button>
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="bankBatchPostingModal" class="modal fade" role="dialog">
+    <div class="modal-dialog" style="width: 450px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Bank Batch Referencing</h4>
+            </div>
+            <div class="modal-body" style="overflow:hidden;">
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-4">
+                                <label class="control-label" for="book_batch_refno">Ref. No.:</label>
+                            </div>
+                            <div class="form-group col-md-8">
+                                <input type="text" class="form-control input-sm"
+                                       style="padding: 5px 10px" id="bank_batch_refno" name="bank_batch_refno">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div align="center">
+                    <button type="button" class="btn btn-sm btn-info" id="bank_batch_refno_save" title="Enter Ref. No. to all the displayed bank data.">Confirm</button>
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% block extra_js %}
+    <script type="text/javascript">
+    $(function(){
+        var currency_details = {};
+        if($('#bankaccount').val() === '5'){
+            // bd5
+            currency_details = {
+                'name': 'USD',
+                'long_name': 'US Dollar',
+                'symbol': '$',
+                'decimal_places': 5,
+                'country': {
+                    'short_name': 'US',
+                    'long_name': 'United States'
+                }
+            };
+            $('.currency_longname').text(currency_details.name);
+            $('.currency-symbol').text(currency_details.symbol);
+            $('#local_currency').hide();
+            $('#usd_currency').show();
+        } else {
+            $('#usd_currency').hide();
+            $('#local_currency').show();
+        }
+
+        var classname = '';
+        var forloop_count = '';
+        var inputval_before = '';
+        var fx_balancecode = '';
+        var php_amount = 0;
+        var refno_posts = [];
+
+        var matched_rows = $('#bank_table tbody tr.matched').filter(':visible').length;
+        var unmatched_rows = $('#bank_table tbody tr.none').filter(':visible').length;
+
+        $('#badge-matched').text(matched_rows);
+        $('#badge-unmatched').text(unmatched_rows);
+
+        // book row numbering
+        if($('#pdi_table > tbody > tr').length > 0){
+            var t = 0;
+            $('#pdi_table > tbody > tr').filter(':visible').each(function(){
+                if(!$(this).hasClass('subtotal')){
+                    t++;
+                    $(this).find("td:nth-child(1)").text(t);
+                }
+            });
+        }
+
+        // Dollar book row numbering
+        if($('#pdi_fxtable > tbody > tr').length > 0){
+            var t = 0;
+            $('#pdi_fxtable > tbody > tr').filter(':visible').each(function(){
+                if(!$(this).hasClass('subtotal')){
+                    t++;
+                    $(this).find("td:nth-child(1)").text(t);
+                }
+            });
+        }
+
+        // bank row numbering
+        if($('#bank_table tbody tr').length > 0){
+            var r = 0;
+            $('#bank_table > tbody > tr').filter(':visible').each(function(){
+                if(!$(this).hasClass('subtotal')){
+                    r++;
+                    $(this).find("td:nth-child(1)").text(r);
+                }
+            });
+        }
+
+        // Dollar bank row numbering
+        if($('#bank_fxtable tbody tr').length > 0){
+            var r = 0;
+            $('#bank_fxtable > tbody > tr').filter(':visible').each(function(){
+                if(!$(this).hasClass('subtotal')){
+                    r++;
+                    $(this).find("td:nth-child(1)").text(r);
+                }
+            });
+        }
+
+        function calc_total(){
+            var bookdebit_sum = 0;
+            var bookcredit_sum = 0;
+            var bankdebit_sum = 0;
+            var bankcredit_sum = 0;
+            var currency = 'PHP';
+
+            var class_bookdebitamount = 'bookdebitamount';
+            var class_bookcreditamount = 'bookcreditamount';
+            var class_bankdebitamount = 'bankdebitamount';
+            var class_bankcreditamount = 'bankcreditamount';
+            
+            if (!$.isEmptyObject(currency_details)){
+                currency = currency_details.name;
+                class_bookdebitamount = 'bookdebit_dollar';
+                class_bookcreditamount = 'bookcredit_dollar';
+                class_bankdebitamount = 'bankdebit_dollar';
+                class_bankcreditamount = 'bankcredit_dollar';
+            } 
+
+            $('.'+ class_bookdebitamount).filter(':visible').not('.subtotal').each(function(){
+                var bookdeb = parseFloat($(this).text().replace(/,/g, ''));
+                if(!isNaN(bookdeb)) bookdebit_sum += bookdeb;
+            });
+            $('.'+ class_bookcreditamount).filter(':visible').not('.subtotal').each(function(){
+                var bookcred = parseFloat($(this).text().replace(/,/g, ''));
+                if(!isNaN(bookcred)) bookcredit_sum += bookcred;
+            });
+            $('.'+ class_bankdebitamount).filter(':visible').not('.subtotal').each(function(){
+                var bankdeb = parseFloat($(this).text().replace(/,/g, ''));
+                if(!isNaN(bankdeb)) bankdebit_sum += bankdeb;
+            });
+            $('.'+ class_bankcreditamount).filter(':visible').not('.subtotal').each(function(){
+                var bankcred = parseFloat($(this).text().replace(/,/g, ''));
+                if(!isNaN(bankcred)) bankcredit_sum += bankcred;
+            });
+            
+            if(isNaN(bookdebit_sum)) bookdebit_sum = 0;
+            if(isNaN(bookcredit_sum)) bookcredit_sum = 0;
+            if(isNaN(bankdebit_sum)) bankdebit_sum = 0;
+            if(isNaN(bankcredit_sum)) bankcredit_sum = 0;
+
+            $('#bookdebit_total').text(bookdebit_sum.toLocaleString('en-US', {style: 'currency',currency: currency}));
+            $('#bookcredit_total').text(bookcredit_sum.toLocaleString('en-US', {style: 'currency',currency: currency}));
+            $('#bankdebit_total').text(bankdebit_sum.toLocaleString('en-US', {style: 'currency',currency: currency}));
+            $('#bankcredit_total').text(bankcredit_sum.toLocaleString('en-US', {style: 'currency',currency: currency}));
+        }
+
+        // function calc_match_unmatch(is_matched, is_unmatched){
+        //     if(is_matched){
+        //         var matched_count = parseInt($('#badge-matched').text()) + 1;
+        //         $('#badge-matched').text(matched_count);
+
+        //         var unmatched_count = parseInt($('#badge-unmatched').text()) - 1;
+        //         if (isNaN(unmatched_count || unmatched_count < 1)) unmatched_count = 0;
+        //         $('#badge-unmatched').text(unmatched_count);
+
+        //     } else if(is_unmatched){
+        //         var matched_count = parseInt($('#badge-matched').text()) - 1;
+        //         if (isNaN(matched_count || matched_count < 1)) matched_count = 0;
+        //         $('#badge-matched').text(matched_count);
+
+        //         var unmatched_count = parseInt($('#badge-unmatched').text()) + 1;
+        //         $('#badge-unmatched').text(unmatched_count);
+                
+        //     }
+        // }
+
+        // $('#matched_rows').click(function(e){
+        //     e.preventDefault();
+        //     $('html, body').animate({
+        //         scrollTop: $("#search_row").offset().top
+        //     }, 1000);
+
+        //     $("#pdi_table tbody tr.matched").show();
+        //     $("#bank_table tbody tr.matched").show();
+
+        //     $("#pdi_table tbody tr:not(.matched)").hide();
+        //     $("#bank_table tbody tr:not(.matched)").hide();
+
+        //     calc_total();
+        // });
+
+        // $('#unmatched_rows').click(function(e){
+        //     e.preventDefault();
+        //     $('html, body').animate({
+        //         scrollTop: $("#search_row").offset().top
+        //     }, 1000);
+
+        //     $("#pdi_table tbody tr.matched").hide();
+        //     $("#bank_table tbody tr.matched").hide();
+
+        //     $("#pdi_table tbody tr:not(.matched)").show();
+        //     $("#bank_table tbody tr:not(.matched)").show();
+
+        //     calc_total();
+        // });
+
+        // $('#all_rows').click(function(e){
+        //     e.preventDefault();
+        //     $('html, body').animate({
+        //         scrollTop: $("#search_row").offset().top
+        //     }, 1000);
+
+        //     $("#pdi_table tbody tr.matched").show();
+        //     $("#bank_table tbody tr.matched").show();
+
+        //     $("#pdi_table tbody tr:not(.matched)").show();
+        //     $("#bank_table tbody tr:not(.matched)").show();
+
+        //     var bookdebit_sum = "{{ record.pdidebit_total|floatformat:2|intcomma }}";
+        //     var bookcredit_sum = "{{ record.pdicredit_total|floatformat:2|intcomma }}";
+        //     var bankdebit_sum = "{{ record.bankdebit_total|floatformat:2|intcomma }}";
+        //     var bankcredit_sum = "{{ record.bankcredit_total|floatformat:2|intcomma }}";
+
+        //     if(currency_details){
+        //         $('#bookdebit_total').html(currency_details.symbol + bookdebit_sum);
+        //         $('#bookcredit_total').html(currency_details.symbol + bookcredit_sum);
+        //         $('#bankdebit_total').html(currency_details.symbol + bankdebit_sum);
+        //         $('#bankcredit_total').html(currency_details.symbol + bankcredit_sum);
+        //     } else {
+        //         $('#bookdebit_total').html("&#8369;"+bookdebit_sum);
+        //         $('#bookcredit_total').html("&#8369;"+bookcredit_sum);
+        //         $('#bankdebit_total').html("&#8369;"+bankdebit_sum);
+        //         $('#bankcredit_total').html("&#8369;"+bankcredit_sum);
+        //     }
+            
+        //     calc_total();
+        // });
+
+        // $('#multiple_pairs').click(function (e){
+        //     e.preventDefault();
+        //     $('html, body').animate({
+        //         scrollTop: $("#search_row").offset().top
+        //     }, 1000);
+
+        //     $('#pdi_table > tbody > tr').hide();
+        //     $('#bank_table > tbody > tr').hide();
+        //     $('#pdi_table > tbody  > tr').each(function() {
+        //         var $class = '.' + $(this).attr('class').split(' ')[0];
+        //         if ($($class).length > 2) {
+        //             $($class).show();
+        //         } 
+        //     });
+        //     calc_total();
+        // });
+
+        // $('input[name=tag_input]').on('keyup paste',function(event){
+        //     $('.btn-submit-tag').hide();
+        //     var input_id = event.target.id.split('_');
+
+        //     forloop_count = input_id[1];
+        //     $('#btn_' + input_id[1]).show();
+        // });
+
+        $('#find_book').click(function(){
+
+            $('#pdi_table tbody tr').removeClass("dead");
+            $('#pdi_table tbody tr').hide();
+
+            var count = 0,
+            subtotal_debit = 0.0,
+            subtotal_credit = 0.0,
+            debit = 0.0,
+            credit = 0.0;
+
+            var book_filter = {
+                'book_date_from': $('#book_date_from').val(),
+                'book_date_to': $('#book_date_to').val(),
+                'book_type': $('#book_type').val().toLowerCase(),
+                'book_refno': $('#book_refno').val().toLowerCase(),
+                'book_checknumber': $('#book_checknumber').val().toLowerCase(),
+                'book_amount': $('#book_amount').val()
+            }
+            if(book_filter.book_date_from != '' && book_filter.book_date_to != ''){
+                const date_from = new Date(book_filter.book_date_from);
+                const date_to = new Date(book_filter.book_date_to);
+
+                $('.document-date').each(function(){
+                    const this_date = new Date($(this).text());
+                    if(this_date >= date_from && this_date <= date_to){
+                        if(!$(this).closest('tr').hasClass('dead')){
+
+                            $(this).closest('tr').show();
+                            
+                        }
+                    } else {
+                        $(this).closest('tr').addClass('dead');
+                        $(this).closest('tr').hide();
+                    }
+                });
+
+            } else {
+                if(book_filter.book_date_from != ''){
+                    $('.document-date').each(function(){
+                        if($(this).text() === book_filter.book_date_from){
+                            if(!$(this).closest('tr').hasClass('dead')){
+
+                                $(this).closest('tr').show();
+                                
+                            }
+                        } else {
+                            $(this).closest('tr').addClass('dead');
+                            $(this).closest('tr').hide();
+                        }
+                            
+                    });
+                }
+                if(book_filter.book_date_to != ''){
+                    $('.document-date').each(function(){
+                        if( $(this).text() === book_filter.book_date_to){
+                            if(!$(this).closest('tr').hasClass('dead')){
+
+                                $(this).closest('tr').show();
+                                
+                            }
+                        } else {
+                            $(this).closest('tr').addClass('dead');
+                            $(this).closest('tr').hide();
+                        }
+                    });
+                }
+            }
+            if(book_filter.book_type != ''){
+                $('.document-type').each(function(){
+                    if( $(this).text().toLowerCase() === book_filter.book_type){
+                        if(!$(this).closest('tr').hasClass('dead')){
+
+                            $(this).closest('tr').show();
+                            
+                        } 
+                    } else {
+                        $(this).closest('tr').addClass('dead');
+                        $(this).closest('tr').hide();
+                    }
+                });
+            }
+            
+            if(book_filter.book_refno != ''){
+                $('.book-refno-input').each(function(){
+                    if( $(this).val().toLowerCase() === book_filter.book_refno){
+                        if(!$(this).closest('tr').hasClass('dead')){
+
+                            $(this).closest('tr').show();
+                            
+                        } 
+                    } else {
+                        $(this).closest('tr').addClass('dead');
+                        $(this).closest('tr').hide();
+                    }
+                });
+            }
+            
+            if(book_filter.book_checknumber != ''){
+                $('.document-checknum').each(function(){
+                    if( $(this).text().toLowerCase() === book_filter.book_checknumber){
+                        if(!$(this).closest('tr').hasClass('dead')){
+
+                            $(this).closest('tr').show();
+                            
+                        } 
+                    } else {
+                        $(this).closest('tr').addClass('dead');
+                        $(this).closest('tr').hide();
+                    }
+                });
+            }
+
+            if(book_filter.book_amount != ''){
+                const filter_balancecode = $('#filter_balancecode').val();
+                if(filter_balancecode === 'D'){
+                    
+                    $('.bookdebitamount').each(function(){
+                        if($(this).text() === book_filter.book_amount){
+                            
+                            if(!$(this).closest('tr').hasClass('dead')){
+
+                                $(this).closest('tr').show();
+                                
+                            } 
+                        } else {
+                            $(this).closest('tr').addClass('dead');
+                            $(this).closest('tr').hide();
+                        }
+                    });
+                } else if(filter_balancecode === 'C'){
+                    $('.bookcreditamount').each(function(){
+                        if($(this).text() === book_filter.book_amount){
+                            if(!$(this).closest('tr').hasClass('dead')){
+
+                                $(this).closest('tr').show();
+                                
+                            } 
+                        } else {
+                            $(this).closest('tr').addClass('dead');
+                            $(this).closest('tr').hide();
+                        }
+                    });
+                } else {
+                    let code = prompt('Please enter "Debit" or "Credit"', "Debit");
+                    let text;
+                    if (code == null || code == "") {
+                        alert('Please enter "Debit" or "Credit" first.');
+                    } else {
+                        if (code == "Debit"){
+                            $('.bookdebitamount').each(function(){
+                                if($(this).text() === book_filter.book_amount){
+                                    if(!$(this).closest('tr').hasClass('dead')){
+
+                                        $(this).closest('tr').show();
+                                        
+                                    } 
+                                } else {
+                                    $(this).closest('tr').addClass('dead');
+                                    $(this).closest('tr').hide();
+                                }
+                            });
+
+                        } else if(code == "Credit"){
+                            $('.bookcreditamount').each(function(){
+                                if($(this).text() === book_filter.book_amount){
+                                    if(!$(this).closest('tr').hasClass('dead')){
+
+                                        $(this).closest('tr').show();
+                                        
+                                    } 
+                                } else {
+                                    $(this).closest('tr').addClass('dead');
+                                    $(this).closest('tr').hide();
+                                }
+                            });
+                        } else {
+                            alert('Please enter "Debit" or "Credit".');
+                        }
+                    }
+                }
+            }
+            
+            calc_total();
+            var table = document.getElementById('pdi_table');
+            var rowCount = table.rows.length;
+            
+            if($("#pdi_table tbody tr:visible").length < 1){
+                subtotal_debit = 0;
+                subtotal_credit = 0;
+                count = 0;
+            } else {
+                $('#pdi_table > tbody > tr').filter(':visible').each(function(){
+                    debit = $(this).closest('tr').find("td").eq(5).text().replace(/,/g, '');
+                    credit = $(this).closest('tr').find("td").eq(6).text().replace(/,/g, '');
+                    subtotal_debit += parseFloat(debit);
+                    subtotal_credit += parseFloat(credit);
+                    count++;
+                });
+            }
+
+            var row = table.insertRow(rowCount);
+            row.setAttribute("class", "book-filtered-subtotal");
+            row.setAttribute("style", "background-color: papayawhip; color: darkred; font-style: italic; font-weight: 500;");
+            row.insertCell(0).textContent = count;
+            row.insertCell(1).setAttribute("class", "bg-blue-200");
+            row.insertCell(2).setAttribute("class", "bg-blue-200");
+            row.insertCell(3).setAttribute("class", "bg-blue-200");
+            row.insertCell(4).textContent = " s u b - t o t a l";
+            row.insertCell(5).textContent = subtotal_debit.toLocaleString('en-US', {style: 'currency',currency: 'PHP'});
+            row.insertCell(6).textContent = subtotal_credit.toLocaleString('en-US', {style: 'currency',currency: 'PHP'});
+            row.insertCell(7).setAttribute("class", "bg-blue-200");
+            row.insertCell(8).setAttribute("class", "bg-blue-200");
+        });
+
+        $('#find_bank').click(function(){
+
+            $('#bank_table tbody tr').removeClass("dead");
+            $('#bank_table tbody tr').hide();
+
+            var count = 0,
+            subtotal_debit = 0.0,
+            subtotal_credit = 0.0,
+            debit = 0.0,
+            credit = 0.0;
+
+            var bank_filter = {
+                'bank_date_from': $('#bank_date_from').val(),
+                'bank_date_to': $('#bank_date_to').val(),
+                'bank_type': $('#bank_type').val().toLowerCase(),
+                'bank_refno': $('#bank_refno').val().toLowerCase(),
+                'bank_checknumber': $('#bank_checknumber').val().toLowerCase(),
+                'bank_amount': $('#bank_amount').val()
+            }
+            if(bank_filter.bank_date_from != '' && bank_filter.bank_date_to != ''){
+                const date_from = new Date(bank_filter.bank_date_from);
+                const date_to = new Date(bank_filter.bank_date_to);
+
+                $('.bank-transaction-date').each(function(){
+                    const this_date = new Date($(this).text());
+                    if(this_date >= date_from && this_date <= date_to){
+                        if(!$(this).closest('tr').hasClass('dead')){
+
+                            $(this).closest('tr').show();
+
+                        }
+                    } else {
+                        $(this).closest('tr').addClass('dead');
+                        $(this).closest('tr').hide();
+                    }
+                });
+
+            } else {
+                if(bank_filter.bank_date_from != ''){
+                    $('.bank-transaction-date').each(function(){
+                        if( $(this).text() ===  bank_filter.bank_date_from){
+                            if(!$(this).closest('tr').hasClass('dead')){
+
+                                $(this).closest('tr').show();
+
+                            }
+                        } else {
+                            $(this).closest('tr').addClass('dead');
+                            $(this).closest('tr').hide();
+                        }
+                    });
+                }
+                if(bank_filter.bank_date_to != ''){
+                    $('.bank-transaction-date').each(function(){
+                        if( $(this).text() ===  bank_filter.bank_date_to){
+                            if(!$(this).closest('tr').hasClass('dead')){
+
+                                $(this).closest('tr').show();
+                                
+                            }
+                        } else {
+                            $(this).closest('tr').addClass('dead');
+                            $(this).closest('tr').hide();
+                        }
+                    });
+                }
+            }
+            if(bank_filter.bank_type != ''){
+                $('.bank-document-type').each(function(){
+                    if( $(this).text().toLowerCase() === bank_filter.bank_type){
+                        if(!$(this).closest('tr').hasClass('dead')){
+
+                            $(this).closest('tr').show();
+                            
+                        }
+                    } else {
+                        $(this).closest('tr').addClass('dead');
+                        $(this).closest('tr').hide();
+                    }
+                });
+            }
+            
+            if(bank_filter.bank_refno != ''){
+                $('.bank-refno-input').each(function(){
+                    if( $(this).val().toLowerCase() === bank_filter.bank_refno){
+                        if(!$(this).closest('tr').hasClass('dead')){
+
+                            $(this).closest('tr').show();
+                            
+                        } 
+                    } else {
+                        $(this).closest('tr').addClass('dead');
+                        $(this).closest('tr').hide();
+                    }
+                });
+            }
+            
+            if(bank_filter.bank_checknumber != ''){
+                $('.bank-checknumber').each(function(){
+                    if( $(this).text().toLowerCase() === bank_filter.bank_checknumber){
+                        if(!$(this).closest('tr').hasClass('dead')){
+
+                            $(this).closest('tr').show();
+                            
+                        } 
+                    } else {
+                        $(this).closest('tr').addClass('dead');
+                        $(this).closest('tr').hide();
+                    }
+                });
+            }
+
+            if(bank_filter.bank_amount != ''){
+                const filter_bank_balancecode = $('#filter_bank_balancecode').val();
+                if(filter_bank_balancecode === 'D'){
+                    $('.bankdebitamount').each(function(){
+                        if($(this).text() === bank_filter.bank_amount){
+                            if(!$(this).closest('tr').hasClass('dead')){
+
+                                $(this).closest('tr').show();
+                                
+                            } 
+                        } else {
+                            $(this).closest('tr').addClass('dead');
+                            $(this).closest('tr').hide();
+                        }
+                    });
+                } else if(filter_bank_balancecode === 'C'){
+                    $('.bankcreditamount').each(function(){
+                        if($(this).text() === bank_filter.bank_amount){
+                            if(!$(this).closest('tr').hasClass('dead')){
+
+                                $(this).closest('tr').show();
+                                
+                            } 
+                        } else {
+                            $(this).closest('tr').addClass('dead');
+                            $(this).closest('tr').hide();
+                        }
+                    });
+                } else {
+                    let code = prompt('Please enter "Debit" or "Credit"', "Debit");
+                    let text;
+                    if (code == null || code == "") {
+                        alert('Please enter "Debit" or "Credit" first.');
+                    } else {
+                        if (code == "Debit"){
+                            $('.bankdebitamount').each(function(){
+                                if($(this).text() === bank_filter.book_amount){
+                                    if(!$(this).closest('tr').hasClass('dead')){
+
+                                        $(this).closest('tr').show();
+                                        
+                                    } 
+                                } else {
+                                    $(this).closest('tr').addClass('dead');
+                                    $(this).closest('tr').hide();
+                                }
+                            });
+
+                        } else if(code == "Credit"){
+                            $('.bankcreditamount').each(function(){
+                                if($(this).text() === bank_filter.book_amount){
+                                    if(!$(this).closest('tr').hasClass('dead')){
+
+                                        $(this).closest('tr').show();
+                                        
+                                    } 
+                                } else {
+                                    $(this).closest('tr').addClass('dead');
+                                    $(this).closest('tr').hide();
+                                }
+                            });
+                        } else {
+                            alert('Please enter "Debit" or "Credit".');
+                        }
+                    }
+                }
+            }
+
+            calc_total();
+            var table = document.getElementById('bank_table');
+            var rowCount = table.rows.length;
+
+            if($("#bank_table tbody tr:visible").length < 1){
+                subtotal_debit = 0;
+                subtotal_credit = 0;
+                count = 0;
+            } else {
+                $('#bank_table > tbody > tr').filter(':visible').each(function(){
+                    debit = $(this).closest('tr').find("td").eq(5).text().replace(/,/g, '');
+                    credit = $(this).closest('tr').find("td").eq(6).text().replace(/,/g, '');
+                    subtotal_debit += parseFloat(debit);
+                    subtotal_credit += parseFloat(credit);
+                    count++;
+                });
+            }
+            
+            var row = table.insertRow(rowCount);
+            row.setAttribute("class", "bank-filtered-subtotal");
+            row.setAttribute("style", "background-color: papayawhip; color: darkred; font-style: italic; font-weight: 500;");
+            row.insertCell(0).textContent = count;
+            row.insertCell(1).setAttribute("class", "bg-blue-200");
+            row.insertCell(2).setAttribute("class", "bg-blue-200");
+            row.insertCell(3).setAttribute("class", "bg-blue-200");
+            row.insertCell(4).textContent = " s u b - t o t a l";
+            row.insertCell(5).textContent = subtotal_debit.toLocaleString('en-US', {style: 'currency',currency: 'PHP'});
+            row.insertCell(6).textContent = subtotal_credit.toLocaleString('en-US', {style: 'currency',currency: 'PHP'});
+            row.insertCell(7).setAttribute("class", "bg-blue-200");
+            row.insertCell(8).setAttribute("class", "bg-blue-200");
+        });
+
+        $('#reset_book').click(function(){
+            $('#book_date_from').val('');
+            $('#book_date_to').val('');
+            $('#book_type').val('');
+            $('#book_refno').val('');
+            $('#book_checknumber').val('');
+            $('#book_amount').val('');
+            $('#filter_balancecode').val('');
+            $('.book-filtered-subtotal').remove();
+            $('#pdi_table tbody tr').show();
+            calc_total();
+        });
+
+        $('#reset_bank').click(function(){
+            $('#bank_date_from').val('');
+            $('#bank_date_to').val('');
+            $('#bank_type').val('');
+            $('#bank_refno').val('');
+            $('#bank_checknumber').val('');
+            $('#bank_amount').val('');
+            $('#filter_bank_balancecode').val('');
+            $('.bank-filtered-subtotal').remove();
+            $('#bank_table tbody tr').show();
+            calc_total();
+        });
+
+        $('#copy_book').click(function(){
+            if($('#book_date_from').val()) $('#bank_date_from').val($('#book_date_from').val());
+            if($('#book_date_to').val()) $('#bank_date_to').val($('#book_date_to').val());
+            if($('#book_type').val()) $('#bank_type').val($('#book_type').val());
+            if($('#book_refno').val()) $('#bank_refno').val($('#book_refno').val());
+            if($('#book_checknumber').val()) $('#bank_checknumber').val($('#book_checknumber').val());
+            if($('#book_amount').val()) $('#bank_amount').val($('#book_amount').val());
+        });
+
+        $('#copy_bank').click(function(){
+            if($('#bank_date_from').val()) $('#book_date_from').val($('#bank_date_from').val());
+            if($('#bank_date_to').val()) $('#book_date_to').val($('#bank_date_to').val());
+            if($('#bank_type').val()) $('#book_type').val($('#bank_type').val());
+            if($('#bank_refno').val()) $('#book_refno').val($('#bank_refno').val());
+            if($('#bank_checknumber').val()) $('#book_checknumber').val($('#bank_checknumber').val());
+            if($('#bank_amount').val()) $('#book_amount').val($('#bank_amount').val());
+        });
+
+        // book clickable text
+        $('.document-date').click(function(){
+            const book_date_from = $('#book_date_from').val();
+            const book_date_to = $('#book_date_to').val();
+
+            if(book_date_from != ''){
+                var dfrom_input = new Date(book_date_from);
+                var this_dfrom = new Date($(this).text());
+
+                if(this_dfrom < dfrom_input){
+                    $('#book_date_from').val($(this).text());
+                } else {
+                    $('#book_date_to').val($(this).text());
+                }
+            } else {
+                $('#book_date_from').val($(this).text());
+            }
+        });
+
+        $('.document-type').click(function(){
+            $('#book_type').val($(this).text());
+        });
+
+        $('.book-refno-input').click(function(){
+            $('#book_refno').val($(this).val());
+        });
+
+        $('.document-checknum').click(function(){
+            $('#book_checknumber').val($(this).text());
+        });
+
+        $('.bookdebitamount').click(function(){
+            $('#book_amount').val($(this).text());
+            $('#filter_balancecode').val('D');
+        });
+
+        $('.bookcreditamount').click(function(){
+            $('#book_amount').val($(this).text());
+            $('#filter_balancecode').val('C');
+        });
+
+        // bank clickable text
+        $('.bank-transaction-date').click(function(){
+            const bank_date_from = $('#bank_date_from').val();
+            const bank_date_to = $('#bank_date_to').val();
+
+            if(bank_date_from != ''){
+                var dfrom_input = new Date(bank_date_from);
+                var this_dfrom = new Date($(this).text());
+
+                if(this_dfrom < dfrom_input){
+                    $('#bank_date_from').val($(this).text());
+                } else {
+                    $('#bank_date_to').val($(this).text());
+                }
+            } else {
+                $('#bank_date_from').val($(this).text());
+            }
+        });
+
+        $('.bank-document-type').click(function(){
+            $('#bank_type').val($(this).text());
+        });
+
+        $('.bank-refno-input').click(function(){
+            $('#bank_refno').val($(this).val());
+        });
+
+        $('.bank-checknumber').click(function(){
+            $('#bank_checknumber').val($(this).text());
+        });
+
+        $('.bankdebitamount').click(function(){
+            $('#bank_amount').val($(this).text());
+            $('#filter_bank_balancecode').val('D');
+        });
+
+        $('.bankcreditamount').click(function(){
+            $('#bank_amount').val($(this).text());
+            $('#filter_bank_balancecode').val('C');
+        });
+
+
+        // book batch referencing
+        $('#book_batch_refno_post').click(function(){
+            const refno = $('#book_batch_refno').val();
+            if(refno != ''){
+                if(confirm('Confirm book batch referencing for "'+refno+'"?')){
+                    $('#pdi_table > tbody > tr').filter(':visible').each(function(){
+                        var id = $(this).find("input[name=book_data_id]").val();
+                        $(this).find("input[name=book_refno_input]").val(refno);
+                        if(id){
+                            if ($.inArray(id, $.map(refno_posts, function(v) { return v[0]; })) > -1) {
+                                
+                            } else {
+                                refno_posts.push({
+                                    id: id,
+                                    refno: refno
+                                });
+                            }
+                        }
+                        
+                    });
+                }
+            } else {
+                alert('Please enter Ref. No.');
+            }
+            $('#bookBatchPostingModal').modal('toggle');
+        });
+
+        // bank batch referencing
+        $('#bank_batch_refno_save').click(function(){
+            const refno = $('#bank_batch_refno').val();
+            if(refno != ''){
+                if(confirm('Confirm bank batch referencing for "'+refno+'"?')){
+                    $('#bank_table > tbody > tr').filter(':visible').each(function(){
+                        var id = $(this).find("input[name=bank_data_id]").val();
+                        $(this).find("input[name=bank_refno_input]").val(refno);
+                        if(id){
+                            if ($.inArray(id, $.map(refno_posts, function(v) { return v[0]; })) > -1) {
+                                
+                            } else {
+                                refno_posts.push({
+                                    id: id,
+                                    refno: refno
+                                });
+                            }
+                        }
+                    });
+                    
+                }
+            } else {
+                alert('Please enter Ref. No.');
+            }
+            $('#bankBatchPostingModal').modal('toggle');
+        });
+
+        // autofocus on modal show
+        $('#bookBatchPostingModal').on('shown.bs.modal', function() {
+            $('#book_batch_refno').val('');
+            $('#book_batch_refno').focus();
+        });
+
+        $('#bankBatchPostingModal').on('shown.bs.modal', function() {
+            $('#bank_batch_refno').val('');
+            $('#bank_batch_refno').focus();
+        });
+
+        $('#fxrateModal').on('shown.bs.modal', function() {
+            $('#id_fxrate').val('');
+            $('#id_fxamount').val('');
+            $('#id_fxrate').focus();
+        });
+
+        // book save posting
+        $('#save_posting_book').click(function(){
+            if(confirm("Confirm saving book reference numbers?")){
+                var arr_refno = [];
+                if($('#pdi_table > tbody > tr').length > 0){
+                    
+                    $('#pdi_table > tbody > tr').each(function(){
+                        if(!$(this).hasClass('book-filtered-subtotal')){
+                            var id = $(this).find('input[name=book_data_id]').val();
+                            var refno = $(this).find('input[name=book_refno_input]').val();
+                            if(id){
+                                arr_refno.push({
+                                    id: id,
+                                    refno: refno
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    $('#pdi_fxtable > tbody > tr').each(function(){
+                        
+                        if(!$(this).hasClass('book-filtered-subtotal')){
+                            
+                            var id = $(this).find('input[name=book_data_id]').val();
+                            var refno = $(this).find('input[name=book_refno_input]').val();
+                            if(id){
+                                arr_refno.push({
+                                    id: id,
+                                    refno: refno
+                                });
+                            }
+                        }
+                    });
+                }
+                
+                if(arr_refno.length > 0){
+                    $.ajax({
+                        url: "{% url 'bankrecon:savebatchpostingbook' %}",
+                        type: "post",
+                        data: {
+                            'csrfmiddlewaretoken': "{{ csrf_token }}",
+                            'data': JSON.stringify(arr_refno)
+                        },
+                        success: function(response) {
+                            
+                            if (response.success_count > 0 && response.failed_count === 0){
+                                alert('Saved successfully.');
+                            } else if(response.failed_count === 1){
+                                alert('A Ref. No. was not saved.');
+                            } else if(response.failed_count > 1){
+                                alert('Ref. No. that were not saved: '+ response.failed_count);
+                            } else if(response.success_count < 1 && response.failed_count < 1){
+                                alert("You haven't entered any Ref. No. yet.");
+                            } else {
+                                alert('Successfully saved Ref. No.: '+response.success_count+ '. Failed saving Ref. No.: '+response.failed_count);
+                            }
+                            
+                        },
+                        error: function(response) {
+                            alert('Save error.');
+                        }
+                    });
+                    
+                } else {
+                    alert('You have not entered any Ref. No. yet.');
+                }
+            }
+        });
+        
+        // bank save posting
+        $('#save_posting_bank').click(function(){
+            if(confirm("Confirm saving bank reference numbers?")){
+                var arr_refno = [];
+                $('#bank_table > tbody > tr').each(function(){
+                    if(!$(this).hasClass('bank-filtered-subtotal')){
+                        var id = $(this).find('input[name=bank_data_id]').val();
+                        var refno = $(this).find('input[name=bank_refno_input]').val();
+                        if(id){
+                            arr_refno.push({
+                                id: id,
+                                refno: refno
+                            });
+                        }
+                    }
+                });
+                if(arr_refno.length > 0){
+                    $.ajax({
+                        url: "{% url 'bankrecon:savebatchpostingbank' %}",
+                        type: "post",
+                        data: {
+                            'csrfmiddlewaretoken': "{{ csrf_token }}",
+                            'data': JSON.stringify(arr_refno)
+                        },
+                        success: function(response) {
+
+                            if (response.success_count > 0 && response.failed_count === 0){
+                                alert('Saved successfully.');
+                            } else if(response.failed_count === 1){
+                                alert('A Ref. No. was not saved.');
+                            } else if(response.failed_count > 1){
+                                alert('Ref. No. that were not saved: '+ response.failed_count);
+                            }else if(response.success_count < 1 && response.failed_count < 1){
+                                alert("You haven't entered any Ref. No. yet.");
+                            } else {
+                                alert('Successfully saved Ref. No.: '+response.success_count+ '. Failed saving Ref. No.: '+response.failed_count);
+                            }
+                        },
+                        error: function(response) {
+                            alert('Save error.');
+                        }
+                    });
+                    return false;
+                } else {
+                    alert('You have not entered any Ref. No. yet.');
+                }
+            }
+        });
+
+        // Erase book ref. no.
+        $('#erase_book').click(function(){
+            if(confirm("Do you really want to clear all the displayed Ref. No.?")){
+                $('#pdi_table > tbody > tr').filter(':visible').each(function(){
+                    $(this).find('input[name=book_refno_input]').val('');
+                });
+            }
+        });
+
+        // Erase bank ref. no.
+        $('#erase_bank').click(function(){
+            if(confirm("Do you really want to clear all the displayed Ref. No.?")){
+                $('#bank_table > tbody > tr').filter(':visible').each(function(){
+                    $(this).find('input[name=bank_refno_input]').val('');
+                });
+            }
+        });
+
+
+        // foreign currencies
+
+        function suggest_fxrate(php_amount, balancecode){
+
+            var bank_debitamount, bank_creditamount, quotient;
+            var suggestions = [];
+            
+            if(balancecode == 'D'){
+                $('#bank_fxtable > tbody > tr').filter(':visible').each(function(){
+                    
+                    bank_creditamount = $(this).find("td").eq(6).text().replace(/,/g, '');
+
+                    if(bank_creditamount != '0.00'){
+                        quotient = 0;
+                        quotient = parseFloat(php_amount) / parseFloat(bank_creditamount);
+                        // adjust ranged suggestions here:
+                        if(quotient > 45 && quotient < 70){
+                            suggestions.push(quotient.toFixed(5));
+                        }
+                    } 
+                });
+            } else if(balancecode == 'C'){
+                $('#bank_fxtable > tbody > tr').filter(':visible').each(function(){
+                    
+                    bank_debitamount = $(this).find("td").eq(5).text().replace(/,/g, '');
+                    if(bank_debitamount != '0.00'){
+                        quotient = 0;
+                        quotient = parseFloat(php_amount) / parseFloat(bank_debitamount);
+                        // adjust ranged suggestions here:
+                        if(quotient > 45 && quotient < 70){
+                            suggestions.push(quotient.toFixed(5));
+                        }
+                    } 
+                });
+            }
+            
+            if(suggestions.length > 1) {
+                $('#state_suggestions').text(suggestions.length + ' suggestions found.');
+                $('#suggestions_label').text('Suggested FX rates:');
+            } else if(suggestions.length == 1) {
+                $('#state_suggestions').text(suggestions.length + ' suggestion found.');
+                $('#suggestions_label').text('Suggested FX rate:');
+            } else {
+                $('#state_suggestions').text('No suggestions found.');
+                $('#suggestions_label').text('');
+            }
+            $('#state_suggestions').show();
+
+            var ul = document.getElementById("suggestions_list");
+            $('#suggestions_list').empty();
+            
+            suggestions.forEach(function (item, index) {
+                var li = document.createElement("li");
+                li.className = "list-group-item";
+
+                li.appendChild(document.createTextNode(item));
+                ul.appendChild(li);
+            });
+        }
+
+        $('.fxrate-btn').click(function(){
+
+            $('#state_suggestions').hide();
+            $('#fxmodal_phpamount').text('');
+            $('#fxmodal_date').text('');
+            $('#fxmodal_refno').text('');
+            $('#fxmodal_doctype').text('');
+            $('#fxmodal_docno').text('');
+
+            var php_debitamount = $(this).closest('tr').find("td:nth-child(8)").text();
+            var php_creditamount = $(this).closest('tr').find("td:nth-child(9)").text();
+            
+            var date = $(this).closest('tr').find("td:nth-child(2)").text();
+            var refno = $(this).find("input[name=book_refno_input]").val();
+            var doctype = $(this).closest('tr').find("td:nth-child(3)").text();
+            var docno = $(this).closest('tr').find("td:nth-child(4)").text();
+
+            var bookid = $(this).closest('tr').attr('id');
+            
+            if (php_creditamount === '0.00' && php_debitamount != '0.00'){
+                php_amount = php_debitamount.replace(/,/g, '');
+                fx_balancecode = 'D';
+                $('#fxmodal_phpamount').text(php_debitamount);
+            } else if(php_debitamount === '0.00' && php_creditamount != '0.00') {
+                php_amount = php_creditamount.replace(/,/g, '');
+                fx_balancecode = 'C';
+                $('#fxmodal_phpamount').text(php_creditamount);
+            }
+
+            $('#fxmodal_date').text(date);
+            $('#fxmodal_refno').text(refno);
+            $('#fxmodal_doctype').text(doctype);
+            $('#fxmodal_docno').text(docno);
+            
+            suggest_fxrate(php_amount, fx_balancecode);
+            
+            $('#basic-addon2').text(currency_details.symbol);
+            $('#id_currency').val(currency_details.name+' ('+currency_details.long_name+')');
+            $('#id_fxrate').val('');
+            $('#id_fxamount').val('');
+            $('#id_bookid').val(bookid);
+        });
+
+        $('input[name=fxrate]').on('keyup paste',function(event){
+            
+            var fxrate = event.target.value;
+            var fxamount = 0;
+            if(php_amount){
+                var fxamount = php_amount / fxrate;
+            }
+            
+            fxamount = fxamount.toFixed(2);
+            if(fxrate) {
+                var fxamount_wcommas = amountWithCommas(fxamount)
+                $('#id_fxamount').val(fxamount_wcommas);
+
+            } else {
+                $('#id_fxamount').val('');
+            }
+            
+        });
+
+        $('input[name=fxamount]').on('keyup paste',function(event){
+            
+            var fxamount = event.target.value.replace(',', '');
+            var fxrate = 0;
+            if(php_amount){
+                var fxrate = parseFloat(php_amount) / parseFloat(fxamount);
+            }
+
+            if(fxrate) {
+                var fxrate_wcommas = amountWithCommas(fxrate);
+                fxrate_wcommas = parseFloat(fxrate_wcommas).toFixed(5);
+                $('#id_fxrate').val(fxrate_wcommas);
+
+            } else {
+                $('#id_fxrate').val('');
+            }
+            
+        });
+
+        function amountWithCommas(amount) {
+            return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        $('#fx_save').click(function(){
+            var fx_rate = $('#id_fxrate').val();
+            var fx_amount = $('#id_fxamount').val();
+            var book_id = $('#id_bookid').val();
+            
+            if(fx_rate && fx_amount){
+
+                try {
+                    var decimal_count = fx_rate.split('.')[1].length;
+                } catch (error) {
+                    var decimal_count = 0;
+                }
+                
+                if(decimal_count > 5){
+                    alert('Number of decimals must not exceed at 5.');
+                } else if(decimal_count < 5){
+                    alert('Number of decimals must be exactly at 5. Add trailing zeros to complete (e.g. 1.23400).');
+                } else {
+                    $.ajax({
+                        url: "{% url 'bankrecon:fxsave' %}",
+                        type: "post",
+                        data: {
+                            'csrfmiddlewaretoken': "{{csrf_token}}",
+                            'book_id': book_id,
+                            'fx_rate': fx_rate,
+                            'fx_amount': fx_amount
+                        },
+                        success: function(response) {
+
+                            if (response.result === true){
+
+                                fx_amount = parseFloat(fx_amount).toFixed(2);
+                                var fx_amount_wcommas = amountWithCommas(fx_amount);
+
+                                $('.row_'+ book_id).find(".fxrate-btn").replaceWith(fx_amount_wcommas);
+                                calc_total();
+                                
+                            } else {
+                                customAlert($('#fx-failed'));
+                            }
+                            
+                            $('#fxrateModal').modal('toggle');
+                        },
+                        error: function(response) {
+                            console.log('err: '+ response.result)
+                            alert('FX save error.');
+                            $('#fxrateModal').modal('toggle');
+                        }
+                    });
+                }
+            } else {
+                alert('FX rate and FX amount are required and please use proper input format.');
+            }
+        });
+
+        $('#get_xls').click(function(){
+
+            var book_data = [];
+            var bank_data = [];
+            if (!$.isEmptyObject(currency_details)){
+                if(currency_details.name == 'USD'){
+                    $('#pdi_fxtable > tbody > tr').filter(':visible').each(function(){
+                        var reference_number= $(this).find('input[name=book_refno_input]').val() ? $(this).find('input[name=book_refno_input]').val() : '';
+                        book_data.push({
+                            date: $(this).find('td').eq(1).text(),
+                            doc_type: $(this).find('td').eq(2).text(),
+                            doc_num: $(this).find('td').eq(3).text(),
+                            particulars: $(this).find('td').eq(4).text(),
+                            debit_dollar: $(this).find('td').eq(5).text(),
+                            credit_dollar: $(this).find('td').eq(6).text(),
+                            debit_php: $(this).find('td').eq(7).text(),
+                            credit_php: $(this).find('td').eq(8).text(),
+                            reference_number: reference_number,
+                            check_number: $(this).find('td').eq(10).text(),
+                        });
+                    });
+                } 
+            } else {
+                $('#pdi_table > tbody > tr').filter(':visible').each(function(){
+                    var reference_number= $(this).find('input[name=book_refno_input]').val() ? $(this).find('input[name=book_refno_input]').val() : '';
+                    book_data.push({
+                        date: $(this).find('td').eq(1).text(),
+                        doc_type: $(this).find('td').eq(2).text(),
+                        doc_num: $(this).find('td').eq(3).text(),
+                        particulars: $(this).find('td').eq(4).text(),
+                        debit: $(this).find('td').eq(5).text(),
+                        credit: $(this).find('td').eq(6).text(),
+                        reference_number: reference_number,
+                        check_number: $(this).find('td').eq(8).text(),
+                    });
+                });
+            }
+
+            $('#bank_table > tbody > tr').filter(':visible').each(function(){
+                var reference_number= $(this).find('input[name=bank_refno_input]').val() ? $(this).find('input[name=bank_refno_input]').val() : '';
+                bank_data.push({
+                    date: $(this).find('td').eq(1).text(),
+                    doc_type: $(this).find('td').eq(2).text(),
+                    doc_num: $(this).find('td').eq(3).text(),
+                    particulars: $(this).find('td').eq(4).text(),
+                    debit: $(this).find('td').eq(5).text(),
+                    credit: $(this).find('td').eq(6).text(),
+                    reference_number: reference_number,
+                    check_number: $(this).find('td').eq(8).text(),
+                });
+            });
+
+            $('#report_bank_account').val($("#bankaccount option:selected").text());
+            $('#report_date_from').val($("#dfrom").val());
+            $('#report_date_to').val($("#dto").val());
+            $('#report_currency_details').val(JSON.stringify(currency_details));
+            $('#report_book_data').val(JSON.stringify(book_data));
+            $('#report_bank_data').val(JSON.stringify(bank_data));
+
+            $('#report_bankdebit_total').val($('#bankdebit_total').text());
+            $('#report_bankcredit_total').val($('#bankcredit_total').text());
+            $('#report_bookdebit_total').val($('#bookdebit_total').text());
+            $('#report_bookcredit_total').val($('#bookcredit_total').text());
+
+            $('#form_report').submit();
+        }); 
+
+        $('#full_screen').click(function(){
+            
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                $('#bankrecon_result').get(0).requestFullscreen();
+                $('#bankrecon_result').css({
+                    background: '#fff'
+                });
+            }
+        });
+    });
+
+</script>
+{% endblock extra_js %}

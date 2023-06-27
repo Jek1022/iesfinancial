@@ -43,7 +43,7 @@
         </div>
     </div>
     <div class="page-wrap">
-        <h3>PHILIPPINE DAILY INQUIRER, INC.</h3>
+        <h3>{{ parameter.description }}</h3>
         <h4>BANK RECONCILIATION TRANSACTION LISTING </h4>
         <h4 style="text-transform:uppercase">AS OF {{ transdfrom }} to {{ transdto }}</h4>
         <br>
@@ -60,73 +60,73 @@
             
         </div> -->
         <div class="row">
-            <div class="col-md-6 text-center"><h4>Book</h4></div>
-            <div class="col-md-6 text-center"><h4>Bank</h4></div>
+            <div class="col-md-6 text-center"><h4><strong>Book</strong></h4></div>
+            <div class="col-md-6 text-center"><h4><strong>Bank</strong></h4></div>
         </div>
         <br/>
         <div class="row" style="margin-bottom: 9px;" id="search_row">
             <div class="col-md-12">
                 <div class="col-md-6">
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="book_date_from">Date From:</label>
+                        <label class="control-label" for="book_date_from">Date From</label>
                         <input type="text" class="form-control" id="book_date_from" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="book_date_to">Date To:</label>
+                        <label class="control-label" for="book_date_to">Date To</label>
                         <input type="text" class="form-control" id="book_date_to" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-1" style="padding: 3px;">
-                        <label class="control-label small" for="book_type">Type:</label>
+                        <label class="control-label" for="book_type">Type</label>
                         <input type="text" class="form-control" id="book_type" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="book_refno">Ref. No.:</label>
+                        <label class="control-label" for="book_refno">Ref No</label>
                         <input type="text" class="form-control" id="book_refno" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="book_checknumber">Check No.:</label>
+                        <label class="control-label" for="book_checknumber">Check No</label>
                         <input type="text" class="form-control" id="book_checknumber" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="book_amount">Amount:</label>
+                        <label class="control-label" for="book_amount">Amount</label>
                         <input type="text" class="form-control" id="book_amount" style="padding: 3px 6px;" />
                         <input type="hidden" id="filter_balancecode" />
                     </div>
                     <div class="form-group col-md-1" style="padding: 3px;">
-                        <a class="btn btn-info waves-effect waves-dark" id="find_book" style="margin-top: 25px;">
-                            <i class="icon fa-search" aria-hidden="true"></i>
+                        <a class="btn btn-info waves-effect waves-dark" id="find_book" title="filter" style="margin-top: 25px;">
+                            <i class="icon fa-filter" aria-hidden="true"></i>
                         </a>                        
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="bank_date_from">Date From:</label>
+                        <label class="control-label" for="bank_date_from">Date From</label>
                         <input type="text" class="form-control datepickerfrom" id="bank_date_from" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="bank_date_to">Date To:</label>
+                        <label class="control-label" for="bank_date_to">Date To</label>
                         <input type="text" class="form-control datepickerto" id="bank_date_to" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-1" style="padding: 3px;">
-                        <label class="control-label small" for="bank_type">Type:</label>
+                        <label class="control-label" for="bank_type">Type</label>
                         <input type="text" class="form-control" id="bank_type" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="bank_refno">Ref. No.:</label>
+                        <label class="control-label" for="bank_refno">Ref No</label>
                         <input type="text" class="form-control" id="bank_refno" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="bank_checknumber">Check No.:</label>
+                        <label class="control-label" for="bank_checknumber">Check No</label>
                         <input type="text" class="form-control" id="bank_checknumber" style="padding: 3px 6px;" />
                     </div>
                     <div class="form-group col-md-2" style="padding: 3px;">
-                        <label class="control-label small" for="bank_amount">Amount:</label>
+                        <label class="control-label" for="bank_amount">Amount</label>
                         <input type="text" class="form-control" id="bank_amount" style="padding: 3px 6px;" />
                         <input type="hidden" id="filter_bank_balancecode" />
                     </div>
                     <div class="form-group col-md-1" style="padding: 3px;">
-                        <a class="btn btn-info waves-effect waves-dark" id="find_bank" style="margin-top: 25px;">
-                            <i class="icon fa-search" aria-hidden="true"></i>
+                        <a class="btn btn-info waves-effect waves-dark" id="find_bank" title="filter" style="margin-top: 25px;">
+                            <i class="icon fa-filter" aria-hidden="true"></i>
                         </a>
                     </div>
                 </div>
@@ -136,19 +136,16 @@
             <div class="col-md-12">
                 <div class="col-md-6">
                     <div class="row">
-                        <div class="col-sm-6">
-                            <button class="btn btn-default waves-effect waves-dark" id="batch_posting_book" title="Enter Ref. No. by batch in Book." data-toggle="modal" data-target="#bookBatchPostingModal">
+                        <div class="col-sm-8">
+                            <button class="btn btn-primary waves-effect waves-dark" id="batch_posting_book" title="Enter Ref. No. by batch in Book." data-toggle="modal" data-target="#bookBatchPostingModal">
                                 <i class="fa fa-clipboard" aria-hidden="true"></i>&nbsp;&nbsp;Batch Referencing
                             </button>
-                            <button class="btn btn-default waves-effect waves-dark" id="save_posting_book" title="All entered Ref. No. will be saved.">
+                            <button class="btn btn-info waves-effect waves-dark" id="save_posting_book" title="All entered Ref. No. will be saved.">
                                 <i class="fa fa-save" aria-hidden="true"></i>&nbsp;&nbsp;Save
                             </button>
                             <button class="btn btn-default waves-effect waves-dark" id="erase_book" title="All displayed Ref. No. will be erased.">
-                                <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear
+                                <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear all Ref No
                             </button>
-                        </div>
-                        <div class="col-sm-2 text-left">
-                            
                         </div>
                         <div class="col-sm-4 text-center">
                             <a class="waves-effect waves-dark" id="copy_book" title="Copy filters from book to bank." style="margin-top: 8px;">
@@ -156,26 +153,23 @@
                             </a>
                             &nbsp;&nbsp;&nbsp;
                             <a class="waves-effect waves-dark" id="reset_book" title="Clear filters and show all data." style="margin-top: 8px;">
-                                <i class="fa fa-repeat" aria-hidden="true"></i>&nbsp;&nbsp;Reset
+                                <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear filter
                             </a>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="row">
-                        <div class="col-sm-6">
-                            <a class="btn btn-default waves-effect waves-dark" id="batch_posting_bank" title="Enter Ref. No. by batch in Bank." data-toggle="modal" data-target="#bankBatchPostingModal">
+                        <div class="col-sm-8">
+                            <a class="btn btn-primary waves-effect waves-dark" id="batch_posting_bank" title="Enter Ref. No. by batch in Bank." data-toggle="modal" data-target="#bankBatchPostingModal">
                                 <i class="fa fa-clipboard" aria-hidden="true"></i>&nbsp;&nbsp;Batch Referencing
                             </a>
-                            <a class="btn btn-default waves-effect waves-dark" id="save_posting_bank" title="All entered Ref. No. will be saved.">
+                            <a class="btn btn-info waves-effect waves-dark" id="save_posting_bank" title="All entered Ref. No. will be saved.">
                                 <i class="fa fa-save" aria-hidden="true"></i>&nbsp;&nbsp;Save
                             </a>
                             <a class="btn btn-default waves-effect waves-dark" id="erase_bank" title="All displayed Ref. No. will be erased.">
-                                <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear
+                                <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear all Ref No
                             </a>
-                        </div>
-                        <div class="col-sm-2 text-left">
-                            
                         </div>
                         <div class="col-sm-4 text-center">
                             <a class="waves-effect waves-dark" id="copy_bank" title="Copy filters from bank to book." style="margin-top: 8px;">
@@ -183,7 +177,7 @@
                             </a>
                             &nbsp;&nbsp;&nbsp;
                             <a class="waves-effect waves-dark" id="reset_bank" title="Clear filters and show all data." style="margin-top: 8px;">
-                                <i class="fa fa-repeat" aria-hidden="true"></i>&nbsp;&nbsp;Reset
+                                <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear filter
                             </a>
                         </div>
                     </div>
@@ -201,12 +195,12 @@
                             <th style="color:#424242"></th>
                             <th style="color:#424242">Date</th>
                             <th style="color:#424242">Doc. Type</th>
-                            <th style="color:#424242">Doc. No.</th>
+                            <th style="color:#424242">Doc. No</th>
                             <th style="color:#424242">Particulars</th>
                             <th style="color:#424242">Debit</th>
                             <th style="color:#424242">Credit</th>
-                            <th style="color:#424242">Ref. No.</th>
-                            <th style="color:#424242">Check No.</th>
+                            <th style="color:#424242">Check No</th>
+                            <th style="color:#424242">Ref No</th>
                         </tr>
                     </thead>
                     {% if record.is_currency_peso %}
@@ -226,7 +220,7 @@
                                     <td class="bg-blue-200"></td>
                                 </tr>
                             {% else %}
-                                <tr class="row_{{ data.id }}">
+                                <tr class="row_{{ data.id }}" style="color:#636262">
                                     <td class="text-left counter"></td>
                                     <td class="text-left pointer document-date">{{ data.document_date|date:"m/d/Y" }}</td>
                                     <td class="text-left pointer document-type">{{ data.document_type }}</td>
@@ -242,6 +236,11 @@
                                         <td class="text-left"></td>
                                         <td class="text-left"></td>
                                     {% endif %}
+                                    {% if data.document_checknum %}
+                                        <td class="text-left pointer document-checknum">{{ data.document_checknum }}</td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
                                     <td class="text-center">
                                         <input type="hidden" name="book_data_id" value="{{ data.id }}" />
                                         {% if data.reference_number %}
@@ -250,11 +249,6 @@
                                             <input type="text" class="input-sm book-refno-input" name="book_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
                                         {% endif %}
                                     </td>
-                                    {% if data.document_checknum %}
-                                        <td class="text-left pointer document-checknum">{{ data.document_checknum }}</td>
-                                    {% else %}
-                                        <td></td>
-                                    {% endif %}
                                 </tr>
                             {% endif %}
                         {% endfor %}
@@ -273,7 +267,7 @@
                                     <td class="bg-blue-200"></td>
                                 </tr>
                             {% else %}
-                                <tr class="row_{{ posted.id }}">
+                                <tr class="row_{{ posted.id }}" style="color:#636262">
                                     <td class="text-left counter"></td>
                                     <td class="text-left pointer document-date">{{ posted.document_date|date:"m/d/Y" }}</td>
                                     <td class="text-left pointer document-type">{{ posted.document_type }}</td>
@@ -289,6 +283,11 @@
                                         <td class="text-left"></td>
                                         <td class="text-left"></td>
                                     {% endif %}
+                                    {% if posted.document_checknum %}
+                                        <td class="text-left document-checknum">{{ posted.document_checknum }}</td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
                                     <td class="text-center">
                                         <input type="hidden" name="book_data_id" value="{{ posted.id }}" />
                                         {% if posted.reference_number %}
@@ -297,11 +296,6 @@
                                             <input type="text" class="input-sm book-refno-input" name="book_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
                                         {% endif %}
                                     </td>
-                                    {% if posted.document_checknum %}
-                                        <td class="text-left document-checknum">{{ posted.document_checknum }}</td>
-                                    {% else %}
-                                        <td></td>
-                                    {% endif %}
                                 </tr>
                             {% endif %}
                         {% endfor %}
@@ -317,12 +311,12 @@
                             <th style="color:#424242;"></th>
                             <th style="color:#424242">Date</th>
                             <th style="color:#424242">Doc. Type</th>
-                            <th style="color:#424242">Doc. No.</th>
+                            <th style="color:#424242">Doc. No</th>
                             <th style="color:#424242">Particulars</th>
                             <th style="color:#424242">Debit</th>
                             <th style="color:#424242">Credit</th>
-                            <th style="color:#424242">Ref. No.</th>
-                            <th style="color:#424242">Check No.</th>
+                            <th style="color:#424242">Check No</th>
+                            <th style="color:#424242">Ref No</th>
                         </tr>
                     </thead>
                     {% if record.is_currency_peso %}
@@ -341,7 +335,7 @@
                                         <td class="bg-blue-200"></td>
                                     </tr>
                                 {% else %}
-                                    <tr id="row_{{ forloop.counter }}">
+                                    <tr id="row_{{ forloop.counter }}" style="color:#636262">
                                         <td class="text-left bank-row-count"></td>
                                         <td class="text-left pointer bank-transaction-date">{{ data.transaction_date|date:"m/d/Y" }}</td>
                                         <td class="text-left pointer bank-document-type"></td>
@@ -353,19 +347,19 @@
                                         {% endif %}
                                         <td class="text-right pointer bankdebitamount">{{ data.debit_amount|floatformat:2|intcomma }}</td>
                                         <td class="text-right pointer bankcreditamount">{{ data.credit_amount|floatformat:2|intcomma }}</td>
-                                        <td class="text-center">
-                                            <input type="hidden" name="bank_data_id" value="{{ data.id }}" />
-                                            {% if data.reference_number %}
-                                                <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" id="input_{{ forloop.counter }}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
-                                            {% else %}
-                                                <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
-                                            {% endif %}
-                                        </td>
                                         {% if data.checknumber %}
                                             <td class="text-left pointer bank-checknumber">{{ data.checknumber }}</td>
                                         {% else %}
                                             <td></td>
                                         {% endif %}
+                                        <td class="text-center">
+                                            <input type="hidden" name="bank_data_id" value="{{ data.id }}" />
+                                            {% if data.reference_number %}
+                                                <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" id="input_{{ forloop.counter }}" value="{{ data.reference_number }}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                            {% else %}
+                                                <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                 {% endif %}
                             {% endfor %}
@@ -384,7 +378,7 @@
                                         <td class="bg-blue-200"></td>
                                     </tr>
                                 {% else %}
-                                    <tr class="row_{{ posted.id }}">
+                                    <tr class="row_{{ posted.id }}" style="color:#636262">
                                         <td class="text-left bank-row-count"></td>
                                         <td class="text-left bank-transaction-date">{{ posted.transaction_date|date:"m/d/Y" }}</td>
                                         <td></td>
@@ -392,6 +386,11 @@
                                         <td class="text-left particulars">{{ posted.particulars }}</td>
                                         <td class="text-right bankdebitamount">{{ posted.debit_amount|floatformat:2|intcomma }}</td>
                                         <td class="text-right bankcreditamount">{{ posted.credit_amount|floatformat:2|intcomma }}</td>
+                                        {% if posted.checknumber %}
+                                            <td class="text-left bank-checknumber">{{ posted.checknumber }}</td>
+                                        {% else %}
+                                            <td></td>
+                                        {% endif %}
                                         <td class="text-center">
                                             <input type="hidden" name="bank_data_id" value="{{ posted.id }}" />
                                             {% if posted.reference_number %}
@@ -400,11 +399,6 @@
                                                 <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
                                             {% endif %}
                                         </td>
-                                        {% if posted.checknumber %}
-                                            <td class="text-left bank-checknumber">{{ posted.checknumber }}</td>
-                                        {% else %}
-                                            <td></td>
-                                        {% endif %}
                                     </tr>
                                 {% endif %}
                             {% endfor %}
@@ -430,21 +424,22 @@
                         <tr class="border-0" id="pdi_table_header">
                             <th style="color:#424242"></th>
                             <th style="color:#424242">Date</th>
-                            <th style="color:#424242">Doc. Type</th>
-                            <th style="color:#424242">Doc. No.</th>
+                            <th style="color:#424242; white-space: nowrap;">Doc. Type</th>
+                            <th style="color:#424242; white-space: nowrap;">Doc. No</th>
                             <th style="color:#424242">Particulars</th>
-                            <th style="color:#424242">Debit (<span class="currency_longname"></span>)</th>
-                            <th style="color:#424242">Credit (<span class="currency_longname"></span>)</th>
-                            <th style="color:#424242">Debit (PHP)</th>
-                            <th style="color:#424242">Credit (PHP)</th>
-                            <th style="color:#424242">Ref. No.</th>
-                            <th style="color:#424242">Check No.</th>
+                            <th style="color:#424242; white-space: nowrap;">Debit (<span class="currency_longname"></span>)</th>
+                            <th style="color:#424242; white-space: nowrap;">Credit (<span class="currency_longname"></span>)</th>
+                            <th style="color:#424242; white-space: nowrap;">FX Rate</th>
+                            <th style="color:#424242; white-space: nowrap;">Debit (PHP)</th>
+                            <th style="color:#424242; white-space: nowrap;">Credit (PHP)</th>
+                            <th style="color:#424242; white-space: nowrap;">Check No</th>
+                            <th style="color:#424242; white-space: nowrap;">Ref No</th>
                         </tr>
                     </thead>
                     {% if record.is_currency_peso == 0 %}
                     <tbody>
                         {% for data in pdi_data %}
-                            <tr class="row_{{ data.id }}" id="{{ data.id }}">
+                            <tr class="row_{{ data.id }}" id="{{ data.id }}" style="color:#636262">
                                 <td class="text-left counter"></td>
                                 <td class="text-left">{{ data.document_date|date:"m/d/Y" }}</td>
                                 <td class="text-left">{{ data.document_type }}</td>
@@ -455,8 +450,8 @@
                                     <td class="text-right bookdebit_dollar">{{ data.fxamount|floatformat:2|intcomma }}</td>
                                 {% elif data.balancecode == 'D' %}
                                     <td class="text-right bookdebit_dollar">
-                                        <button class="btn btn-info btn-sm fxrate-btn" title="Enter FX rate" data-toggle='modal' id="posting" data-target='#fxrateModal'>
-                                            <i class="icon fa-exchange"> </i>&nbsp;&nbsp;&nbsp;Enter FX Rate
+                                        <button class="btn btn-info btn-sm fxrate-btn" title="Foreign exchange rate" data-toggle='modal' id="posting" data-target='#fxrateModal'>
+                                            <i class="icon fa-exchange"> </i>&nbsp;&nbsp;&nbsp;Enter PHP/USD Rate
                                         </button>
                                     </td>
                                 {% else %}
@@ -467,14 +462,14 @@
                                     <td class="text-right bookcredit_dollar">{{ data.fxamount|floatformat:2|intcomma }}</td>
                                 {% elif data.balancecode == 'C' %}
                                     <td class="text-right bookcredit_dollar">
-                                        <button class="btn btn-info btn-sm fxrate-btn" title="Enter FX rate" data-toggle='modal' id="posting" data-target='#fxrateModal'>
-                                            <i class="icon fa-exchange"> </i>&nbsp;&nbsp;&nbsp;Enter FX Rate
+                                        <button class="btn btn-info btn-sm fxrate-btn" title="Foreign exchange rate" data-toggle='modal' id="posting" data-target='#fxrateModal'>
+                                            <i class="icon fa-exchange"> </i>&nbsp;&nbsp;&nbsp;Enter PHP/USD Rate
                                         </button>
                                     </td>
                                 {% else %}
                                     <td class="text-right bookcredit_dollar">0.00</td>
                                 {% endif %}
-
+                                <td class="text-right">{{ data.fxrate|default:"" }}</td>
                                 {% if data.balancecode == 'D' %}
                                     <td class="text-right pointer bookdebitamount" >{{ data.amount|floatformat:2|intcomma }}</td>
                                     <td class="text-right pointer bookcreditamount" >0.00</td>
@@ -485,6 +480,11 @@
                                     <td class="text-right">0.00</td>
                                     <td class="text-right">0.00</td>
                                 {% endif %}
+                                {% if data.document_checknum %}
+                                    <td class="text-left pointer document-checknum">{{ data.document_checknum }}</td>
+                                {% else %}
+                                    <td></td>
+                                {% endif %}
                                 <td class="text-center">
                                     <input type="hidden" name="book_data_id" value="{{ data.id }}" />
                                     {% if data.reference_number %}
@@ -493,11 +493,6 @@
                                         <input type="text" class="input-sm book-refno-input" name="book_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
                                     {% endif %}
                                 </td>
-                                {% if data.document_checknum %}
-                                    <td class="text-left pointer document-checknum">{{ data.document_checknum }}</td>
-                                {% else %}
-                                    <td></td>
-                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -512,20 +507,20 @@
                             <th style="color:#424242;"></th>
                             <th style="color:#424242">Date</th>
                             <th style="color:#424242">Doc. Type</th>
-                            <th style="color:#424242">Doc. No.</th>
+                            <th style="color:#424242">Doc. No</th>
                             <th style="color:#424242">Particulars</th>
                             <th style="color:#424242">Debit (<span class="currency_longname"></span>)</th>
                             <th style="color:#424242">Credit (<span class="currency_longname"></span>)</th>
-                            <th style="color:#424242">Ref. No.</th>
-                            <th style="color:#424242">Check No.</th>
+                            <th style="color:#424242">Check No</th>
+                            <th style="color:#424242">Ref No</th>
                         </tr>
                     </thead>
                     {% if record.is_currency_peso == 0 %}
-                        <tbody>
+                    <tbody>
                         
                         {% for data in bank_data %}
 
-                            <tr class="none" id="row_{{ forloop.counter }}">
+                            <tr class="none" id="row_{{ forloop.counter }}" style="color:#636262">
                                 <td class="text-left"></td>
                                 <td class="text-left">{{ data.transaction_date }}</td>
                                 <td class="text-left"></td>
@@ -533,22 +528,22 @@
                                 <td class="text-left">{{ data.particulars }}</td>
                                 <td class="text-right pointer bankdebit_dollar">{{ data.debit_amount|floatformat:2|intcomma }}</td>
                                 <td class="text-right pointer bankcredit_dollar">{{ data.credit_amount|floatformat:2|intcomma }}</td>
-                                <td class="text-center">
-                                    <input type="hidden" name="bank_data_id" value="{{ data.id }}" />
-                                    {% if data.reference_number %}
-                                        <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" id="input_{{ forloop.counter }}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
-                                    {% else %}
-                                        <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
-                                    {% endif %}
-                                </td>
                                 {% if data.checknumber %}
                                     <td class="text-left pointer bank-checknumber">{{ data.checknumber }}</td>
                                 {% else %}
                                     <td></td>
                                 {% endif %}
+                                <td class="text-center">
+                                    <input type="hidden" name="bank_data_id" value="{{ data.id }}" />
+                                    {% if data.reference_number %}
+                                        <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" id="input_{{ forloop.counter }}" value="{{ data.reference_number }}" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                    {% else %}
+                                        <input type="text" class="input-sm bank-refno-input" name="bank_refno_input" autocomplete="off" style="width: 100px; border: 1px #ccc solid;" />
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
-                        </tbody>
+                    </tbody>
                     {% endif %}
 
                     {% if not bank_data %}
@@ -660,6 +655,54 @@
                 <h4 class="modal-title">Foreign Exchange Rate</h4>
             </div>
             <div class="modal-body" style="overflow:hidden;">
+                <br>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-8">
+                                <label class="control-label" for="fxmodal_doctype">Document Type:</label>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <span id="fxmodal_doctype"></span>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-8">
+                                <label class="control-label" for="fxmodal_docno">Document No.:</label>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <span id="fxmodal_docno"></span>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-8">
+                                <label class="control-label" for="fxmodal_date">Date:</label>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <span id="fxmodal_date"></span>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-8">
+                                <label class="control-label" for="fxmodal_phpamount">Amount (PHP):</label>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <span id="fxmodal_phpamount"></span>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-8">
+                                <label class="control-label" for="fxmodal_refno">Ref. No.:</label>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <span id="fxmodal_refno"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <br>
                 <div class="row">
                     <div class="form-group col-md-12">
                         <input type="hidden" id="id_bookid" />
@@ -707,12 +750,14 @@
                                 </div>
                             </div>
                         </div>
+                        <br>
+                        <br>
                         <div class="form-group col-md-12 extra-field">
-                            <div class="form-group col-md-4">
-                                <label class="control-label" for="id_fxamount">Suggested FX rates:</label>
+                            <div class="form-group col-md-6">
+                                <label class="control-label" for="suggestions_list" id="suggestions_label"> </label>
                             </div>
-                            <div class="form-group col-md-8">
-                                <ul class="list-group" id="suggestions_list">
+                            <div class="form-group col-md-6">
+                                <ul class="list-group text-right" id="suggestions_list">
                                     
                                 </ul>
                             </div>
@@ -1660,6 +1705,7 @@
         $('#save_posting_book').click(function(){
             if(confirm("Confirm saving book reference numbers?")){
                 var arr_refno = [];
+                
                 if($('#pdi_table > tbody > tr').length > 0){
                     
                     $('#pdi_table > tbody > tr').each(function(){
@@ -1681,6 +1727,7 @@
                             
                             var id = $(this).find('input[name=book_data_id]').val();
                             var refno = $(this).find('input[name=book_refno_input]').val();
+                            
                             if(id){
                                 arr_refno.push({
                                     id: id,
@@ -1706,9 +1753,9 @@
                             } else if(response.failed_count === 1){
                                 alert('A Ref. No. was not saved.');
                             } else if(response.failed_count > 1){
-                                alert('Ref. No. that were not saved: '+ response.failed_count);
+                                alert('Count of Ref. No. that were not saved: '+ response.failed_count);
                             } else if(response.success_count < 1 && response.failed_count < 1){
-                                alert("You haven't entered any Ref. No. yet.");
+                                alert("There is no new entered Ref. No.");
                             } else {
                                 alert('Successfully saved Ref. No.: '+response.success_count+ '. Failed saving Ref. No.: '+response.failed_count);
                             }
@@ -1729,18 +1776,36 @@
         $('#save_posting_bank').click(function(){
             if(confirm("Confirm saving bank reference numbers?")){
                 var arr_refno = [];
-                $('#bank_table > tbody > tr').each(function(){
-                    if(!$(this).hasClass('bank-filtered-subtotal')){
-                        var id = $(this).find('input[name=bank_data_id]').val();
-                        var refno = $(this).find('input[name=bank_refno_input]').val();
-                        if(id){
-                            arr_refno.push({
-                                id: id,
-                                refno: refno
-                            });
+
+                if ($('#bank_table > tbody > tr').length > 0){
+                    $('#bank_table > tbody > tr').each(function(){
+
+                        if(!$(this).hasClass('bank-filtered-subtotal')){
+                            var id = $(this).find('input[name=bank_data_id]').val();
+                            var refno = $(this).find('input[name=bank_refno_input]').val();
+                            if(id){
+                                arr_refno.push({
+                                    id: id,
+                                    refno: refno
+                                });
+                            }
                         }
-                    }
-                });
+                    });
+                } else {
+                    $('#bank_fxtable > tbody > tr').each(function(){
+                        
+                        if(!$(this).hasClass('bank-filtered-subtotal')){
+                            var id = $(this).find('input[name=bank_data_id]').val();
+                            var refno = $(this).find('input[name=bank_refno_input]').val();
+                            if(id){
+                                arr_refno.push({
+                                    id: id,
+                                    refno: refno
+                                });
+                            }
+                        }
+                    });
+                }
                 if(arr_refno.length > 0){
                     $.ajax({
                         url: "{% url 'bankrecon:savebatchpostingbank' %}",
@@ -1758,7 +1823,7 @@
                             } else if(response.failed_count > 1){
                                 alert('Ref. No. that were not saved: '+ response.failed_count);
                             }else if(response.success_count < 1 && response.failed_count < 1){
-                                alert("You haven't entered any Ref. No. yet.");
+                                alert("There is no new entered Ref. No.");
                             } else {
                                 alert('Successfully saved Ref. No.: '+response.success_count+ '. Failed saving Ref. No.: '+response.failed_count);
                             }
@@ -1831,10 +1896,13 @@
             
             if(suggestions.length > 1) {
                 $('#state_suggestions').text(suggestions.length + ' suggestions found.');
+                $('#suggestions_label').text('Suggested FX rates:');
             } else if(suggestions.length == 1) {
                 $('#state_suggestions').text(suggestions.length + ' suggestion found.');
+                $('#suggestions_label').text('Suggested FX rate:');
             } else {
                 $('#state_suggestions').text('No suggestions found.');
+                $('#suggestions_label').text('');
             }
             $('#state_suggestions').show();
 
@@ -1853,20 +1921,40 @@
         $('.fxrate-btn').click(function(){
 
             $('#state_suggestions').hide();
+            $('#fxmodal_phpamount').text('');
+            $('#fxmodal_date').text('');
+            $('#fxmodal_refno').text('');
+            $('#fxmodal_doctype').text('');
+            $('#fxmodal_docno').text('');
+
+            // affected if column count/structure changes
+            var php_debitamount = $(this).closest('tr').find("td:nth-child(9)").text();
+            var php_creditamount = $(this).closest('tr').find("td:nth-child(10)").text();
             
-            var php_debitamount = $(this).closest('tr').find("td:nth-child(8)").text();
-            var php_creditamount = $(this).closest('tr').find("td:nth-child(9)").text();
+            var date = $(this).closest('tr').find("td:nth-child(2)").text();
+            var refno = $(this).find("input[name=book_refno_input]").val();
+            var doctype = $(this).closest('tr').find("td:nth-child(3)").text();
+            var docno = $(this).closest('tr').find("td:nth-child(4)").text();
+
             var bookid = $(this).closest('tr').attr('id');
             
             if (php_creditamount === '0.00' && php_debitamount != '0.00'){
                 php_amount = php_debitamount.replace(/,/g, '');
-                fx_balancecode = 'D'
+                fx_balancecode = 'D';
+                $('#fxmodal_phpamount').text(php_debitamount);
             } else if(php_debitamount === '0.00' && php_creditamount != '0.00') {
                 php_amount = php_creditamount.replace(/,/g, '');
-                fx_balancecode = 'C'
+                fx_balancecode = 'C';
+                $('#fxmodal_phpamount').text(php_creditamount);
             }
-            
+
             suggest_fxrate(php_amount, fx_balancecode);
+
+            $('#fxmodal_date').text(date);
+            $('#fxmodal_refno').text(refno);
+            $('#fxmodal_doctype').text(doctype);
+            $('#fxmodal_docno').text(docno);
+            
             
             $('#basic-addon2').text(currency_details.symbol);
             $('#id_currency').val(currency_details.name+' ('+currency_details.long_name+')');
@@ -1875,7 +1963,7 @@
             $('#id_bookid').val(bookid);
         });
 
-        $('input[name=fxrate]').on('keyup paste',function(event){
+        $('input[name=fxrate]').on('input propertychange', function(event){
             
             var fxrate = event.target.value;
             var fxamount = 0;
@@ -1894,14 +1982,15 @@
             
         });
 
-        $('input[name=fxamount]').on('keyup paste',function(event){
+        $('input[name=fxamount]').on('input propertychange', function(event){
             
             var fxamount = event.target.value.replace(',', '');
             var fxrate = 0;
+            
             if(php_amount){
                 var fxrate = parseFloat(php_amount) / parseFloat(fxamount);
             }
-
+            
             if(fxrate) {
                 var fxrate_wcommas = amountWithCommas(fxrate);
                 fxrate_wcommas = parseFloat(fxrate_wcommas).toFixed(5);
@@ -1918,12 +2007,13 @@
         }
 
         $('#fx_save').click(function(){
+            
             var fx_rate = $('#id_fxrate').val();
             var fx_amount = $('#id_fxamount').val();
             var book_id = $('#id_bookid').val();
             
             if(fx_rate && fx_amount){
-
+                
                 try {
                     var decimal_count = fx_rate.split('.')[1].length;
                 } catch (error) {
@@ -1932,9 +2022,12 @@
                 
                 if(decimal_count > 5){
                     alert('Number of decimals must not exceed at 5.');
+                    
                 } else if(decimal_count < 5){
+                    
                     alert('Number of decimals must be exactly at 5. Add trailing zeros to complete (e.g. 1.23400).');
                 } else {
+                    $(this).text('Saving....');
                     $.ajax({
                         url: "{% url 'bankrecon:fxsave' %}",
                         type: "post",
@@ -1947,29 +2040,31 @@
                         success: function(response) {
 
                             if (response.result === true){
-
-                                fx_amount = parseFloat(fx_amount).toFixed(2);
+                                
                                 var fx_amount_wcommas = amountWithCommas(fx_amount);
-
+                                
                                 $('.row_'+ book_id).find(".fxrate-btn").replaceWith(fx_amount_wcommas);
                                 calc_total();
                                 
                             } else {
                                 customAlert($('#fx-failed'));
                             }
-                            
+                            $('#fx_save').text('Save');
                             $('#fxrateModal').modal('toggle');
                         },
                         error: function(response) {
                             console.log('err: '+ response.result)
                             alert('FX save error.');
+                            $('#fx_save').text('Save');
                             $('#fxrateModal').modal('toggle');
                         }
                     });
                 }
+                
             } else {
-                alert('FX rate and FX amount are required and please use proper input format.');
+                alert('FX rate and FX amount are required and use numeric input format.');
             }
+            
         });
 
         $('#get_xls').click(function(){
@@ -1977,7 +2072,9 @@
             var book_data = [];
             var bank_data = [];
             if (!$.isEmptyObject(currency_details)){
+
                 if(currency_details.name == 'USD'){
+
                     $('#pdi_fxtable > tbody > tr').filter(':visible').each(function(){
                         var reference_number= $(this).find('input[name=book_refno_input]').val() ? $(this).find('input[name=book_refno_input]').val() : '';
                         book_data.push({
@@ -1987,12 +2084,28 @@
                             particulars: $(this).find('td').eq(4).text(),
                             debit_dollar: $(this).find('td').eq(5).text(),
                             credit_dollar: $(this).find('td').eq(6).text(),
-                            debit_php: $(this).find('td').eq(7).text(),
-                            credit_php: $(this).find('td').eq(8).text(),
+                            fxrate: $(this).find('td').eq(7).text(),
+                            debit_php: $(this).find('td').eq(8).text(),
+                            credit_php: $(this).find('td').eq(9).text(),
                             reference_number: reference_number,
                             check_number: $(this).find('td').eq(10).text(),
                         });
                     });
+
+                    $('#bank_fxtable > tbody > tr').filter(':visible').each(function(){
+                        var reference_number= $(this).find('input[name=bank_refno_input]').val() ? $(this).find('input[name=bank_refno_input]').val() : '';
+                        bank_data.push({
+                            date: $(this).find('td').eq(1).text(),
+                            doc_type: $(this).find('td').eq(2).text(),
+                            doc_num: $(this).find('td').eq(3).text(),
+                            particulars: $(this).find('td').eq(4).text(),
+                            debit: $(this).find('td').eq(5).text(),
+                            credit: $(this).find('td').eq(6).text(),
+                            reference_number: reference_number,
+                            check_number: $(this).find('td').eq(7).text(),
+                        });
+                    });
+
                 } 
             } else {
                 $('#pdi_table > tbody > tr').filter(':visible').each(function(){
@@ -2008,21 +2121,21 @@
                         check_number: $(this).find('td').eq(8).text(),
                     });
                 });
-            }
 
-            $('#bank_table > tbody > tr').filter(':visible').each(function(){
-                var reference_number= $(this).find('input[name=bank_refno_input]').val() ? $(this).find('input[name=bank_refno_input]').val() : '';
-                bank_data.push({
-                    date: $(this).find('td').eq(1).text(),
-                    doc_type: $(this).find('td').eq(2).text(),
-                    doc_num: $(this).find('td').eq(3).text(),
-                    particulars: $(this).find('td').eq(4).text(),
-                    debit: $(this).find('td').eq(5).text(),
-                    credit: $(this).find('td').eq(6).text(),
-                    reference_number: reference_number,
-                    check_number: $(this).find('td').eq(8).text(),
+                $('#bank_table > tbody > tr').filter(':visible').each(function(){
+                    var reference_number= $(this).find('input[name=bank_refno_input]').val() ? $(this).find('input[name=bank_refno_input]').val() : '';
+                    bank_data.push({
+                        date: $(this).find('td').eq(1).text(),
+                        doc_type: $(this).find('td').eq(2).text(),
+                        doc_num: $(this).find('td').eq(3).text(),
+                        particulars: $(this).find('td').eq(4).text(),
+                        debit: $(this).find('td').eq(5).text(),
+                        credit: $(this).find('td').eq(6).text(),
+                        reference_number: reference_number,
+                        check_number: $(this).find('td').eq(8).text(),
+                    });
                 });
-            });
+            }
 
             $('#report_bank_account').val($("#bankaccount option:selected").text());
             $('#report_date_from').val($("#dfrom").val());

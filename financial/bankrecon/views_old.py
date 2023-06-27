@@ -1,4 +1,5 @@
 ''' Bankrecon Utility '''
+''' File upload from excel not working in this version (edited 06/19/2023) '''
 import datetime
 import hashlib
 import itertools
@@ -63,67 +64,61 @@ class IndexView(AjaxListView):
 def upload(request):
     if request.method == 'POST':
         
-        try:
-            if request.FILES['data_file'] \
-                    and request.FILES['data_file'].name.endswith('.csv'):
-                if request.FILES['data_file']._size < float(upload_size) * 1024 * 1024:
-                        # 2-bd2, 4-bd4, 5-bd5, 6-bdo
-                    if request.POST['bank_account'] in ['2', '4', '5', '6']:
-                        return BDO(request, columnlength=7)
-                        # 7-bp2
-                    elif request.POST['bank_account'] in ['7']:
-                        return BPI(request, columnlength=9)
-                        # 9-lbp
-                    elif request.POST['bank_account'] in ['9']:
-                        return LandBank(request, columnlength=7)
-                        # 10-mb2
-                    elif request.POST['bank_account'] in ['10']:
-                        return MetroBank(request, columnlength=11)
-                        # 15-rs1
-                    elif request.POST['bank_account'] in ['15']:
-                        return RobinsonSavingsBank(request, columnlength=13)
-                        # 19-sb7, 22-sb9
-                    elif request.POST['bank_account'] in ['19', '22']:
-                        return SecurityBank(request, columnlength=6)
-                        # 23-ub2
-                    elif request.POST['bank_account'] in ['23']:
-                        return UnionBank(request, columnlength=13)
-                        # 32-ew1
-                    elif request.POST['bank_account'] in ['32']:
-                        return EastWestBank(request, columnlength=9)
-                        # 31-pn2
-                    elif request.POST['bank_account'] in ['31']:
-                        return PNB(request, columnlength=9)
-                    else:
-                        return JsonResponse({
-                            'result': 7
-                        })
+        if request.FILES['data_file'] \
+                and request.FILES['data_file'].name.endswith('.csv'):
+            if request.FILES['data_file']._size < float(upload_size) * 1024 * 1024:
+                    # 2-bd2, 4-bd4, 5-bd5, 6-bdo
+                if request.POST['bank_account'] in ['2', '4', '5', '6']:
+                    return BDO(request, columnlength=7)
+                    # 7-bp2
+                elif request.POST['bank_account'] in ['7']:
+                    return BPI(request, columnlength=9)
+                    # 9-lbp
+                elif request.POST['bank_account'] in ['9']:
+                    return LandBank(request, columnlength=7)
+                    # 10-mb2
+                elif request.POST['bank_account'] in ['10']:
+                    return MetroBank(request, columnlength=11)
+                    # 15-rs1
+                elif request.POST['bank_account'] in ['15']:
+                    return RobinsonSavingsBank(request, columnlength=13)
+                    # 19-sb7, 22-sb9
+                elif request.POST['bank_account'] in ['19', '22']:
+                    return SecurityBank(request, columnlength=6)
+                    # 23-ub2
+                elif request.POST['bank_account'] in ['23']:
+                    return UnionBank(request, columnlength=13)
+                    # 32-ew1
+                elif request.POST['bank_account'] in ['32']:
+                    return EastWestBank(request, columnlength=9)
+                    # 31-pn2
+                elif request.POST['bank_account'] in ['31']:
+                    return PNB(request, columnlength=9)
                 else:
                     return JsonResponse({
-                        'result': 4
+                        'result': 7
                     })
-            # elif request.FILES['data_file'] and (request.FILES['data_file'].name.endswith('.dbf')):
-            #         if request.FILES['data_file']._size < float(upload_size) * 1024 * 1024:
-
-            #             if request.POST['bank_account'] in ['15']:
-            #                 # 15-rs1
-            #                 return RobinsonSavingsBankDBF(request)
-            #             elif request.POST['bank_account'] in ['23']:
-            #                 # 23-ubs
-            #                 return UnionBankDBF(request)
-
-            #         else:
-            #             return JsonResponse({
-            #                 'result': 4
-            #             })
             else:
                 return JsonResponse({
-                    'result': 5
+                    'result': 4
                 })
-        except Exception as e:
-            print("An error occurred while uploading the CSV file:", str(e))
+        # elif request.FILES['data_file'] and (request.FILES['data_file'].name.endswith('.dbf')):
+        #         if request.FILES['data_file']._size < float(upload_size) * 1024 * 1024:
+
+        #             if request.POST['bank_account'] in ['15']:
+        #                 # 15-rs1
+        #                 return RobinsonSavingsBankDBF(request)
+        #             elif request.POST['bank_account'] in ['23']:
+        #                 # 23-ubs
+        #                 return UnionBankDBF(request)
+
+        #         else:
+        #             return JsonResponse({
+        #                 'result': 4
+        #             })
+        else:
             return JsonResponse({
-                'result': 9
+                'result': 5
             })
     else:
         context = {
@@ -164,9 +159,6 @@ def get_result(successcount, existscount, bodycount, dberrorcount, commadetected
         result = 3
     elif commadetectedcount > 0:
         result = 5
-    elif existscount == (bodycount - 1):
-        # if csv is edited  using ms excel do minus 1 for extra row
-        result = 2
     else:
         result = 8
     return result
@@ -210,10 +202,6 @@ def BDO(request, columnlength):
     for row in rows:
         
         fields = row.split(",")
-
-        if len(fields) < 2:
-            continue
-
         increment += 1
         # validation
         postingdate = fields[0] if fields[0] != '' else ''
@@ -306,10 +294,6 @@ def BPI(request, columnlength):
     for row in rows:
 
         fields = row.split(",")
-
-        if len(fields) < 2:
-            continue
-
         increment += 1
         # validation
         date = fields[0] if fields[0] != '' else ''
@@ -404,10 +388,6 @@ def MetroBank(request, columnlength):
     for row in rows:
         
         fields = row.split(",")
-
-        if len(fields) < 2:
-            continue
-
         increment += 1
         #validation
         transactiondate = fields[0] if fields[0] != '' else ''
@@ -505,10 +485,6 @@ def RobinsonSavingsBank(request, columnlength):
     for row in rows:
         
         fields = row.split(",")
-
-        if len(fields) < 2:
-            continue
-
         increment += 1
         # validation
         postingdate = fields[0] if fields[0] != '' else ''
@@ -611,10 +587,6 @@ def SecurityBank(request, columnlength):
     for row in rows:
         
         fields = row.split(",")
-        
-        if len(fields) < 2:
-            continue
-
         increment += 1
         # validation
         postingdate = fields[0] if fields[0] != '' else ''
@@ -671,7 +643,7 @@ def SecurityBank(request, columnlength):
         else:
             faileddata.append([postingdate, "", transactiondescription, '', '', catchheaderorfooter, bggrey])
             headorfootcount += 1
-        
+    
     count = successcount + failedcount
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
@@ -700,10 +672,6 @@ def UnionBank(request, columnlength):
     for row in rows:
         
         fields = row.split(",")
-
-        if len(fields) < 2:
-            continue
-
         increment += 1
         # validation
         transactiondate = fields[0] if fields[0] != '' else ''
@@ -800,10 +768,6 @@ def EastWestBank(request, columnlength=9):
     for row in rows:
         
         fields = row.split(",")
-
-        if len(fields) < 2:
-            continue
-
         increment += 1
         # validation
         postingdatetime = fields[0] if fields[0] != '' else ''
@@ -897,10 +861,6 @@ def LandBank(request, columnlength=7):
     for row in rows:
         
         fields = row.split(",")
-
-        if len(fields) < 2:
-            continue
-
         increment += 1
         # validation
         transdatetime = fields[0] if fields[0] != '' else ''
@@ -990,10 +950,6 @@ def PNB(request, columnlength=9):
     for row in rows:
         
         fields = row.split(",")
-
-        if len(fields) < 2:
-            continue
-
         increment += 1
         # validation
         transdate = fields[0] if fields[0] != '' else ''
@@ -1152,38 +1108,19 @@ def transgenerate(request):
     
     if bankaccount_id in foreign_currencyaccounts:
         is_currency_peso = 0
-
-        bank_reconciled = []
-        bank_unreconciled = []
+        sorted_pdi_data = pdi_data
+        sorted_bank_data = bank_data
 
         for bank in bank_data:
             bankdebit_total += bank['debit_amount']
             bankcredit_total += bank['credit_amount']
-
-            if bank['reference_number']:
-                bank_reconciled.append(bank)
-            else:
-                bank_unreconciled.append(bank)
-
-        # Sort transactions with refno to move at the last of records
-        sorted_bank_data = bank_unreconciled + bank_reconciled
-
-        pdi_reconciled = []
-        pdi_unreconciled = []
 
         for pdi in pdi_data:
             if pdi['balancecode'] == 'D':
                 pdidebit_total += pdi['fxamount']
             elif pdi['balancecode'] == 'C':
                 pdicredit_total += pdi['fxamount']
-
-            if pdi['reference_number']:
-                pdi_reconciled.append(pdi)
-            else:
-                pdi_unreconciled.append(pdi)
         
-        # Sort transactions with refno to move at the last of records
-        sorted_pdi_data = pdi_unreconciled + pdi_reconciled
     else:
         dates = list(set([docdate['document_date'] for docdate in pdi_data]))
         for date in dates:
@@ -1455,7 +1392,6 @@ def transgenerate(request):
     context['bank_data'] = sorted_bank_data
     context['posted_with_subtotal'] = posted_with_subtotal
     context['bank_posted_with_subtotal'] = bank_posted_with_subtotal
-    context['parameter'] = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
     viewhtml = render_to_string('bankrecon/transaction_result.html', context)
     
     data = {
@@ -1525,12 +1461,12 @@ def fxsave(request):
     if request.method == 'POST':
         try:
             fxamount = str(request.POST['fx_amount']).replace(',', '')
-            Subledger.objects.filter(id=request.POST['book_id']).update(
-                fxrate=float(request.POST['fx_rate']),
-                fxamount=float(fxamount),
-                modifyby_id=request.user.id, 
-                modifydate=datetime.datetime.now()
-            )
+            # Subledger.objects.filter(id=request.POST['book_id']).update(
+            #     fxrate=float(request.POST['fx_rate']),
+            #     fxamount=float(fxamount),
+            #     modifyby_id=request.user.id, 
+            #     modifydate=datetime.datetime.now()
+            # )
             data = {'result': True}
         except:
             data = {'result': False}
@@ -1570,9 +1506,9 @@ def reportxls(request):
             
             if currency_details:
                 if currency_details['name'] == 'USD':
-                    bookcolumns = ['', 'Date', 'Doc. Type', 'Doc. No.', 'Particulars', 'Debit (USD)', 'Credit (USD)', 'FX Rate', 'Debit (PHP)', 'Credit (PHP)', 'Check No.', 'Ref. No.']
+                    bookcolumns = ['', 'Date', 'Doc. Type', 'Doc. No.', 'Particulars', 'Debit (USD)', 'Credit (USD)', 'Debit (PHP)', 'Credit (PHP)', 'Ref. No.', 'Check No.']
             else:
-                bookcolumns = ['', 'Date', 'Doc. Type', 'Doc. No.', 'Particulars', 'Debit', 'Credit', 'Check No.', 'Ref. No.']
+                bookcolumns = ['', 'Date', 'Doc. Type', 'Doc. No.', 'Particulars', 'Debit', 'Credit', 'Ref. No.', 'Check No.']
 
             for col_num in range(len(bookcolumns)):
                 ws.write(row_num, col_num, bookcolumns[col_num], font_style)
@@ -1590,11 +1526,10 @@ def reportxls(request):
                         ws.write(row_num, 4, row['particulars'], font_style)
                         ws.write(row_num, 5, row['debit_dollar'], horiz_right)
                         ws.write(row_num, 6, row['credit_dollar'], horiz_right)
-                        ws.write(row_num, 7, row['fxrate'], horiz_right)
-                        ws.write(row_num, 8, row['debit_php'], horiz_right)
-                        ws.write(row_num, 9, row['credit_php'], horiz_right)
+                        ws.write(row_num, 7, row['debit_php'], horiz_right)
+                        ws.write(row_num, 8, row['credit_php'], horiz_right)
+                        ws.write(row_num, 9, row['reference_number'], font_style)
                         ws.write(row_num, 10, row['check_number'], font_style)
-                        ws.write(row_num, 11, row['reference_number'], font_style)
             else:
                 for row in list(book_data):
                     row_num +=1
@@ -1605,8 +1540,8 @@ def reportxls(request):
                     ws.write(row_num, 4, row['particulars'], font_style)
                     ws.write(row_num, 5, row['debit'], horiz_right)
                     ws.write(row_num, 6, row['credit'], horiz_right)
-                    ws.write(row_num, 7, row['check_number'], font_style)
-                    ws.write(row_num, 8, row['reference_number'], font_style)
+                    ws.write(row_num, 7, row['reference_number'], font_style)
+                    ws.write(row_num, 8, row['check_number'], font_style)
 
             row_num += 2
             ws.write(row_num, 4, "Total:", font_style)
@@ -1619,7 +1554,7 @@ def reportxls(request):
             font_style = xlwt.XFStyle()
             font_style.font.bold=True
 
-            bankcolumns = ['', 'Date', 'Doc. Type', 'Doc. No.', 'Particulars', 'Debit', 'Credit', 'Check No.', 'Ref. No.']
+            bankcolumns = ['', 'Date', 'Doc. Type', 'Doc. No.', 'Particulars', 'Debit', 'Credit', 'Ref. No.', 'Check No.']
 
             for col_num in range(len(bankcolumns)):
                 ws.write(row_num, col_num, bankcolumns[col_num], font_style)
@@ -1635,8 +1570,8 @@ def reportxls(request):
                 ws.write(row_num, 4, row['particulars'], font_style)
                 ws.write(row_num, 5, row['debit'], horiz_right)
                 ws.write(row_num, 6, row['credit'], horiz_right)
-                ws.write(row_num, 7, row['check_number'], font_style)
-                ws.write(row_num, 8, row['reference_number'], font_style)
+                ws.write(row_num, 7, row['reference_number'], font_style)
+                ws.write(row_num, 8, row['check_number'], font_style)
 
             row_num +=2
             ws.write(row_num, 4, "Total:", font_style)
@@ -1735,13 +1670,11 @@ def savebatchpostingbank(request):
     failedcount = 0
 
     for data in form_data:
-        
         try:
-            bank = Bankrecon.objects.filter(id=data['id'])
-            if bank[0].reference_number != data['refno']:
-                bank.update(reference_number=data['refno'], \
+            Bankrecon.objects.filter(id=data['id'])\
+                .update(reference_number=data['refno'], \
                     modifyby_id=request.user.id, modifydate=datetime.datetime.now())
-                successcount += 1
+            successcount += 1
         except:
             failedcount += 1
 

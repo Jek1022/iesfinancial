@@ -222,7 +222,7 @@
                                                         <span class="badge bg-orange-400" id="badge-unable-import"></span>Unable to Import <i>(For User Verification)</i>:
                                                         <p id="unable_import1" style="display: none;">
                                                             <em style="margin-left: 30px;"> - Credit and Debit columns must be numeric or just blank.</em><br>
-                                                            <em style="margin-left: 30px;"> - Check proper date format in <a href="{% url 'bankrecon:importguide' %}">import guide</a>.</em>
+                                                            <em style="margin-left: 30px;"> - Check proper date format in import guide.</em>
                                                         </p>
                                                     </li>
                                                     <li class="list-group-item">
@@ -266,7 +266,6 @@
 <div id="upload-form-required" class="custom-alert danger">All fields are required.</div>
 
 <div id="upload-file-error" class="custom-alert danger">File/Invalid error!</div>
-<div id="csv-file-error" class="custom-alert danger">An error occurred while uploading the CSV file</div>
 <div id="upload-file-large" class="custom-alert danger">File too large! (>3mb)</div>
 <div id="upload-unknown-bank" class="custom-alert danger">Unknown/Waitlisted Bank</div>
 {% endblock page-content %}
@@ -358,7 +357,7 @@
         });
 
 		$('form#data').submit(function(){
-	        if ($('#data_file').get(0).files.length === 0 || $('#bank_account').val() === "" || $('#bank_id').val() === "") {
+	        if ($('#data_file').get(0).files.length === 0 && $('#bank_account').val() === "") {
 	            customAlert($('#upload-form-required'));
                 showUploadForm();
 	        }
@@ -397,9 +396,6 @@
                                 customAlert($('#upload-unknown-bank'));
                             case 8:
                                 customAlert($('#upload-file-error'));
-                                break;
-                            case 9:
-                                customAlert($('#csv-file-error'));
                                 break;
                             default:
                                 customAlert($('#upload-file-error'));

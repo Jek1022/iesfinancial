@@ -98,8 +98,8 @@
 $(function(){
 
     $('#bankaccount').change(function(){
-        // 5-bd5
-        if(this.value === '5'){
+        // 4-bd4, 5-bd5
+        if(this.value === '4' || this.value === '5'){
             $('#us_dollar').show("highlight");
         } else {
             $('#us_dollar').hide("highlight");
@@ -125,7 +125,7 @@ $(function(){
 
         url = "{% url 'bankrecon:transgenerate' %}"+"?dfrom="+dfrom+"&dto="+dto+"&document_type="+document_type+"&bankaccount="+bankaccount;
 
-        if(bankaccount === '5'){
+        if(bankaccount === '4' || bankaccount === '5'){
             
             $.ajax({
                 url: url,

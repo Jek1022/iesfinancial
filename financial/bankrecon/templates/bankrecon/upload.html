@@ -484,7 +484,7 @@
 
             if(list_ids.length > 0){
 
-                if(confirm("Are you sure to delete the newly uploaded data?")){
+                if(confirm("Are you sure you want to proceed with the deletion?")){
 
                     $.ajax({
                         url: "{% url 'bankrecon:delete_upload' %}",
@@ -510,7 +510,7 @@
                     });
                 }
             } else {
-                alert('There are no uploaded transactions applicable to delete');
+                alert('No applicable transactions have been uploaded for deletion.');
             }
             return false;
         });

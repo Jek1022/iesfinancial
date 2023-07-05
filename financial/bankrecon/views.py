@@ -409,7 +409,7 @@ def BPI(request, columnlength):
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
 
-    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result)
+    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result,list_ids)
 
 
 # Transaction Date - Posting Date - Time - Check Number - Transaction Description - Debit Amount - Credit Amount - Balance - Branch/Channel - Subscriber Number/TIN Number - Sequence Number
@@ -514,7 +514,7 @@ def MetroBank(request, columnlength):
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
 
-    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result)
+    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result,list_ids)
 
 
 def RobinsonSavingsBank(request, columnlength):
@@ -624,7 +624,7 @@ def RobinsonSavingsBank(request, columnlength):
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
 
-    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result)
+    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result,list_ids)
 
 
 # Posting Date, Transaction Description, Credit Amount, Debit Amount, Running Balance, Narrative
@@ -717,7 +717,7 @@ def SecurityBank(request, columnlength):
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
 
-    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result)
+    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result,list_ids)
 
 
 def UnionBank(request, columnlength):
@@ -820,7 +820,7 @@ def UnionBank(request, columnlength):
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
 
-    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result)
+    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result,list_ids)
 
 
 def EastWestBank(request, columnlength=9):
@@ -920,7 +920,7 @@ def EastWestBank(request, columnlength=9):
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
 
-    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result)
+    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result,list_ids)
 
 
 def LandBank(request, columnlength=7):
@@ -1016,7 +1016,7 @@ def LandBank(request, columnlength=7):
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
 
-    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result)
+    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result,list_ids)
 
 
 def PNB(request, columnlength=9):
@@ -1112,7 +1112,7 @@ def PNB(request, columnlength=9):
     bodycount = len(rows) - headorfootcount
     result = get_result(successcount, existscount, bodycount, dberrorcount, commadetectedcount)
 
-    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result)
+    return json_response(successcount,failedcount,faileddata,successdata,count,existscount,dberrorcount,commadetectedcount,headorfootcount,result,list_ids)
 
 
 @csrf_exempt

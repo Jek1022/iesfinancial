@@ -2,6 +2,7 @@
 {% load mathfilters %}
 {% load custom %}
 <br>
+
 {% block extra_css %}
     <style>
         .matched {
@@ -23,6 +24,7 @@
         .amount-right{
             text-align: right;
         }
+        
     </style>
 {% endblock extra_css %}
 
@@ -673,7 +675,7 @@
                         <div class="col-md-12">
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-8">
-                                    <label class="control-label" for="fxmodal_doctype">Document Type:</label>
+                                    <label class="control-label">Document Type:</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <span id="fxmodal_doctype"></span>
@@ -681,7 +683,7 @@
                             </div>
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-8">
-                                    <label class="control-label" for="fxmodal_docno">Document No.:</label>
+                                    <label class="control-label">Document No.:</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <span id="fxmodal_docno"></span>
@@ -689,7 +691,7 @@
                             </div>
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-8">
-                                    <label class="control-label" for="fxmodal_date">Date:</label>
+                                    <label class="control-label">Date:</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <span id="fxmodal_date"></span>
@@ -697,7 +699,7 @@
                             </div>
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-8">
-                                    <label class="control-label" for="fxmodal_phpamount">Amount (PHP):</label>
+                                    <label class="control-label">Amount (PHP):</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <span id="fxmodal_phpamount"></span>
@@ -705,7 +707,7 @@
                             </div>
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-8">
-                                    <label class="control-label" for="fxmodal_refno">Ref. No.:</label>
+                                    <label class="control-label">Ref. No.:</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <span id="fxmodal_refno"></span>
@@ -767,7 +769,7 @@
                             <br>
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-6">
-                                    <label class="control-label" for="suggestions_list" id="suggestions_label"> </label>
+                                    <label class="control-label" id="suggestions_label"> </label>
                                 </div>
                                 <div class="form-group col-md-6">
                                     <ul class="list-group text-right" id="suggestions_list">
@@ -788,7 +790,39 @@
         </div>
     </div>
     <!-- fxrate modal end -->
+    <!-- confirm modal -->
+
+    <div id="custom-dialog" class="modal fade" role="dialog">
+        <div class="modal-dialog" style="width: 450px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Confirmation</h4>
+                </div>
+                <div class="modal-body" style="overflow:hidden;">
+                    <div class="row">
+                        <div class="form-group col-md-12">
+                            <strong id="confirm-message"></strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div align="center">
+                        <button type="button" class="btn btn-sm btn-info" id="confirm-button" title="Enter Ref. No. to all the displayed book data.">Confirmed</button>
+                        <button type="button" class="btn btn-sm btn-default" id="cancel-button" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- confirm modal -->
     <!-- modals end -->
+
+    <!-- start alerts -->
+    <div id="alert-success" class="custom-alert success"></div>
+    <div id="alert-warning" class="custom-alert warning"></div>
+    <div id="alert-danger" class="custom-alert danger"></div>
+    <!-- end alerts -->
 </div>
 <!-- bankrecon_result end -->
 
@@ -1033,76 +1067,19 @@
                 });
             }
 
-            if(book_filter.book_amount != ''){
-                const filter_balancecode = $('#filter_balancecode').val();
-                if(filter_balancecode === 'D'){
-                    
-                    $('.bookdebitamount').each(function(){
-                        if($(this).text() === book_filter.book_amount){
-                            
-                            if(!$(this).closest('tr').hasClass('dead')){
-
-                                $(this).closest('tr').show();
-                                
-                            } 
-                        } else {
-                            $(this).closest('tr').addClass('dead');
-                            $(this).closest('tr').hide();
-                        }
-                    });
-                } else if(filter_balancecode === 'C'){
-                    $('.bookcreditamount').each(function(){
-                        if($(this).text() === book_filter.book_amount){
-                            if(!$(this).closest('tr').hasClass('dead')){
-
-                                $(this).closest('tr').show();
-                                
-                            } 
-                        } else {
-                            $(this).closest('tr').addClass('dead');
-                            $(this).closest('tr').hide();
-                        }
-                    });
-                } else {
-                    let code = prompt('Please enter "Debit" or "Credit"', "Debit");
-                    let text;
-                    if (code == null || code == "") {
-                        alert('Please enter "Debit" or "Credit" first.');
+            if (book_filter.book_amount !== '') {
+                $('.bookdebitamount, .bookcreditamount').each(function() {
+                    const row = $(this).closest('tr');
+                    const debitAmount = row.find('.bookdebitamount').text();
+                    const creditAmount = row.find('.bookcreditamount').text();
+                    if (debitAmount === book_filter.book_amount || creditAmount === book_filter.book_amount) {
+                        row.show().removeClass('dead');
                     } else {
-                        if (code == "Debit"){
-                            $('.bookdebitamount').each(function(){
-                                if($(this).text() === book_filter.book_amount){
-                                    if(!$(this).closest('tr').hasClass('dead')){
-
-                                        $(this).closest('tr').show();
-                                        
-                                    } 
-                                } else {
-                                    $(this).closest('tr').addClass('dead');
-                                    $(this).closest('tr').hide();
-                                }
-                            });
-
-                        } else if(code == "Credit"){
-                            $('.bookcreditamount').each(function(){
-                                if($(this).text() === book_filter.book_amount){
-                                    if(!$(this).closest('tr').hasClass('dead')){
-
-                                        $(this).closest('tr').show();
-                                        
-                                    } 
-                                } else {
-                                    $(this).closest('tr').addClass('dead');
-                                    $(this).closest('tr').hide();
-                                }
-                            });
-                        } else {
-                            alert('Please enter "Debit" or "Credit".');
-                        }
+                        row.hide().addClass('dead');
                     }
-                }
+                });
             }
-            
+
             calc_total();
             var table = document.getElementById('pdi_table');
             var rowCount = table.rows.length;
@@ -1247,72 +1224,17 @@
                 });
             }
 
-            if(bank_filter.bank_amount != ''){
-                const filter_bank_balancecode = $('#filter_bank_balancecode').val();
-                if(filter_bank_balancecode === 'D'){
-                    $('.bankdebitamount').each(function(){
-                        if($(this).text() === bank_filter.bank_amount){
-                            if(!$(this).closest('tr').hasClass('dead')){
-
-                                $(this).closest('tr').show();
-                                
-                            } 
-                        } else {
-                            $(this).closest('tr').addClass('dead');
-                            $(this).closest('tr').hide();
-                        }
-                    });
-                } else if(filter_bank_balancecode === 'C'){
-                    $('.bankcreditamount').each(function(){
-                        if($(this).text() === bank_filter.bank_amount){
-                            if(!$(this).closest('tr').hasClass('dead')){
-
-                                $(this).closest('tr').show();
-                                
-                            } 
-                        } else {
-                            $(this).closest('tr').addClass('dead');
-                            $(this).closest('tr').hide();
-                        }
-                    });
-                } else {
-                    let code = prompt('Please enter "Debit" or "Credit"', "Debit");
-                    let text;
-                    if (code == null || code == "") {
-                        alert('Please enter "Debit" or "Credit" first.');
+            if (bank_filter.bank_amount !== '') {
+                $('.bankdebitamount, .bankcreditamount').each(function() {
+                    const row = $(this).closest('tr');
+                    const debitAmount = row.find('.bankdebitamount').text();
+                    const creditAmount = row.find('.bankcreditamount').text();
+                    if (debitAmount === bank_filter.bank_amount || creditAmount === bank_filter.bank_amount) {
+                    row.show().removeClass('dead');
                     } else {
-                        if (code == "Debit"){
-                            $('.bankdebitamount').each(function(){
-                                if($(this).text() === bank_filter.book_amount){
-                                    if(!$(this).closest('tr').hasClass('dead')){
-
-                                        $(this).closest('tr').show();
-                                        
-                                    } 
-                                } else {
-                                    $(this).closest('tr').addClass('dead');
-                                    $(this).closest('tr').hide();
-                                }
-                            });
-
-                        } else if(code == "Credit"){
-                            $('.bankcreditamount').each(function(){
-                                if($(this).text() === bank_filter.book_amount){
-                                    if(!$(this).closest('tr').hasClass('dead')){
-
-                                        $(this).closest('tr').show();
-                                        
-                                    } 
-                                } else {
-                                    $(this).closest('tr').addClass('dead');
-                                    $(this).closest('tr').hide();
-                                }
-                            });
-                        } else {
-                            alert('Please enter "Debit" or "Credit".');
-                        }
+                    row.hide().addClass('dead');
                     }
-                }
+                });
             }
 
             calc_total();
@@ -1473,30 +1395,56 @@
             $('#filter_bank_balancecode').val('C');
         });
 
+        // customized dialog
+        var confirmButton = document.getElementById("confirm-button");
+        var cancelButton = document.getElementById("cancel-button");
+        var confirmMessageElement = document.getElementById("confirm-message");
+
+        function showConfirmationDialog(confirmMessage) {
+            var promise = new Promise(function(resolve, reject) {
+            confirmMessageElement.textContent = confirmMessage;
+            $("#custom-dialog").modal("show");
+
+            confirmButton.addEventListener("click", function() {
+                $("#custom-dialog").modal("hide");
+                resolve(true);
+            });
+
+            cancelButton.addEventListener("click", function() {
+                $("#custom-dialog").modal("hide");
+                resolve(false);
+            });
+            });
+
+            return promise;
+        }
 
         // book batch referencing
         $('#book_batch_refno_post').click(function(){
             const refno = $('#book_batch_refno').val();
             if(refno != ''){
-                if(confirm('Confirm book batch referencing for "'+refno+'"?')){
-                    $('#pdi_table > tbody > tr').filter(':visible').each(function(){
-                        var id = $(this).find("input[name=book_data_id]").val();
-                        $(this).find("input[name=book_refno_input]").val(refno);
-                        if(id){
-                            if ($.inArray(id, $.map(refno_posts, function(v) { return v[0]; })) > -1) {
-                                
-                            } else {
-                                refno_posts.push({
-                                    id: id,
-                                    refno: refno
-                                });
+                var confirmMessage = 'Confirm book batch referencing for "'+refno+'"?';
+                showConfirmationDialog(confirmMessage).then(function(result) {
+                    if(result){
+                        $('#pdi_table > tbody > tr').filter(':visible').each(function(){
+                            var id = $(this).find("input[name=book_data_id]").val();
+                            $(this).find("input[name=book_refno_input]").val(refno);
+                            if(id){
+                                if ($.inArray(id, $.map(refno_posts, function(v) { return v[0]; })) > -1) {
+                                    
+                                } else {
+                                    refno_posts.push({
+                                        id: id,
+                                        refno: refno
+                                    });
+                                }
                             }
-                        }
-                        
-                    });
-                }
+                        });
+                    }
+                });
             } else {
-                alert('Please enter Ref. No.');
+                $('#alert-warning').text('Please enter Ref. No.');
+                customAlert($('#alert-warning'));
             }
             $('#bookBatchPostingModal').modal('toggle');
         });
@@ -1505,25 +1453,29 @@
         $('#bank_batch_refno_save').click(function(){
             const refno = $('#bank_batch_refno').val();
             if(refno != ''){
-                if(confirm('Confirm bank batch referencing for "'+refno+'"?')){
-                    $('#bank_table > tbody > tr').filter(':visible').each(function(){
-                        var id = $(this).find("input[name=bank_data_id]").val();
-                        $(this).find("input[name=bank_refno_input]").val(refno);
-                        if(id){
-                            if ($.inArray(id, $.map(refno_posts, function(v) { return v[0]; })) > -1) {
-                                
-                            } else {
-                                refno_posts.push({
-                                    id: id,
-                                    refno: refno
-                                });
+                var confirmMessage = 'Confirm bank batch referencing for "'+refno+'"?';
+                showConfirmationDialog(confirmMessage).then(function(result) {
+                    if(result){
+                        $('#bank_table > tbody > tr').filter(':visible').each(function(){
+                            var id = $(this).find("input[name=bank_data_id]").val();
+                            $(this).find("input[name=bank_refno_input]").val(refno);
+                            if(id){
+                                if ($.inArray(id, $.map(refno_posts, function(v) { return v[0]; })) > -1) {
+                                    
+                                } else {
+                                    refno_posts.push({
+                                        id: id,
+                                        refno: refno
+                                    });
+                                }
                             }
-                        }
-                    });
-                    
-                }
+                        });
+                        
+                    }
+                });
             } else {
-                alert('Please enter Ref. No.');
+                $('#alert-warning').text('Please enter Ref. No.');
+                customAlert($('#alert-warning'));
             }
             $('#bankBatchPostingModal').modal('toggle');
         });
@@ -1547,158 +1499,184 @@
 
         // book save posting
         $('#save_posting_book').click(function(){
-            if(confirm("Confirm saving book reference numbers?")){
-                var arr_refno = [];
-                
-                if($('#pdi_table > tbody > tr').length > 0){
+            var confirmMessage = "Confirm saving book reference numbers?";
+            showConfirmationDialog(confirmMessage).then(function(result) {
+                if(result){
+                    var arr_refno = [];
                     
-                    $('#pdi_table > tbody > tr').each(function(){
-                        if(!$(this).hasClass('book-filtered-subtotal')){
-                            var id = $(this).find('input[name=book_data_id]').val();
-                            var refno = $(this).find('input[name=book_refno_input]').val();
-                            if(id){
-                                arr_refno.push({
-                                    id: id,
-                                    refno: refno
-                                });
-                            }
-                        }
-                    });
-                } else {
-                    $('#pdi_fxtable > tbody > tr').each(function(){
+                    if($('#pdi_table > tbody > tr').length > 0){
                         
-                        if(!$(this).hasClass('book-filtered-subtotal')){
-                            
-                            var id = $(this).find('input[name=book_data_id]').val();
-                            var refno = $(this).find('input[name=book_refno_input]').val();
-                            
-                            if(id){
-                                arr_refno.push({
-                                    id: id,
-                                    refno: refno
-                                });
+                        $('#pdi_table > tbody > tr').each(function(){
+                            if(!$(this).hasClass('book-filtered-subtotal')){
+                                var id = $(this).find('input[name=book_data_id]').val();
+                                var refno = $(this).find('input[name=book_refno_input]').val();
+                                if(id){
+                                    arr_refno.push({
+                                        id: id,
+                                        refno: refno
+                                    });
+                                }
                             }
-                        }
-                    });
-                }
-                
-                if(arr_refno.length > 0){
-                    $.ajax({
-                        url: "{% url 'bankrecon:savebatchpostingbook' %}",
-                        type: "post",
-                        data: {
-                            'csrfmiddlewaretoken': "{{ csrf_token }}",
-                            'data': JSON.stringify(arr_refno)
-                        },
-                        success: function(response) {
+                        });
+                    } else {
+                        $('#pdi_fxtable > tbody > tr').each(function(){
                             
-                            if (response.success_count > 0 && response.failed_count === 0){
-                                alert('Saved successfully.');
-                            } else if(response.failed_count === 1){
-                                alert('A Ref. No. was not saved.');
-                            } else if(response.failed_count > 1){
-                                alert('Count of Ref. No. that were not saved: '+ response.failed_count);
-                            } else if(response.success_count < 1 && response.failed_count < 1){
-                                alert("There is no new entered Ref. No.");
-                            } else {
-                                alert('Successfully saved Ref. No.: '+response.success_count+ '. Failed saving Ref. No.: '+response.failed_count);
+                            if(!$(this).hasClass('book-filtered-subtotal')){
+                                
+                                var id = $(this).find('input[name=book_data_id]').val();
+                                var refno = $(this).find('input[name=book_refno_input]').val();
+                                
+                                if(id){
+                                    arr_refno.push({
+                                        id: id,
+                                        refno: refno
+                                    });
+                                }
                             }
-                            
-                        },
-                        error: function(response) {
-                            alert('Save error.');
-                        }
-                    });
+                        });
+                    }
                     
-                } else {
-                    alert('You have not entered any Ref. No. yet.');
+                    if(arr_refno.length > 0){
+                        $.ajax({
+                            url: "{% url 'bankrecon:savebatchpostingbook' %}",
+                            type: "post",
+                            data: {
+                                'csrfmiddlewaretoken': "{{ csrf_token }}",
+                                'data': JSON.stringify(arr_refno)
+                            },
+                            success: function(response) {
+                                
+                                if (response.success_count > 0 && response.failed_count === 0){
+                                    $('#alert-success').text('Saved successfully.');
+                                    customAlert($('#alert-success'));
+                                } else if(response.failed_count === 1){
+                                    $('#alert-danger').text('One Ref. No. was not saved.');
+                                    customAlert($('#alert-danger'));
+                                } else if(response.failed_count > 1){
+                                    $('#alert-danger').text('Count of Ref. No. that was not saved: '+ response.failed_count);
+                                    customAlert($('#alert-danger'));
+                                } else if(response.success_count < 1 && response.failed_count < 1){
+                                    $('#alert-warning').text('There is no new entered Ref. No.');
+                                    customAlert($('#alert-warning'));
+                                } else {
+                                    $('#alert-warning').text('Successfully saved Ref. No.: '+response.success_count+ '. Failed saving Ref. No.: '+response.failed_count);
+                                    customAlert($('#alert-warning'));
+                                }
+                                
+                            },
+                            error: function(response) {
+                                $('#alert-danger').text('Error occured while saving.');
+                                customAlert($('#alert-danger'));
+                            }
+                        });
+                        
+                    } else {
+                        $('#alert-warning').text('You have not entered any Ref. No. yet.');
+                        customAlert($('#alert-warning'));
+                    }
                 }
-            }
+            });
         });
         
         // bank save posting
         $('#save_posting_bank').click(function(){
-            if(confirm("Confirm saving bank reference numbers?")){
-                var arr_refno = [];
+            var confirmMessage = "Confirm saving bank reference numbers?";
+            showConfirmationDialog(confirmMessage).then(function(result) {
+                if(result){
+                    var arr_refno = [];
 
-                if ($('#bank_table > tbody > tr').length > 0){
-                    $('#bank_table > tbody > tr').each(function(){
+                    if ($('#bank_table > tbody > tr').length > 0){
+                        $('#bank_table > tbody > tr').each(function(){
 
-                        if(!$(this).hasClass('bank-filtered-subtotal')){
-                            var id = $(this).find('input[name=bank_data_id]').val();
-                            var refno = $(this).find('input[name=bank_refno_input]').val();
-                            if(id){
-                                arr_refno.push({
-                                    id: id,
-                                    refno: refno
-                                });
+                            if(!$(this).hasClass('bank-filtered-subtotal')){
+                                var id = $(this).find('input[name=bank_data_id]').val();
+                                var refno = $(this).find('input[name=bank_refno_input]').val();
+                                if(id){
+                                    arr_refno.push({
+                                        id: id,
+                                        refno: refno
+                                    });
+                                }
                             }
-                        }
-                    });
-                } else {
-                    $('#bank_fxtable > tbody > tr').each(function(){
-                        
-                        if(!$(this).hasClass('bank-filtered-subtotal')){
-                            var id = $(this).find('input[name=bank_data_id]').val();
-                            var refno = $(this).find('input[name=bank_refno_input]').val();
-                            if(id){
-                                arr_refno.push({
-                                    id: id,
-                                    refno: refno
-                                });
+                        });
+                    } else {
+                        $('#bank_fxtable > tbody > tr').each(function(){
+                            
+                            if(!$(this).hasClass('bank-filtered-subtotal')){
+                                var id = $(this).find('input[name=bank_data_id]').val();
+                                var refno = $(this).find('input[name=bank_refno_input]').val();
+                                if(id){
+                                    arr_refno.push({
+                                        id: id,
+                                        refno: refno
+                                    });
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
+                    if(arr_refno.length > 0){
+                        $.ajax({
+                            url: "{% url 'bankrecon:savebatchpostingbank' %}",
+                            type: "post",
+                            data: {
+                                'csrfmiddlewaretoken': "{{ csrf_token }}",
+                                'data': JSON.stringify(arr_refno)
+                            },
+                            success: function(response) {
+
+                                if (response.success_count > 0 && response.failed_count === 0){
+                                    $('#alert-success').text('Saved successfully.');
+                                    customAlert($('#alert-success'));
+                                } else if(response.failed_count === 1){
+                                    $('#alert-danger').text('A Ref. No. was not saved.');
+                                    customAlert($('#alert-danger'));
+                                } else if(response.failed_count > 1){
+                                    $('#alert-danger').text('The number of Ref. No. that were not saved: '+ response.failed_count);
+                                    customAlert($('#alert-danger'));
+                                }else if(response.success_count < 1 && response.failed_count < 1){
+                                    $('#alert-warning').text('There is no new entered Ref. No.');
+                                    customAlert($('#alert-warning'));
+                                } else {
+                                    $('#alert-warning').text('Successfully saved Ref. No.: '+response.success_count+ '. Failed saving Ref. No.: '+response.failed_count);
+                                    customAlert($('#alert-warning'));
+                                }
+                            },
+                            error: function(response) {
+                                $('#alert-danger').text('Error occurred while saving.');
+                                customAlert($('#alert-danger'));
+                            }
+                        });
+                        return false;
+                    } else {
+                        $('#alert-warning').text('You have not entered any Ref. No. yet.');
+                        customAlert($('#alert-warning'));
+                    }
                 }
-                if(arr_refno.length > 0){
-                    $.ajax({
-                        url: "{% url 'bankrecon:savebatchpostingbank' %}",
-                        type: "post",
-                        data: {
-                            'csrfmiddlewaretoken': "{{ csrf_token }}",
-                            'data': JSON.stringify(arr_refno)
-                        },
-                        success: function(response) {
-
-                            if (response.success_count > 0 && response.failed_count === 0){
-                                alert('Saved successfully.');
-                            } else if(response.failed_count === 1){
-                                alert('A Ref. No. was not saved.');
-                            } else if(response.failed_count > 1){
-                                alert('Ref. No. that were not saved: '+ response.failed_count);
-                            }else if(response.success_count < 1 && response.failed_count < 1){
-                                alert("There is no new entered Ref. No.");
-                            } else {
-                                alert('Successfully saved Ref. No.: '+response.success_count+ '. Failed saving Ref. No.: '+response.failed_count);
-                            }
-                        },
-                        error: function(response) {
-                            alert('Save error.');
-                        }
-                    });
-                    return false;
-                } else {
-                    alert('You have not entered any Ref. No. yet.');
-                }
-            }
+            });
         });
 
         // Erase book ref. no.
         $('#erase_book').click(function(){
-            if(confirm("Do you really want to clear all the displayed Ref. No.?")){
-                $('#pdi_table > tbody > tr').filter(':visible').each(function(){
-                    $(this).find('input[name=book_refno_input]').val('');
-                });
-            }
+            var confirmMessage = "Are you sure you want to clear all the displayed Ref. No.?";
+            showConfirmationDialog(confirmMessage).then(function(result) {
+                if(result){
+                    $('#pdi_table > tbody > tr').filter(':visible').each(function(){
+                        $(this).find('input[name=book_refno_input]').val('');
+                    });
+                }
+            });
         });
 
         // Erase bank ref. no.
         $('#erase_bank').click(function(){
-            if(confirm("Do you really want to clear all the displayed Ref. No.?")){
-                $('#bank_table > tbody > tr').filter(':visible').each(function(){
-                    $(this).find('input[name=bank_refno_input]').val('');
-                });
-            }
+            var confirmMessage = "Are you sure you want to clear all the displayed Ref. No.?";
+            showConfirmationDialog(confirmMessage).then(function(result) {
+                if(result){
+                    $('#bank_table > tbody > tr').filter(':visible').each(function(){
+                        $(this).find('input[name=bank_refno_input]').val('');
+                    });
+                }
+            });
         });
 
 
@@ -1865,11 +1843,11 @@
                 }
                 
                 if(decimal_count > 5){
-                    alert('Number of decimals must not exceed at 5.');
-                    
+                    $('#alert-warning').text('Number of decimals must not exceed at 5.');
+                    customAlert($('#alert-warning'));
                 } else if(decimal_count < 5){
-                    
-                    alert('Number of decimals must be exactly at 5. Add trailing zeros to complete (e.g. 1.23400).');
+                    $('#alert-warning').text('The number of decimals must be exactly 5. Please add trailing zeros to complete (e.g., 1.23400).');
+                    customAlert($('#alert-warning'));
                 } else {
                     $(this).text('Saving....');
                     $.ajax({
@@ -1891,14 +1869,16 @@
                                 calc_total();
                                 
                             } else {
-                                customAlert($('#fx-failed'));
+                                $('#alert-danger').text('Unable to save FX.');
+                                customAlert($('#alert-danger'));
                             }
                             $('#fx_save').text('Save');
                             $('#fxrateModal').modal('toggle');
                         },
                         error: function(response) {
                             console.log('err: '+ response.result)
-                            alert('FX save error.');
+                            $('#alert-danger').text('Error while saving FX rate.');
+                            customAlert($('#alert-danger'));
                             $('#fx_save').text('Save');
                             $('#fxrateModal').modal('toggle');
                         }
@@ -1906,7 +1886,8 @@
                 }
                 
             } else {
-                alert('FX rate and FX amount are required and use numeric input format.');
+                $('#alert-warning').text('Please provide the FX rate and FX amount in a numeric format. These fields are required.');
+                customAlert($('#alert-warning'));
             }
             
         });
@@ -2008,6 +1989,30 @@
             }
         });
     });
+
+    // custom-alert
+    $(".custom-alert").each(function(){
+        alert_content = $(this).text();
+        alert_id = $(this).attr('id');
+        alert_class = "alt-info alert-info";
+
+        if($(this).hasClass('success')) alert_class = "alt-success alert-success";
+        else if($(this).hasClass('danger')) alert_class = "alt-danger alert-danger";
+        else if($(this).hasClass('warning')) alert_class = "alt-danger alert-warning";
+
+        $('#bankrecon_result').append("<div id='"+alert_id+"' class='custom-alert alert dark "+alert_class+" fade' role='dialog'> " +
+                            "<button type='button' class='close' data-dismiss='modal' aria-label='Close'> " +
+                                "<i class='icon fa-close' aria-hidden='true'></i> " +
+                            "</button>" +
+                            alert_content + "&nbsp;&nbsp;&nbsp;&nbsp;" +
+                        "</div>");
+        $(this).remove();
+    });
+    function customAlert(e, duration){
+        var def_duration = duration >= 0 ? duration : 2500;
+        e.modal('show');
+        setTimeout(function() { e.modal('hide'); }, def_duration);
+    }
 
 </script>
 {% endblock extra_js %}

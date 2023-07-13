@@ -26,5 +26,15 @@ urlpatterns = [
     url(r'^revert_transaction/$', views.revert_transaction, name='revert_transaction'),
     url(r'^count_csno/$', views.count_csno, name='count_csno'),
     url(r'^generic_retrieve/$', views.RetrieveView.as_view(), name='generic_retrieve'),
+    url(r'^get_ap_id/$', views.get_ap_id, name='get_ap_id'),
 
+    # quota
+    url(r'^quota/$', views.QuotaView.as_view(), name='quota'),
+    url(r'^quota/(?P<pk>[0-9]+)/$', views.QuotaDetailView.as_view(), name='quota_detail'),
+    url(r'^quota/(?P<pk>[0-9]+)/update/$', views.QuotaUpdateView.as_view(), name='quota_update'),
+
+    # cs printing 
+    url(r'^confirmation_sheet/batchprint/$', views.BatchPrintCsView.as_view(), name='batchprint_cs'),
+    url(r'^confirmation_sheet/retrieve/$', views.retrieve_cs, name='retrieve_cs'),
+    url(r'^confirmation_sheet/batchprint/a/$', views.startprint, name='startprint'),
 ]

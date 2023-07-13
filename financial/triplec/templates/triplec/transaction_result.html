@@ -24,6 +24,10 @@
         .amount-right{
             text-align: right;
         }
+
+        td {
+            font-weight: bold;
+        }
         
     </style>
 {% endblock extra_css %}
@@ -203,8 +207,8 @@
                                     <td>
                                         <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; font-size: 24px;">
                                             <div class="row nowrap">
-                                                <a class="pointer edit-transaction-entry" title="Click to Edit Transaction Entry" data-toggle="modal" data-target="#transactionEntryModal">
-                                                    <i class="icon md-edit" aria-hidden="true">&nbsp;&nbsp;</i>
+                                                <a class="pointer edit-transaction-entry" title="View or Edit Transaction" data-toggle="modal" data-target="#transactionEntryModal">
+                                                    <i class="icon fa-file-text" aria-hidden="true">&nbsp;&nbsp;</i>
                                                 </a>
                                                 {% if data.status == 'O' %}
                                                     {% if not data.apv_no or data.apv_no == '' %}
@@ -212,9 +216,6 @@
                                                             <i class="icon md-refresh" aria-hidden="true">&nbsp;&nbsp;</i>
                                                         </a>
                                                     {% endif %}
-                                                    <a class="pointer view-transaction-entry" title="Click to View">
-                                                        <i class="icon md-view-list" aria-hidden="true">&nbsp;&nbsp;</i>
-                                                    </a>
                                                 {% endif %}
                                             </div>
                                         </div>
@@ -276,12 +277,12 @@
                                                     <i class="icon md-view-list" aria-hidden="true">&nbsp;&nbsp;</i>
                                                 </a> -->
                                                 {% if not data.author_name or data.author_name == '' or data.author_name == 'None' and not data.code %}
-                                                    <a class="hidden pointer edit-transaction-entry" title="Click to Edit Transaction Entry" data-toggle="modal" data-target="#transactionEntryModal">
-                                                        <i class="icon md-edit" aria-hidden="true">&nbsp;&nbsp;</i>
+                                                    <a class="hidden pointer edit-transaction-entry" title="View or Edit Transaction" data-toggle="modal" data-target="#transactionEntryModal">
+                                                        <i class="icon fa-file-text" aria-hidden="true">&nbsp;&nbsp;</i>
                                                     </a>
                                                 {% else %}
-                                                    <a class="pointer edit-transaction-entry" title="Click to Edit Transaction Entry" data-toggle="modal" data-target="#transactionEntryModal">
-                                                        <i class="icon md-edit" aria-hidden="true">&nbsp;&nbsp;</i>
+                                                    <a class="pointer edit-transaction-entry" title="View or Edit Transaction" data-toggle="modal" data-target="#transactionEntryModal">
+                                                        <i class="icon fa-file-text" aria-hidden="true">&nbsp;&nbsp;</i>
                                                     </a>
                                                 {% endif %}
                                             </div>
@@ -835,7 +836,15 @@
                                     <label class="control-label" for="input_apv_no">APV No.:</label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <input type="text" class="form-control input-sm" id="input_apv_no" readonly>
+                                    <div class="row">
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control input-sm" id="input_apv_no" readonly>
+                                        </div>
+                                        <div class="col-sm-4" id="apv_view_area">
+                                            <a href="" id="view_apv" target="_blank" style="display: none;">View</a>
+                                            <a href="#" id="trigger_view_apv" title="View APV">View</a>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="form-group col-md-2">
@@ -852,7 +861,7 @@
                     <div align="center">
                         <button type="button" class="btn btn-info" id="btn_save_transaction_entry" disabled="disabled">Save</button>
                         &nbsp;&nbsp;
-                        <button type="button" class="btn btn-default" id="btn_cancel_transaction_entry" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-default" id="btn_cancel_transaction_entry" data-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -1046,19 +1055,20 @@
             $('#triplec_table > tbody > tr').filter(':visible').each(function(){
                 if($(this).find(".triplec-checkbox").is(":checked")){
 
-                    var id = $(this).find("input[name=data_id]").val();
+                    var confirmation = $(this).find("input[name=data_confirmation]").val();
                     var status = $(this).find("input[name=data_status]").val();
                     
-                    if(id != '' && status == 'O') {
-                        for_printing.push(id);
+                    if(confirmation != '' && status == 'O') {
+                        for_printing.push(confirmation);
                     }
+
                 }
             });
             if($.isEmptyObject(for_printing)){
                 alert("There's no posted transaction to print");
             } else {
-
-                $("#trigger_cs").attr("href", "{% url 'triplec:print_cs' %}" + "?q=" + encodeURIComponent(JSON.stringify(for_printing)));
+                var unique_cs_list = [...new Set(for_printing)];
+                $("#trigger_cs").attr("href", "{% url 'triplec:print_cs' %}" + "?batch=1&q=" + encodeURIComponent(JSON.stringify(unique_cs_list)));
                 $('#trigger_cs')[0].click();
                 
             }
@@ -1131,10 +1141,15 @@
             $('#modal_status').val(status);
 
             $('#modal_pk').val(pk);
-            if(confirmation !== 'None'){
+            if(confirmation !== 'None' || confirmation !== ''){
                 $('#input_confirmation').val(confirmation);
-                $('#input_apv_no').val(apv_no);
-                $('#input_date_apv').val(apv_date);
+                if(apv_no !== 'None'){
+                    $('#apv_view_area').show();
+                    $('#input_apv_no').val(apv_no);
+                    $('#input_date_apv').val(apv_date);
+                } else {
+                    $('#apv_view_area').hide();
+                }
             }
 
             if(type != ''){
@@ -1223,6 +1238,33 @@
             }
             
             return false;
+        });
+
+        $('#trigger_view_apv').click(function(){
+            var apnum = $('#input_apv_no').val();
+
+            if(apnum != ''){
+                $.ajax({
+                    url: "{% url 'triplec:get_ap_id' %}",
+                    type: "post",
+                    data:{
+                        'apnum': apnum,
+                        'csrfmiddlewaretoken': "{{ csrf_token }}",
+                    },
+                    success: function(response) {
+                        if (response.result === true && response.ap_id){
+                            var detailUrl = "{% url 'accountspayable:detail' 0 %}".replace('0', response.ap_id);
+                            $("#view_apv").attr("href", detailUrl);
+                            $('#view_apv')[0].click();
+                        } else {
+                            custom_failed_alert("APV unavailable.");
+                        }
+                    },
+                    error: function(response) {
+                        alert('Connection error.');
+                    }
+                });
+            }
         });
 
         function revert_transaction(id){
@@ -1754,16 +1796,6 @@
             return num;
         }
 
-        // $('#input_no_of_ccc').on('change paste keyup input', function(){
-        //     var num = parseInt($(this).val()) || 0;
-        //     var amount = $('#input_amount').val() || 0;
-            
-        //     if (num > 1 && amount > 0){
-        //         var divided_amount = amount / num;
-        //         $('#input_amount').val(divided_amount);
-        //     }
-        // });
-
         // custom alert messages
         function custom_success_alert(message){
             $('#custom-success-alert').text(message);
@@ -1774,37 +1806,6 @@
             $('#custom-failed-alert').text(message);
             customAlert($('#custom-failed-alert'));
         }
-
-        // reload row
-        // function reload_row(id){
-            // $('#label_transaction_entry_number').text('');
-            // $('#input_issue_date').val('');
-            // $('#select_section').val('').change();
-            // $('#input_article_title').val('');
-            // $('#select_page').val('').change();
-            // $('#input_no_of_words').val('');
-            // $('#input_no_of_characters').val('');
-            // $('#select_rate_code').val('').change();
-            // $('#input_amount').val('');
-            // $('#select_type').val('').change();
-            // $('#select_code').val('').change();
-            // $('#select_author_name').val('').change();
-            // $('#select_subtype').val('').change();
-            // $('#select_bureau').val('').change();
-            // $('#input_confirmation').val('');
-            // $('#input_no_of_ccc').val('');
-            // $('#input_no_of_items').val('');
-            // $('#input_length1').val('');
-            // $('#input_length2').val('');
-            // $('#input_length3').val('');
-            // $('#input_length4').val('');
-            // $('#input_width1').val('');
-            // $('#input_width2').val('');
-            // $('#input_width3').val('');
-            // $('#input_width4').val('');
-            // $('#input_total_size').val('');
-            // $('#status_txt').text('');
-        // }
     });
 
 </script>

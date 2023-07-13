@@ -16,14 +16,14 @@ class TripleC(models.Model):
     generated_key = models.CharField(max_length=250)
     cms_issue_date = models.DateField()
     cms_article_status = models.CharField(max_length=50, null=True)
-    cms_publication = models.CharField(max_length=250, null=True)
-    cms_section = models.CharField(max_length=250, null=True)
+    cms_publication = models.TextField(null=True)
+    cms_section = models.TextField(null=True)
     cms_page = models.CharField(max_length=50, null=True)
     cms_article_id = models.CharField(max_length=50, null=True)
     cms_article_title = models.TextField()
-    cms_byline = models.CharField(max_length=250, null=True)
-    cms_author_name = models.CharField(max_length=250, null=True)
-    cms_created_by = models.CharField(max_length=250, null=True)
+    cms_byline = models.TextField(null=True)
+    cms_author_name = models.TextField(null=True)
+    cms_created_by = models.TextField(null=True)
     cms_no_of_words = models.IntegerField()
     cms_no_of_characters = models.IntegerField()
     supplier = models.ForeignKey(Supplier, related_name='triplec_supplier')
@@ -35,7 +35,7 @@ class TripleC(models.Model):
     type = models.CharField(max_length=30, choices=TYPE_CHOICES)
     no_ccc = models.IntegerField(default=0)
     code = models.CharField(max_length=30, null=True)
-    author_name = models.CharField(max_length=250, null=True)
+    author_name = models.TextField(null=True)
     issue_date = models.DateField()
     article_title = models.TextField()
     no_of_words = models.IntegerField(default=0)
@@ -115,10 +115,12 @@ class Triplecquota(models.Model):
     TYPE_CHOICES = (
         ('P', 'Photo'),
         ('A', 'Article'),
+        ('A,P', 'Article and Photo'),
         ('B', 'Breaking News'),
     )
-    type = models.CharField(max_length=1, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     transportation_amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, default=0.00)
+    transportation2_amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, default=0.00)
     cellcard_amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, default=0.00)
     STATUS_CHOICES = (
         ('A', 'Active'),
@@ -137,6 +139,10 @@ class Triplecquota(models.Model):
     class Meta:
         db_table = 'triplecquota'
         ordering = ['-pk']
+        permissions = (
+            ("change_triplec_quota", "Can change Triple C Quota"),
+            ("delete_triplec_quota", "Can delete Triple C Quota"),
+        )
 
     def status_verbose(self):
         return dict(Triplecquota.STATUS_CHOICES)[self.status]

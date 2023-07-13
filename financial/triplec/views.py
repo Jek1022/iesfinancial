@@ -2,15 +2,18 @@ import datetime
 from datetime import datetime as dt, timedelta
 import hashlib
 import json
+import urllib2
+from django import forms
 import pandas
-from django.http import JsonResponse, Http404, HttpResponse
+from django.http import JsonResponse, Http404, HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.template.loader import render_to_string, get_template
-from django.views.generic import ListView, View, DetailView
+from django.views.generic import ListView, View, DetailView, UpdateView
 from django.db.models import Q, Sum, Count
+from django.db.models import Max
 from django.db import connection
 from collections import namedtuple
 from annoying.functions import get_object_or_None
@@ -48,7 +51,6 @@ class IndexView(AjaxListView):
     model = TripleC
     template_name = 'triplec/index.html'
     context_object_name = 'data_list'
-
     # page_template = 'triplec/index_list.html'
 
     def get_context_data(self, **kwargs):
@@ -61,6 +63,84 @@ class IndexView(AjaxListView):
         context['classifications'] = Classification.objects.all().filter(isdeleted=0).order_by('code')
         
         return context
+
+
+class RetrieveView(DetailView):
+    model = TripleC
+    template_name = 'triplec/transaction_result.html'
+
+    def get(self, request, *args, **kwargs):
+        if request.is_ajax():
+            dfrom = request.GET.get('dfrom')
+            dto = request.GET.get('dto')
+            type = request.GET["type"]
+            author_name = request.GET["author_name"]
+            status = request.GET["status"]
+            bureau = request.GET["bureau"]
+            section = request.GET["section"]
+            page = request.GET["page"]
+
+            triplec_data = TripleC.objects.filter(cms_issue_date__range=[dfrom, dto], isdeleted=0).order_by('pk')
+
+            if type != '':
+                triplec_data = triplec_data.filter(type=type)
+
+            if author_name != '':
+                triplec_data = triplec_data.filter(author_name__icontains=author_name)
+
+            if status != '':
+                if status == 'O_APV':
+                    triplec_data = triplec_data.filter(status__icontains='O', apv_no__isnull=False).exclude(apv_no__exact='')
+                elif status == 'O':
+                    triplec_data = triplec_data.filter(status__icontains=status).exclude(confirmation__exact='').exclude(apv_no__isnull=False)
+                else:
+                    triplec_data = triplec_data.filter(status__icontains=status)
+
+            if bureau != '':
+                triplec_data = triplec_data.filter(bureau=bureau)
+
+            if section != '':
+                triplec_data = triplec_data.filter(section=section)
+
+            if page != '':
+                triplec_data = triplec_data.filter(page=page)
+
+            context = {}
+            context['triplec_data'] = triplec_data
+            context['authors'] = Supplier.objects.filter(isdeleted=0, triplec=1).order_by('code')
+            context['bureaus'] = Bureau.objects.filter(isdeleted=0).order_by('code')
+            context['pages'] = Page.objects.filter(isdeleted=0).order_by('code')
+            context['sections'] = Section.objects.filter(isdeleted=0).order_by('code')
+            context['subtypes'] = Subtype.objects.filter(isdeleted=0).order_by('code')
+            context['rates'] = Rate.objects.filter(isdeleted=0).order_by('code')
+            context['classifications'] = Classification.objects.filter(isdeleted=0).order_by('code')
+            context['dfrom'] = dfrom
+            context['dto'] = dto
+            # time benchmarking
+            # start_time = dt.now()
+            
+            template = get_template(self.get_template_names()[0])
+            html_content = template.render(context, request)
+            
+            # end_time = dt.now()
+            # time_difference = end_time - start_time
+            # print 'time', time_difference.total_seconds()
+            return HttpResponse(html_content, content_type='text/html')
+        else:
+            return super(RetrieveView, self).get(request, *args, **kwargs)
+        
+
+@csrf_exempt
+def get_ap_id(request):
+    if request.method == 'POST':
+        try:
+            apnum = request.POST.get('apnum')
+            ap_id = Apmain.objects.get(apnum=apnum).id
+            response = {'result': True, 'ap_id': ap_id}
+        except:
+            response = {'result': False}
+
+        return JsonResponse(response)
 
 
 def generate_hash_key(issue_date,article_id,numofwords,numofcharacters):
@@ -176,140 +256,7 @@ def savedata(record,generated_key,issue_date):
         return True
     except:
         return False
-    
-# optimize the speed of this function - ok in RetrieveView
-# def retrieve(request):
-#     print 'start'
-#     dfrom = request.GET["dfrom"]
-#     dto = request.GET["dto"]
-#     type = request.GET["type"]
-#     author_name = request.GET["author_name"]
-#     status = request.GET["status"]
-#     bureau = request.GET["bureau"]
-#     # publication = request.GET["publication"]
-#     section = request.GET["section"]
-#     page = request.GET["page"]
 
-#     triplec_data = TripleC.objects.filter(cms_issue_date__range=[dfrom, dto], isdeleted=0).order_by('pk')
-
-#     if type != '':
-#         triplec_data = triplec_data.filter(type=type)
-
-#     if author_name != '':
-#         triplec_data = triplec_data.filter(author_name__icontains=author_name)
-
-#     if status != '':
-#         if status == 'O_APV':
-#             triplec_data = triplec_data.filter(status__icontains='O', apv_no__isnull=False).exclude(apv_no__exact='')
-#         elif status == 'O':
-#             triplec_data = triplec_data.filter(status__icontains=status).exclude(confirmation__exact='').exclude(apv_no__isnull=False)
-#         else:
-#             triplec_data = triplec_data.filter(status__icontains=status)
-
-#     if bureau != '':
-#         triplec_data = triplec_data.filter(bureau=bureau)
-
-#     # if publication != '':
-#     #     triplec_data = triplec_data.filter(publication=publication)
-
-#     if section != '':
-#         triplec_data = triplec_data.filter(section=section)
-
-#     if page != '':
-#         triplec_data = triplec_data.filter(page=page)
-    
-#     viewhtml = ''
-#     context = {}
-#     context['triplec_data'] = triplec_data
-#     context['authors'] = Supplier.objects.filter(isdeleted=0, triplec=1).order_by('code')
-#     context['bureaus'] = Bureau.objects.filter(isdeleted=0).order_by('code')
-#     context['pages'] = Page.objects.filter(isdeleted=0).order_by('code')
-#     context['publications'] = Publication.objects.filter(isdeleted=0).order_by('code')
-#     context['sections'] = Section.objects.filter(isdeleted=0).order_by('code')
-#     context['subtypes'] = Subtype.objects.filter(isdeleted=0).order_by('code')
-#     context['rates'] = Rate.objects.filter(isdeleted=0).order_by('code')
-#     context['classifications'] = Classification.objects.filter(isdeleted=0).order_by('code')
-#     context['dfrom'] = dfrom
-#     context['dto'] = dto
-
-#     print 'render_to_string'
-#     present_time = dt.now()
-#     viewhtml = render_to_string('triplec/transaction_result.html', context)
-#     end_time = dt.now()
-#     time_difference = end_time - present_time
-#     print 'endrender_to_string'
-#     print 'time', time_difference.total_seconds()
-    
-#     data = {
-#         'status': 'success',
-#         'viewhtml': viewhtml
-#     }
-#     print 'end'
-#     return JsonResponse(data)
-
-
-class RetrieveView(DetailView):
-    model = TripleC
-    template_name = 'triplec/transaction_result.html'
-
-    def get(self, request, *args, **kwargs):
-        if request.is_ajax():
-            dfrom = request.GET.get('dfrom')
-            dto = request.GET.get('dto')
-            type = request.GET["type"]
-            author_name = request.GET["author_name"]
-            status = request.GET["status"]
-            bureau = request.GET["bureau"]
-            section = request.GET["section"]
-            page = request.GET["page"]
-
-            triplec_data = TripleC.objects.filter(cms_issue_date__range=[dfrom, dto], isdeleted=0).order_by('pk')
-
-            if type != '':
-                triplec_data = triplec_data.filter(type=type)
-
-            if author_name != '':
-                triplec_data = triplec_data.filter(author_name__icontains=author_name)
-
-            if status != '':
-                if status == 'O_APV':
-                    triplec_data = triplec_data.filter(status__icontains='O', apv_no__isnull=False).exclude(apv_no__exact='')
-                elif status == 'O':
-                    triplec_data = triplec_data.filter(status__icontains=status).exclude(confirmation__exact='').exclude(apv_no__isnull=False)
-                else:
-                    triplec_data = triplec_data.filter(status__icontains=status)
-
-            if bureau != '':
-                triplec_data = triplec_data.filter(bureau=bureau)
-
-            if section != '':
-                triplec_data = triplec_data.filter(section=section)
-
-            if page != '':
-                triplec_data = triplec_data.filter(page=page)
-
-            context = {}
-            context['triplec_data'] = triplec_data
-            context['authors'] = Supplier.objects.filter(isdeleted=0, triplec=1).order_by('code')
-            context['bureaus'] = Bureau.objects.filter(isdeleted=0).order_by('code')
-            context['pages'] = Page.objects.filter(isdeleted=0).order_by('code')
-            context['sections'] = Section.objects.filter(isdeleted=0).order_by('code')
-            context['subtypes'] = Subtype.objects.filter(isdeleted=0).order_by('code')
-            context['rates'] = Rate.objects.filter(isdeleted=0).order_by('code')
-            context['classifications'] = Classification.objects.filter(isdeleted=0).order_by('code')
-            context['dfrom'] = dfrom
-            context['dto'] = dto
-            # start_time = dt.now()
-            
-            template = get_template(self.get_template_names()[0])
-            html_content = template.render(context, request)
-            
-            # end_time = dt.now()
-            # time_difference = end_time - start_time
-            # print 'time', time_difference.total_seconds()
-            return HttpResponse(html_content, content_type='text/html')
-        else:
-            return super().get(request, *args, **kwargs)
 
 @csrf_exempt
 def save_batch_tagging(request):
@@ -557,20 +504,25 @@ def count_csno(request):
 
 
 # change year into year of transaction date and add validation for uniqueness
-def get_confirmation():
+def get_confirmation(year):
     try:
-        triplec = TripleC.objects.latest()
+        year = str(year)
+        matching_records = TripleC.objects.filter(confirmation__startswith=year)
+        
+        if matching_records:
+            # Get the maximum last six digits from the filtered records
+            max_last_six_digits = matching_records.aggregate(max_last_six=Max('confirmation'))['max_last_six'][-6:]
+            
+            last_cs = year + str(max_last_six_digits)
 
-        if triplec.confirmation:
-            last_cs = triplec.confirmation
         else:
-            year = datetime.date.today().year
-            last_cs = str(year) + '000000'
-
+            # first cs
+            last_cs = year + '000001'
+        
         return last_cs
         
     except Exception:
-        # fault tolerance - for fixing
+        # fault tolerance - for datafixing
         return '0000000000'
 
 
@@ -647,7 +599,18 @@ class GenerateProcessTransaction(View):
                 'status': 'failed',
                 'message': 'An error occured'
             })
-        
+
+
+# @csrf_exempt
+# def transaction_posting(request):
+#     if request.method == 'POST':
+#         transactions = json.loads(request.POST.getlist('data')[0])
+#         year = dt.strptime(transactions[0]['issue_date'], "%Y-%m-%d").year
+#         csno = get_confirmation('2024')
+#         print year, csno
+
+#         return JsonResponse({'result': True})
+
 
 @csrf_exempt
 def transaction_posting(request):
@@ -663,7 +626,9 @@ def transaction_posting(request):
             for item in transactions:
 
                 newitem = item['code']+'sep'+item['type']
-                csno = get_confirmation()
+
+                year = dt.strptime(item['issue_date'], "%Y-%m-%d").year
+                csno = get_confirmation(year)
                 
                 try:
                     triplec = TripleC.objects.filter(pk=item['pk'])
@@ -748,14 +713,14 @@ def process_quota(request, csnums):
                         transpo = additional.get(code='TRANSPO').amount 
                         transpo2 = additional.get(code='TRANSPO2').amount 
 
-                        trans = transpo + transpo2
                         cellcard = additional.get(code='TEL').amount
 
                         Triplecquota.objects.create(
                             confirmation = csnums[i],
                             no_item = max(num_articles, num_items['num_items']),
-                            type = 'A',
-                            transportation_amount = trans,
+                            type = 'A,P',
+                            transportation_amount = transpo,
+                            transportation2_amount = transpo2,
                             cellcard_amount = cellcard,
                             enterby_id = request.user.id,
                             enterdate = datetime.datetime.now(),
@@ -770,7 +735,7 @@ def process_quota(request, csnums):
                             confirmation=csnums[i],
                             no_item = max(num_photos, num_items['num_items']),
                             type = 'P',
-                            transportation_amount = transpo2,
+                            transportation2_amount = transpo2,
                             enterby_id = request.user.id,
                             enterdate = datetime.datetime.now(),
                             modifyby_id = request.user.id,
@@ -799,17 +764,27 @@ def process_quota(request, csnums):
 
 def print_cs(request):
 
-    triplec_ids = json.loads(request.GET['q'])
+    urlquery = json.loads(request.GET['q'])
+    is_batch = request.GET.get('batch')
     parameter = {}
     info = {}
 
     data_list = []
 
-    for triplec_id in triplec_ids:
-        try:
-            data_list.append(TripleC.objects.values('pk', 'code', 'author_name', 'confirmation', 'date_posted').get(pk=triplec_id, status='O', isdeleted=0))
-        except Exception as e:
-            print e
+    if is_batch:
+        for confirmation in urlquery:
+            try:
+                ids = TripleC.objects.filter(confirmation=confirmation, status='O', isdeleted=0).values('pk')
+                for id in ids:
+                    data_list.append(TripleC.objects.values('pk', 'code', 'author_name', 'confirmation', 'date_posted').get(pk=id['pk'], status='O', isdeleted=0))
+            except Exception as e:
+                print 'confirmation', confirmation, e
+    else:
+        for triplec_id in urlquery:
+            try:
+                data_list.append(TripleC.objects.values('pk', 'code', 'author_name', 'confirmation', 'date_posted').get(pk=triplec_id, status='O', isdeleted=0))
+            except Exception as e:
+                print 'triplec_id', triplec_id, e
 
     grouped_list = defaultdict(list)
 
@@ -835,12 +810,14 @@ def print_cs(request):
         with_additional = False
         if has_quota:
             transpo = has_quota.transportation_amount
+            transpo2 = has_quota.transportation2_amount
             cellcard = has_quota.cellcard_amount
 
-            quota_amount = transpo + cellcard
+            quota_amount = transpo + transpo2 + cellcard
             with_additional = True
 
             parameter[csno]['transportation_amount'] = transpo
+            parameter[csno]['transportation2_amount'] = transpo2
             parameter[csno]['cellcard_amount'] = cellcard
         
         atc_id = Supplier.objects.get(code=parameter[csno]['main'].code).atc_id
@@ -907,8 +884,16 @@ class GeneratePDF(View):
         parameter = {}
 
         if request.method == 'GET' and request.GET['blank'] != '1':
+
+            csno_from = request.GET['csno_from']
+            csno_to = request.GET['csno_to']
             dfrom = request.GET['from']
             dto = request.GET['to']
+
+            # if 
+
+            # else:
+
             type = request.GET['type']
             bureau = request.GET['bureau']
             section = request.GET['section']
@@ -1330,3 +1315,216 @@ def namedtuplefetchall(cursor):
     desc = cursor.description
     nt_result = namedtuple('Result', [col[0] for col in desc])
     return [nt_result(*row) for row in cursor.fetchall()]
+
+
+class QuotaView(AjaxListView):
+    model = Triplecquota
+    template_name = 'triplec/process_transaction/quota/index.html'
+    context_object_name = 'data_list'
+    page_template = 'triplec/process_transaction/quota/index_list.html'
+    
+    def get_queryset(self):
+        query = self.request.GET.get('query')
+        if query:
+            queryset = self.model.objects.filter(
+                Q(confirmation__icontains=query) |
+                Q(type__icontains=query) |
+                Q(transportation_amount__icontains=query) |
+                Q(transportation2_amount__icontains=query) |
+                Q(cellcard_amount__icontains=query),
+                isdeleted=0
+            )
+        else:
+            queryset = self.model.objects.filter(isdeleted=0)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(QuotaView, self).get_context_data(**kwargs)
+        query = self.request.GET.get('query', '')
+        context['query'] = query
+
+        data_list = []
+        for quota in context['data_list']:
+            triplec = TripleC.objects.filter(confirmation=quota.confirmation, isdeleted=0).values('type', 'author_name').first()
+            if triplec:
+                data_list.append({
+                    'quota': quota,
+                    'detail': triplec
+                })
+
+        context['data_list'] = data_list
+
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotaDetailView(DetailView):
+    model = Triplecquota
+    template_name = 'triplec/process_transaction/quota/detail.html'
+    context_object_name = 'object'
+
+    def get_context_data(self, **kwargs):
+        context = super(QuotaDetailView, self).get_context_data(**kwargs)
+        quota = self.get_object()
+        
+        context['detail'] = TripleC.objects.filter(confirmation=quota.confirmation)
+
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotaUpdateView(UpdateView):
+    model = Triplecquota
+    template_name = 'triplec/process_transaction/quota/edit.html'
+    fields = ['confirmation', 'transportation_amount', 'transportation2_amount', 'cellcard_amount']
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('triplec.change_triplec_quota'):
+            raise Http404
+        return super(QuotaUpdateView, self).dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        self.object = self.get_object()
+        context = super(QuotaUpdateView, self).get_context_data(**kwargs)
+        
+        return context
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.modifyby = self.request.user
+        self.object.modifydate = datetime.datetime.now()
+        self.object.save(update_fields=['transportation_amount', 'transportation2_amount', 'cellcard_amount', 'modifyby', 'modifydate'])
+        return HttpResponseRedirect('/triplec/quota')
+
+
+class BatchPrintCsView(IndexView):
+    model = TripleC
+    template_name = 'triplec/print_cs/index.html'
+    
+    def get_context_data(self, **kwargs):
+       context = super(BatchPrintCsView, self).get_context_data(**kwargs)
+       return context
+    
+
+def retrieve_cs(request):
+    dfrom = request.GET["dfrom"]
+    dto = request.GET["dto"]
+    csno_from = request.GET["csno_from"]
+    csno_to = request.GET["csno_to"]
+
+    try:
+        triplec = TripleC.objects.filter(~Q(confirmation__isnull=True) & ~Q(confirmation=''))
+        if dfrom and dto and csno_from and csno_to:
+            result = triplec.filter(issue_date__range=[dfrom, dto], confirmation__range=[csno_from, csno_to])
+        elif dfrom and dto:
+            result = triplec.filter(issue_date__range=[dfrom, dto])
+        elif csno_from and csno_to:
+            result = triplec.filter(confirmation__range=[csno_from, csno_to])
+        else:
+            result = None
+    except:
+        result = None
+
+    if result:
+        confirmations = (
+            result.values('confirmation', 'issue_date', 'type', 'author_name')
+            .annotate(total_size=Sum('total_size'))
+            .annotate(total_no_of_items=Sum('no_items'))
+            .annotate(amount=Sum('amount'))
+            .order_by('confirmation')
+        )
+        result = list(confirmations)
+
+    context = {}
+    context['cs_data'] = result
+    viewhtml = render_to_string('triplec/print_cs/index_list.html', context)
+    
+    data = {
+        'status': 'success',
+        'viewhtml': viewhtml
+    }
+
+    return JsonResponse(data)
+
+
+def startprint(request):
+
+    cookie_urlquery = request.COOKIES.get('csbatchprint_triplec', '')
+    parameter = {}
+    info = {}
+    data_list = []
+    
+    if cookie_urlquery:
+        urlquery = json.loads(urllib2.unquote(cookie_urlquery))
+        for confirmation in urlquery:
+            try:
+                ids = TripleC.objects.filter(confirmation=confirmation, status='O', isdeleted=0).values('pk')
+                for id in ids:
+                    data_list.append(TripleC.objects.values('pk', 'code', 'author_name', 'confirmation', 'date_posted').get(pk=id['pk'], status='O', isdeleted=0))
+            except:
+                pass
+    
+        grouped_list = defaultdict(list)
+
+        for item in data_list:
+            grouped_list[
+                item['confirmation']
+            ].append(
+                [item['pk']]
+            )
+
+        for csno, ids in grouped_list.items():
+
+            csno = str(csno)
+            parameter[csno] = {}
+            details = {}
+            batch_cs = TripleC.objects.filter(confirmation=csno, status='O', isdeleted=0)
+
+            parameter[csno]['main'] = batch_cs.first()
+
+            has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
+            
+            quota_amount = 0
+            with_additional = False
+            if has_quota:
+                transpo = has_quota.transportation_amount
+                transpo2 = has_quota.transportation2_amount
+                cellcard = has_quota.cellcard_amount
+
+                quota_amount = transpo + transpo2 + cellcard
+                with_additional = True
+
+                parameter[csno]['transportation_amount'] = transpo
+                parameter[csno]['transportation2_amount'] = transpo2
+                parameter[csno]['cellcard_amount'] = cellcard
+            
+            atc_id = Supplier.objects.get(code=parameter[csno]['main'].code).atc_id
+            rate = Ataxcode.objects.get(pk=atc_id).rate
+
+            subtotal = batch_cs.aggregate(subtotal=Sum('amount'))
+            subtotal = float(subtotal['subtotal'])
+            total = subtotal + float(quota_amount)
+            ewt = percentage(float(rate), total)
+            net = total - ewt
+
+            parameter[csno]['size'] = batch_cs.aggregate(total_size=Sum('total_size'))
+            parameter[csno]['with_additional'] = with_additional
+            parameter[csno]['ataxrate'] = rate
+            parameter[csno]['subtotal'] = subtotal
+            parameter[csno]['total'] = total
+            parameter[csno]['ewt'] = ewt
+            parameter[csno]['net'] = net
+            
+            for id in ids:
+                index = str(id[0])
+                details[index] = TripleC.objects.get(pk=id[0])
+
+            parameter[csno]['details'] = details
+        
+        info['logo'] = request.build_absolute_uri('/static/images/pdi.jpg')
+        info['parameter'] = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
+        
+        return render(request, 'triplec/print_cs/print_cs.html', {'info': info, 'parameter': parameter})
+    else:
+        return render(request, 'triplec/print_cs/print_cs.html', {'info': {}, 'parameter': {}})

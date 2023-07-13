@@ -112,8 +112,11 @@
                         </a>
                     </div>
                     <div class="form-group col-sm-4" >
+                        <a href="{% url 'triplec:batchprint_cs' %}" target="_blank" class="btn btn-primary waves-effect waves-dark" id="print_cs" title="Go to CS printing" style="margin-top: 27px;">
+                            <i class="icon fa-print" aria-hidden="true"></i>&nbsp;&nbsp;CS Batch Printing
+                        </a>
                         <a class="btn btn-primary waves-effect waves-dark" href="{% url 'triplec:report' %}" target="_blank" id="report" title="Go to report" style="margin-top: 27px;">
-                            <i class="fa fa-file-pdf-o" aria-hidden="true"></i>&nbsp;&nbsp;Report
+                            <i class="fa fa-file-pdf-o" aria-hidden="true"></i>&nbsp;&nbsp;Reports
                         </a>
                         <a href="{% url 'triplec:process_transaction' %}" target="_blank" class="btn btn-primary waves-effect waves-dark" id="process_transaction" title="Go to process transaction. (Note: Transactions with Ready for Posting status only are applicable)" style="margin-top: 27px;">
                             <i class="icon fa-file-text-o" aria-hidden="true"></i>&nbsp;&nbsp;Process Transaction
@@ -139,6 +142,7 @@
             </div>
         </div>
         <br><br>
+        
         <div class="row" id="result_panel" style="display: none;">
             <div class="panel panel-default">
                 <div class="panel-body" id="viewhtml">

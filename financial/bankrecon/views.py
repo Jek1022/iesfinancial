@@ -1179,7 +1179,7 @@ def transgenerate(request):
         bankaccount_id=bankaccount_id, \
         chartofaccount_id=cashinbank_id, \
         document_date__range=[dfrom, dto]\
-    ).values('id', 'reference_number', 'document_type', 'document_num', 'document_date', 'balancecode', 'amount', 'fxrate', 'fxamount', 'document_checknum', 'document_branch_id', 'particulars').order_by('document_date')
+    ).values('id', 'reference_number', 'document_type', 'document_num', 'document_date', 'document_payee', 'balancecode', 'amount', 'fxrate', 'fxamount', 'document_checknum', 'document_branch_id', 'particulars').order_by('document_date')
 
     if document_type != '':
         pdi_data = pdi_data.filter(document_type=document_type)

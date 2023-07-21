@@ -262,8 +262,12 @@
                                 <td class="text-left pointer document-type" style="max-width: 50px;">{{ data.document_type }}</td>
                                 <td class="text-left document-num">{{ data.document_num }}</td>
                                 <td class="text-left particulars">
-                                    {% if data.document_type == 'CV' or data.document_type == 'OR' and data.reference_number %}
-                                        {{ data.document_payee }}
+                                    {% if data.reference_number and data.reference_number|default:'' %}
+                                        {% if data.document_type == 'CV' or data.document_type == 'OR' %}
+                                            {{ data.document_payee }}
+                                        {% else %}
+                                            {{ data.particulars }}
+                                        {% endif %}
                                     {% else %}
                                         {{ data.particulars }}
                                     {% endif %}
@@ -315,8 +319,12 @@
                                 <td class="text-left pointer document-type" style="max-width: 50px;">{{ posted.document_type }}</td>
                                 <td class="text-left document-num">{{ posted.document_num }}</td>
                                 <td class="text-left particulars">                       
-                                    {% if posted.document_type == 'CV' or posted.document_type == 'OR' and posted.reference_number %}
-                                        {{ posted.document_payee }}
+                                    {% if posted.reference_number and posted.reference_number|default:'' %}
+                                        {% if posted.document_type == 'CV' or posted.document_type == 'OR' %}
+                                            {{ posted.document_payee }}
+                                        {% else %}
+                                            {{ posted.particulars }}
+                                        {% endif %}
                                     {% else %}
                                         {{ posted.particulars }}
                                     {% endif %}
@@ -496,8 +504,12 @@
                             <td class="text-left" style="max-width: 50px;">{{ data.document_type }}</td>
                             <td class="text-left">{{ data.document_num }}</td>
                             <td class="text-left">
-                                {% if data.document_type == 'CV' or data.document_type == 'OR' and data.reference_number %}
-                                    {{ data.document_payee }}
+                                {% if data.reference_number and data.reference_number|default:'' %}
+                                    {% if data.document_type == 'CV' or data.document_type == 'OR' %}
+                                        {{ data.document_payee }}
+                                    {% else %}
+                                        {{ data.particulars }}
+                                    {% endif %}
                                 {% else %}
                                     {{ data.particulars }}
                                 {% endif %}

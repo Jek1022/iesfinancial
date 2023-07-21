@@ -229,7 +229,7 @@
                 <thead style="position: sticky; top: 0; z-index: 1; background: ghostwhite; border: none;">
                     <tr class="border-0" id="pdi_table_header">
                         <th style="color:#424242"></th>
-                        <th style="color:#424242; max-width: 30px;">Date</th>
+                        <th style="color:#424242; max-width: 50px;">Date</th>
                         <th style="color:#424242; max-width: 50px;">Doc. Type</th>
                         <th style="color:#424242">Doc. No</th>
                         <th style="color:#424242">Particulars</th>
@@ -246,7 +246,7 @@
                         {% if data.balancecode == 'subtotal' %}
                             <tr class="subtotal" style="background-color: papayawhip; color: darkred; font-style: italic; font-weight: 500;">
                                 <td style="padding: 0;">{{ data.count }}</td>
-                                <td style="max-width: 30px;">{{ data.date|date:'m/d/Y' }}</td>
+                                <td style="max-width: 50px;">{{ data.date|date:'m/d/Y' }}</td>
                                 <td>{{ data.type }}</td>
                                 <td class="bg-blue-200"></td>
                                 <td style="letter-spacing: 5px;" class="text-center">sub-total</td>
@@ -258,8 +258,8 @@
                         {% else %}
                             <tr class="row_{{ data.id }}" style="color:#444444; font-weight: 500">
                                 <td class="text-left counter" style="padding: 0"></td>
-                                <td class="text-left pointer document-date" style="max-width: 30px;">{{ data.document_date|date:"m/d/Y" }}</td>
-                                <td class="text-left pointer document-type">{{ data.document_type }}</td>
+                                <td class="text-left pointer document-date" style="max-width: 50px;">{{ data.document_date|date:"m/d/Y" }}</td>
+                                <td class="text-left pointer document-type" style="max-width: 50px;">{{ data.document_type }}</td>
                                 <td class="text-left document-num">{{ data.document_num }}</td>
                                 <td class="text-left particulars">
                                     {% if data.document_type == 'CV' or data.document_type == 'OR' and data.reference_number %}
@@ -311,8 +311,8 @@
                         {% else %}
                             <tr class="row_{{ posted.id }}" style="color:#444444; font-weight: 500">
                                 <td class="text-left counter"></td>
-                                <td class="text-left pointer document-date">{{ posted.document_date|date:"m/d/Y" }}</td>
-                                <td class="text-left pointer document-type">{{ posted.document_type }}</td>
+                                <td class="text-left pointer document-date" style="max-width: 50px;">{{ posted.document_date|date:"m/d/Y" }}</td>
+                                <td class="text-left pointer document-type" style="max-width: 50px;">{{ posted.document_type }}</td>
                                 <td class="text-left document-num">{{ posted.document_num }}</td>
                                 <td class="text-left particulars">                       
                                     {% if posted.document_type == 'CV' or posted.document_type == 'OR' and posted.reference_number %}
@@ -386,8 +386,8 @@
                             {% else %}
                                 <tr id="row_{{ forloop.counter }}" style="color:#444444; font-weight: 500">
                                     <td class="text-left bank-row-count"></td>
-                                    <td class="text-left pointer bank-transaction-date">{{ data.transaction_date|date:"m/d/Y" }}</td>
-                                    <td class="text-left pointer bank-document-type"></td>
+                                    <td class="text-left pointer bank-transaction-date" style="max-width: 50px;">{{ data.transaction_date|date:"m/d/Y" }}</td>
+                                    <td class="text-left pointer bank-document-type" style="max-width: 50px;"></td>
                                     <td></td>
                                     {% if data.branch %}
                                         <td class="text-left bank-particulars">{{ data.particulars }} [{{ data.branch }}] </td>
@@ -429,7 +429,7 @@
                             {% else %}
                                 <tr class="row_{{ posted.id }}" style="color:#444444; font-weight: 500">
                                     <td class="text-left bank-row-count"></td>
-                                    <td class="text-left bank-transaction-date">{{ posted.transaction_date|date:"m/d/Y" }}</td>
+                                    <td class="text-left bank-transaction-date" style="max-width: 50px;">{{ posted.transaction_date|date:"m/d/Y" }}</td>
                                     <td></td>
                                     <td></td>
                                     <td class="text-left particulars">{{ posted.particulars }}</td>
@@ -492,8 +492,8 @@
                     {% for data in pdi_data %}
                         <tr class="row_{{ data.id }}" id="{{ data.id }}" style="color:#444444; font-weight: 500">
                             <td class="text-left counter"></td>
-                            <td class="text-left">{{ data.document_date|date:"m/d/Y" }}</td>
-                            <td class="text-left">{{ data.document_type }}</td>
+                            <td class="text-left" style="max-width: 50px;">{{ data.document_date|date:"m/d/Y" }}</td>
+                            <td class="text-left" style="max-width: 50px;">{{ data.document_type }}</td>
                             <td class="text-left">{{ data.document_num }}</td>
                             <td class="text-left">
                                 {% if data.document_type == 'CV' or data.document_type == 'OR' and data.reference_number %}

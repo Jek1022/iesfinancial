@@ -8,7 +8,7 @@ from triplecbureau.models import Triplecbureau as Bureau
 from triplecsection.models import Triplecsection as Section
 from triplecsubtype.models import Triplecsubtype as Subtype
 from triplecpublication.models import Triplecpublication as Publication
-from triplecpage.models import Triplecpage as Page
+# from triplecpage.models import Triplecpage as Page
 
 
 # Create your models here.

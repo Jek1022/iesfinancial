@@ -34,7 +34,7 @@ from triplecbureau.models import Triplecbureau as Bureau
 from triplecsection.models import Triplecsection as Section
 from triplecsubtype.models import Triplecsubtype as Subtype
 from triplecpublication.models import Triplecpublication as Publication
-from triplecpage.models import Triplecpage as Page
+# from triplecpage.models import Triplecpage as Page
 from triplecrate.models import Triplecrate as Rate
 from triplecclassification.models import Triplecclassification as Classification
 from triplecsupplier.models import Triplecsupplier
@@ -60,7 +60,7 @@ class IndexView(AjaxListView):
         context['bureaus'] = Bureau.objects.all().filter(isdeleted=0).order_by('code')
         context['sections'] = Section.objects.all().filter(isdeleted=0).order_by('code')
         context['publications'] = Publication.objects.all().filter(isdeleted=0).order_by('code')
-        context['pages'] = Page.objects.all().filter(isdeleted=0).order_by('code')
+        # context['pages'] = Page.objects.all().filter(isdeleted=0).order_by('code')
         context['classifications'] = Classification.objects.all().filter(isdeleted=0).order_by('code')
         context['subtypes'] = Subtype.objects.all().filter(isdeleted=0).order_by('code')
         context['rates'] = Rate.objects.all().filter(isdeleted=0).order_by('code')
@@ -112,7 +112,7 @@ class RetrieveView(DetailView):
             context['triplec_data'] = triplec_data
             context['authors'] = Supplier.objects.filter(isdeleted=0, triplec=1).order_by('code')
             context['bureaus'] = Bureau.objects.filter(isdeleted=0).order_by('code')
-            context['pages'] = Page.objects.filter(isdeleted=0).order_by('code')
+            # context['pages'] = Page.objects.filter(isdeleted=0).order_by('code')
             context['sections'] = Section.objects.filter(isdeleted=0).order_by('code')
             context['subtypes'] = Subtype.objects.filter(isdeleted=0).order_by('code')
             context['rates'] = Rate.objects.filter(isdeleted=0).order_by('code')

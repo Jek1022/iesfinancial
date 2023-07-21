@@ -17,19 +17,26 @@ from triplecsection.models import Triplecsection
 from department.models import Department
 from triplecrate.models import Triplecrate
 from bankaccount.models import Bankaccount
+from endless_pagination.views import AjaxListView
+from django.db.models import Q
 
 # Create your views here.
 @method_decorator(login_required, name='dispatch')
-class IndexView(ListView):
+class IndexView(AjaxListView):
     model = Triplecsupplier
     template_name = 'triplecsupplier/index.html'
     context_object_name = 'data_list'
+    page_template = 'triplecsupplier/index_list.html'
 
     def get_queryset(self):
-        return Triplecsupplier.objects.all().filter(isdeleted=0).order_by('-pk')
-    
+        query = Triplecsupplier.objects.all().filter(isdeleted=0)
+        if self.request.COOKIES.get('keysearch_' + self.request.resolver_match.app_name):
+            keysearch = str(self.request.COOKIES.get('keysearch_' + self.request.resolver_match.app_name))
+            query = query.filter(Q(supplier__name__icontains=keysearch) | Q(supplier__code__icontains=keysearch))
+        return query
+       
     def get_context_data(self, **kwargs):
-        context = super(IndexView, self).get_context_data(**kwargs)
+        context = super(AjaxListView, self).get_context_data(**kwargs)
         context['authors'] = Supplier.objects.all().filter(isdeleted=0, triplec=1).order_by('code')
 
         return context

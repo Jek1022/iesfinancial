@@ -8,9 +8,6 @@
 <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
 {% block extra_css %}
     <style>
-        input[type=search]::-webkit-search-cancel-button {
-            -webkit-appearance: searchfield-cancel-button;
-        }
         .pointer {
             cursor: pointer;
         }
@@ -20,7 +17,6 @@
             margin: 0;
         }
     
-        input[type=number], 
         .amount-right{
             text-align: right;
         }
@@ -28,11 +24,21 @@
         td {
             font-weight: bold;
         }
+
+        /* Pending */
+        tr.D{
+            border-left: 3px solid royalblue;
+        }
+
+        /* No Payment */
+        tr.Y{
+            border-left: 3px solid purple;
+        }
         
     </style>
 {% endblock extra_css %}
 
-<div class="col-md-12 col-sm-12 col-xs-12" id="triplec_result">
+<div class="col-sm-12 col-xs-12" id="triplec_result">
     <div class="row">
         <div class="col-md-12">
             <div class="col-md-6"></div>
@@ -59,33 +65,32 @@
             <div class="col-md-12">
                 <div class="row">
                     <div class="col-sm-8">
-                        <button class="btn btn-default waves-effect waves-dark" id="batch_tagging" disabled title="Batch tagging of Class and Author Name" data-toggle="modal" data-target="#batchTagging">
-                            <i class="fa fa-tags" aria-hidden="true"></i>&nbsp;&nbsp;Batch Tagging
+                        <button class="btn btn-primary waves-effect waves-dark" id="batch_tagging" disabled title="Batch tagging of Class and Author Name" data-toggle="modal" data-target="#batchTagging">
+                            <i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;Batch Tagging
                         </button>
-                        <!-- <button class="btn btn-default waves-effect waves-dark" id="batch_transaction_entry" disabled title="Selected rows with saved Class and Author Name will be included in transaction entry." data-toggle="modal" data-target="#batchTransactionEntry">
-                            <i class="fa fa-clipboard" aria-hidden="true"></i>&nbsp;&nbsp;Batch Transaction Entry
-                        </button> -->
-                        <!-- <button class="btn btn-default waves-effect waves-dark" id="batch_transaction_process" disabled title="Selected rows with saved Type and Author Name will be included in transaction entry.">
-                            <i class="fa fa-clipboard" aria-hidden="true"></i>&nbsp;&nbsp;Batch Transaction Process
-                        </button> -->
-                        <button class="btn btn-default waves-effect waves-dark" id="batch_save" disabled title="Selected rows with Class and Author Name will be saved.">
+                        <button class="btn btn-primary waves-effect waves-dark" id="batch_save" disabled title="Selected rows with Class and Author Name will be saved.">
                             <i class="fa fa-save" aria-hidden="true"></i>&nbsp;&nbsp;Batch Save
                         </button>
-                        <button class="btn btn-default waves-effect waves-dark" id="batch_print" disabled title="Selected and posted transactions will be included for printing.">
+                        <button class="btn btn-primary waves-effect waves-dark" id="batch_print" disabled title="Selected and posted transactions will be included for printing.">
                             <i class="fa fa-print" aria-hidden="true"></i>&nbsp;&nbsp;Batch Print
                         </button>
-                        <button class="btn btn-default waves-effect waves-dark" id="post_ap" disabled title="Selected and posted transactions will be included for AP posting." data-toggle="modal" data-target="#postAP">
+                        <button class="btn btn-primary waves-effect waves-dark" id="post_ap" disabled title="Selected and posted transactions will be included for AP posting." data-toggle="modal" data-target="#postAP">
                             <i class="fa fa-file-text-o" aria-hidden="true"></i>&nbsp;&nbsp;Post to AP
                         </button>
-                        <!-- <button class="btn btn-default waves-effect waves-dark" id="batch_clear" disabled title="Selected rows with Type and Author Name will be cleared.">
-                            <i class="fa fa-minus-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Clear
-                        </button> -->
-                        <!-- <button class="btn btn-default waves-effect waves-dark" id="unselect" disabled title="Unselect all the selected rows.">
-                            <i class="fa fa-square-o" aria-hidden="true"></i>&nbsp;&nbsp;Unselect
-                        </button> -->
+                        
                     </div>
                     <div class="col-sm-2 text-left">
                         <a style="display: none;" href="" id="trigger_cs" target="_blank">CS</a>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 15px;">
+                    <div class="col-md-8">
+                        <button class="btn btn-secondary bg-gray waves-effect waves-dark" id="tag_as_pending" disabled title="Tag as Pending transaction">
+                            <i class="fa fa-clock-o" aria-hidden="true"></i>&nbsp;&nbsp;Tag as Pending
+                        </button>
+                        <button class="btn btn-secondary bg-gray waves-effect waves-dark" id="tag_as_no_payment" disabled title="Tag transaction as No Payment">
+                            <i class="fa fa-ban" aria-hidden="true"></i>&nbsp;&nbsp;Tag as No Payment
+                        </button>
                     </div>
                 </div>
             </div>
@@ -97,13 +102,13 @@
                 <table class="table table-striped" id="triplec_table">
                     <thead style="position: sticky; top: 0; z-index: 1; background: ghostwhite; border: none;">
                         <tr class="border-0" id="triplec_table_header">
-                            <th style="color:#424242">#</th>
+                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">#</th>
                             <th style="color:#424242"><input type="checkbox" class="pointer" name="chb_all" id="chb_all" /></th>
-                            <th style="color:#424242">Issue Date</th>
+                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">Issue Date</th>
                             <th style="color:#424242">Publication</th>
-                            <th style="color:#424242">Bureau</th>
-                            <th style="color:#424242">Section</th>
-                            <th style="color:#424242">Page</th>
+                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">Bureau</th>
+                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">Section</th>
+                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">Page</th>
                             <th style="color:#424242">Article Title</th>
                             <th style="color:#424242">Byline</th>
                             <th style="color:#424242">Code</th>
@@ -126,7 +131,7 @@
                         {% author_names_to_options_html authors as author_names_options_html %}
 
                         {% for data in triplec_data %}
-                            <tr>
+                            <tr class="{{ data.status }}">
                                 <td class="c0"></td>
                                 <td class="c1">
                                     <input type="hidden" name="data_id" value="{{ data.id }}" />
@@ -142,7 +147,7 @@
                                     <input type="hidden" name="data_length1" value="{{ data.length1 }}" />
                                     <input type="hidden" name="data_length2" value="{{ data.length2 }}" />
                                     <input type="hidden" name="data_length3" value="{{ data.length3 }}" />
-                                    <input type="hidden" name="data_length1" value="{{ data.length1 }}" />
+                                    <input type="hidden" name="data_length4" value="{{ data.length4 }}" />
                                     <input type="hidden" name="data_width1" value="{{ data.width1 }}" />
                                     <input type="hidden" name="data_width2" value="{{ data.width2 }}" />
                                     <input type="hidden" name="data_width3" value="{{ data.width3 }}" />
@@ -161,7 +166,7 @@
                                     <td class="c3">{{ data.cms_publication }}</td>
                                     <td class="c14">{{ data.bureau.description|default:"" }}</td>
                                     <td class="c4">{{ data.section.description }}</td>
-                                    <td class="c5">{{ data.page.description }}</td>
+                                    <td class="c5">{{ data.page }}</td>
                                     <td class="c6">{{ data.article_title }}</td>
                                     <td class="c7">{{ data.cms_byline|default:"" }}</td>
                                     <td class="c8">
@@ -232,8 +237,6 @@
                                     <td class="c6">{{ data.cms_article_title|default:"" }}</td>
                                     <td class="c7">{{ data.cms_byline|default:"" }}</td>
                                     <td class="c8">
-
-                                        
                                         <select class="form-control input-sm select2" style="width: 110px;" name="code">
                                             {% if data.code %}
                                                 {% author_codes_to_html authors data.code as author_codes_html %}
@@ -265,17 +268,15 @@
                                         </select>
                                     </td>
                                     <td class="c15">{{ data.subtype.description|default:"" }}</td>
-                                    <td class="c11">{{ data.cms_created_by }}</td>
-                                    <td class="c12">{{ data.cms_no_of_words }}</td>
-                                    <td class="c13">{{ data.cms_no_of_characters }}</td>
+                                    <td class="c11">{{ data.cms_created_by|default:"" }}</td>
+                                    <td class="c12">{{ data.cms_no_of_words|default:"" }}</td>
+                                    <td class="c13">{{ data.cms_no_of_characters|default:"" }}</td>
                                     <td class="c17">{{ data.confirmation|default:"" }}</td>
                                     <td class="c16">{{ data.get_status_display }}</td>
                                     <td>
                                         <div class="iconlist-wrap auto-0">
                                             <div class="iconlist" style="text-align: center">
-                                                <!-- <a href="" class="btnDetail" data-toggle="tooltip" data-placement="left" data-trigger="hover" data-original-title="Click to View" title="" aria-describedby="tooltip850155">
-                                                    <i class="icon md-view-list" aria-hidden="true">&nbsp;&nbsp;</i>
-                                                </a> -->
+                                                
                                                 {% if not data.author_name or data.author_name == '' or data.author_name == 'None' and not data.code %}
                                                     <a class="hidden pointer edit-transaction-entry" title="View or Edit Transaction" data-toggle="modal" data-target="#transactionEntryModal">
                                                         <i class="icon fa-file-text" aria-hidden="true">&nbsp;&nbsp;</i>
@@ -299,11 +300,7 @@
         </div>
         <br>
         <br>
-        <!-- <div class="row text-center">
-            <div class="col-md-12">
-                <button class="btn btn-success waves-effect waves-dark" id="save_all" style="margin-top: 22px;"><i class="fa fa-floppy-o" aria-hidden="true"></i> &nbsp;&nbsp;Save All</button>
-            </div>
-        </div> -->
+       
     </div>
     {% else %}
     <br>
@@ -362,10 +359,10 @@
                                 </div>
                                 <div class="form-group col-md-8">
                                     <select class="form-control input-sm" id="batch_input_type">
-                                        <option value="">-- All --</option>
-                                        <option value="COL">Columnist</option>
-                                        <option value="CON">Contributor</option>
-                                        <option value="COR">Correspondent</option>
+                                        <option value="">-- Select --</option>
+                                        {% for classification in classifications  %}
+                                            <option value="{{ classification.code }}">{{ classification.description }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                             </div>
@@ -430,82 +427,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Not working, too many to fix -->
-    <!-- <div id="batchTransactionEntry" class="modal fade" role="dialog">
-        <div class="modal-dialog" style="width: 850px;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Batch Transaction Entry</h4>
-                </div>
-                <div class="modal-body" style="overflow:auto;">
-                    <div class="row">
-                        <div class="form-group col-md-12">
-                            <div class="form-group col-md-12 extra-field">
-                                <div class="form-group col-md-2">
-                                    <label class="control-label" for="batch_input_type">Issue Date:</label>
-                                </div>
-                                <div class="form-group col-md-2">
-                                    <input class="form-control input-sm" id="no_of_transaction" readonly />
-                                </div>
-                            </div>
-
-                            <div class="form-group col-md-12 extra-field">
-                                <div class="form-group col-md-2">
-                                    <label class="control-label" for="batch_input_type">Code:</label>
-                                </div>
-                                <div class="form-group col-md-2">
-                                    <select class="form-control input-sm" id="batch_input_type">
-                                        <option value="">-- Select --</option>
-                                        
-                                    </select>
-                                </div>
-
-                                <div class="form-group col-md-2">
-                                    <label class="control-label" for="batch_input_author">Author Name:</label>
-                                </div>
-                                <div class="form-group col-md-4">
-                                    <select class="form-control input-sm" id="batch_input_author">
-                                        <option value="">-- Select --</option>
-                                        {% if authors %}
-                                            {% for author in authors  %}
-                                                <option value="{{ author.name }}">{{ author.name }}</option>
-                                            {% endfor %}
-                                        {% endif %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group col-md-12 extra-field">
-                                <div class="form-group col-md-2">
-                                    <label class="control-label" for="batch_input_author">Type:</label>
-                                </div>
-                                <div class="form-group col-md-4">
-                                    <input class="form-control input-sm" id="batch_input_author" />
-                                </div>
-
-                                <div class="form-group col-md-2">
-                                    <label class="control-label" for="batch_input_author">Section:</label>
-                                </div>
-                                <div class="form-group col-md-4">
-                                    <input class="form-control input-sm" id="batch_input_author" />
-                                </div>
-                            </div>
-                            
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <div align="center">
-                        <button type="button" class="btn btn-sm btn-info" id="batch_tagging_confirm">Confirm</button>
-                        <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> -->
-
 
     <div id="transactionEntryModal" class="modal fade" role="dialog">
         <div class="modal-dialog" style="width: 990px;">
@@ -592,7 +513,7 @@
                                     <label class="control-label" for="select_bureau">Bureau: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <select class="form-control input-sm required-field" id="select_bureau">
+                                    <select class="form-control input-sm" id="select_bureau">
                                         <option value="">-- Select --</option>
                                         {% for bureau in bureaus  %}
                                             <option value="{{ bureau.id }}" data-code="{{ bureau.code }}">{{ bureau.description }}</option>
@@ -627,45 +548,39 @@
                                     <label class="control-label" for="input_no_of_ccc">No. of CCC: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm" id="input_no_of_ccc">
+                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_ccc">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_no_of_items">No. of Items: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm" id="input_no_of_items">
+                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_items">
                                 </div>
                             </div>
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_page">Page No.: <span class="text-danger">*</span></label>
+                                    <label class="control-label" for="input_page">Page No.: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <select class="form-control input-sm required-field" id="select_page">
-                                        <option value="">-- Select --</option>
-                                        {% for page in pages %}
-                                            <option value="{{ page.description }}" data-id="{{ page.id }}">{{ page.description }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <!-- <input type="text" class="form-control input-sm required-field" id="input_page_no" /> -->
+                                    <input type="text" class="form-control input-md required-field" id="input_page"/>
                                 </div>
                             </div>
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_no_of_words">No. of Words: <span class="text-danger">*</span></label>
+                                    <label class="control-label" for="input_no_of_words">No. of Words: </label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <input type="number" class="form-control input-sm required-field" id="input_no_of_words">
+                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_words">
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_no_of_characters">No. of Characters: <span class="text-danger">*</span></label>
+                                    <label class="control-label" for="input_no_of_characters">No. of Characters: </label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <input type="number" class="form-control input-sm required-field" id="input_no_of_characters">
+                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_characters">
                                 </div>
                             </div>
                             <br><br>
@@ -674,14 +589,14 @@
                                     <label class="control-label" for="input_length1">Length1: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm size-field" id="input_length1">
+                                    <input type="number" class="form-control text-center input-sm size-field" id="input_length1">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_width1">Width1: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm size-field" id="input_width1">
+                                    <input type="number" class="form-control text-center input-sm size-field" id="input_width1">
                                 </div>
                             </div>
 
@@ -690,14 +605,14 @@
                                     <label class="control-label" for="input_length2">Length2: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm size-field" id="input_length2">
+                                    <input type="number" class="form-control text-center input-sm size-field" id="input_length2">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_width2">Width2: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm size-field" id="input_width2">
+                                    <input type="number" class="form-control text-center input-sm size-field" id="input_width2">
                                 </div>
                             </div>
 
@@ -707,14 +622,14 @@
                                     <label class="control-label" for="input_length3">Length3: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm size-field" id="input_length3">
+                                    <input type="number" class="form-control text-center input-sm size-field" id="input_length3">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_width3">Width3: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm size-field" id="input_width3">
+                                    <input type="number" class="form-control text-center input-sm size-field" id="input_width3">
                                 </div>
                             </div>
 
@@ -723,14 +638,14 @@
                                     <label class="control-label" for="input_length4">Length4: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm size-field" id="input_length4">
+                                    <input type="number" class="form-control text-center input-sm size-field" id="input_length4">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_width4">Width4: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control input-sm size-field" id="input_width4">
+                                    <input type="number" class="form-control text-center input-sm size-field" id="input_width4">
                                 </div>
                             </div>
 
@@ -739,13 +654,13 @@
                                     <label class="control-label" for="input_total_size">Total Size: </label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <input type="number" class="form-control input-sm" id="input_total_size" readonly>
+                                    <input type="number" class="form-control text-center input-sm" id="input_total_size" readonly>
                                 </div>
                             </div>
                             
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_rate_code">Rate Code: <span class="text-danger">*</span></label>
+                                    <label class="control-label" for="select_rate_code">Rate: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <select class="form-control input-sm required-field" id="select_rate_code">
@@ -761,7 +676,7 @@
                                     <label class="control-label" for="input_amount">Amount: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <input type="number" class="form-control input-sm required-field" id="input_amount">
+                                    <input type="number" class="form-control input-sm amount-right required-field" id="input_amount">
                                 </div>
                             </div>
                         </div>
@@ -910,12 +825,16 @@
                 $('#batch_print').removeAttr('disabled');
                 $('#batch_transaction_entry').removeAttr('disabled');
                 $('#post_ap').removeAttr('disabled');
+                $('#tag_as_no_payment').removeAttr('disabled');
+                $('#tag_as_pending').removeAttr('disabled');
             } else {
                 $("#batch_tagging").prop("disabled", true);
                 $("#batch_save").prop("disabled", true);
                 $("#batch_print").prop("disabled", true);
                 $("#batch_transaction_entry").prop("disabled", true);
                 $("#post_ap").prop("disabled", true);
+                $("#tag_as_no_payment").prop("disabled", true);
+                $("#tag_as_pending").prop("disabled", true);
             }
         });
 
@@ -927,12 +846,16 @@
                 $('#batch_print').removeAttr('disabled');
                 $('#batch_transaction_entry').removeAttr('disabled');
                 $('#post_ap').removeAttr('disabled');
+                $('#tag_as_no_payment').removeAttr('disabled');
+                $('#tag_as_pending').removeAttr('disabled');
             } else {
                 $("#batch_tagging").prop("disabled", true);
                 $("#batch_save").prop("disabled", true);
                 $("#batch_print").prop("disabled", true);
                 $("#batch_transaction_entry").prop("disabled", true);
                 $("#post_ap").prop("disabled", true);
+                $("#tag_as_no_payment").prop("disabled", true);
+                $("#tag_as_pending").prop("disabled", true);
             }
 
             if($('.triplec-checkbox').length === $('.triplec-checkbox:checked').length){
@@ -942,12 +865,37 @@
             }
         });
 
+        // sortable column
+        $('th.sortable').click(function() {
+            var table = $(this).parents('table').eq(0);
+            var rows = table.find('tr:gt(0)').toArray().sort(comparer($(this).index()));
+            this.asc = !this.asc;
+            if (!this.asc) {
+                rows = rows.reverse();
+            }
+            for (var i = 0; i < rows.length; i++) {
+                table.append(rows[i]);
+            }
+        });
+
+        function comparer(index) {
+            return function(a, b) {
+                var valA = getCellValue(a, index);
+                var valB = getCellValue(b, index);
+                return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.localeCompare(valB);
+            };
+        }
+
+        function getCellValue(row, index) {
+            return $(row).children('td').eq(index).text();
+        }
+
         // in batch tagging modal - code
         $('#batch_input_code').change(function(){
 
             const row = $(this).closest('tr');
             const code = $(this).val();
-
+            
             if(code != ''){
                 $.ajax({
                     url: "{% url 'triplec:get_supplier_by_code' %}"+"?code="+code,
@@ -1074,6 +1022,93 @@
             }
         });
 
+        $("#tag_as_pending").click(function(){
+            
+            var count = $('.triplec-checkbox:checked').length;
+            if(!confirm("Are you sure to Tag as Pending "+count+" transaction(s)?")){
+                return false;
+            }
+
+            for_pending = [];
+            $('.triplec-checkbox:checked').each(function() {
+                var $row = $(this).closest('tr');
+
+                var id = $row.find("input[name=data_id]").val();
+                var status = $row.find("input[name=data_status]").val();
+                
+                if(id != '' && status == 'A') {
+                    for_pending.push(id);
+
+                    $row.removeAttr('class').addClass('D');
+                }
+            });
+            if($.isEmptyObject(for_pending)){
+                alert("There are no active transactions to Tag as Pending.");
+            } else {
+                $.ajax({
+                    url: "{% url 'triplec:tag_as_pending' %}",
+                    type: "post",
+                    data: {
+                        'csrfmiddlewaretoken': "{{ csrf_token }}",
+                        'data': JSON.stringify(for_pending)
+                    },
+                    success: function(response) {
+                        if(response.result == 'success'){
+                            custom_success_alert("Status update successful!");
+                        } else {
+                            custom_failed_alert("Error updating data");
+                        }
+                    },
+                    error: function(response) {
+                        custom_failed_alert("Error updating data");
+                    }
+                });
+            }
+        });
+
+        $("#tag_as_no_payment").click(function(){
+            var count = $('.triplec-checkbox:checked').length;
+            if(!confirm("Are you sure to Tag as No Payment "+count+" transaction(s)?")){
+                return false;
+            }
+
+            for_no_payment = [];
+            $('.triplec-checkbox:checked').each(function() {
+                var $row = $(this).closest('tr');
+
+                var id = $row.find("input[name=data_id]").val();
+                var status = $row.find("input[name=data_status]").val();
+                
+                if(id != '' && status == 'A') {
+                    for_no_payment.push(id);
+
+                    $row.removeAttr('class').addClass('Y');
+                }
+            });
+            if($.isEmptyObject(for_no_payment)){
+                alert("There are no active transactions to Tag as Pending.");
+            } else {
+                $.ajax({
+                    url: "{% url 'triplec:tag_as_no_payment' %}",
+                    type: "post",
+                    data: {
+                        'csrfmiddlewaretoken': "{{ csrf_token }}",
+                        'data': JSON.stringify(for_no_payment)
+                    },
+                    success: function(response) {
+                        if(response.result == 'success'){
+                            custom_success_alert("Status update successful!");
+                        } else {
+                            custom_failed_alert("Error updating data");
+                        }
+                    },
+                    error: function(response) {
+                        custom_failed_alert("Error updating data");
+                    }
+                });
+            }
+        });
+
         // Transaction entry modal
         $('.edit-transaction-entry').click(function(){
 
@@ -1120,7 +1155,7 @@
             $('#input_issue_date').val(issue_date);
             
             $('#input_article_title').val(article_title);
-            $('#select_page').val(page_no).change();
+            $('#input_page').val(page_no);
             $('#input_no_of_words').val(no_of_words);
             $('#input_no_of_characters').val(no_of_characters);
             $('#select_rate_code').val(rate_code).change();
@@ -1141,9 +1176,11 @@
             $('#modal_status').val(status);
 
             $('#modal_pk').val(pk);
-            if(confirmation !== 'None' || confirmation !== ''){
+            $('#apv_view_area').hide();
+            if(confirmation !== 'None' && confirmation !== ''){
+                
                 $('#input_confirmation').val(confirmation);
-                if(apv_no !== 'None'){
+                if(apv_no !== 'None'  && apv_no !== ''){
                     $('#apv_view_area').show();
                     $('#input_apv_no').val(apv_no);
                     $('#input_date_apv').val(apv_date);
@@ -1166,10 +1203,8 @@
             $('#select_author_name').val(author_name).change();
             if(author_name != ''){
                 var code = $('#select_author_name option:selected').attr('data-code');
-                $('#select_code').val(code).change();
-
-                if (status_txt === 'Active') {
-                    supplier_suggestion(code);
+                if(code !== $('#select_code').val()){
+                    $('#select_code').val(code).change();
                 }
             }
 
@@ -1186,6 +1221,7 @@
                     if (response.result === true){
                         $('#select_bureau').val(response.triplecsupplier[0].bureau).change();
                         $('#select_section').val(response.triplecsupplier[0].section).change();
+                        $('#select_rate_code').val(response.rate_code).change();
                     } else {
                         alert(response.message);
                     }
@@ -1323,46 +1359,12 @@
 
         });
 
-        // in table row - code
-        $('select[name=code]').change(function(){
-
-            const row = $(this).closest('tr');
-            const code = $(this).val();
-
-            if(code != ''){
-                $.ajax({
-                    url: "{% url 'triplec:get_supplier_by_code' %}"+"?code="+code,
-                    type: "get",
-                    data: {
-                        'csrfmiddlewaretoken': "{{ csrf_token }}",
-                    },
-                    success: function(response) {
-                        if (response.result === true){
-                            row.find('.edit-transaction-entry').removeClass('hidden');
-                            row.find("select[name=author_name]").val(response.supplier[0].name).change();
-                            row.find("select[name=type]").val(response.supplier[0].ccc).change();
-                        } else {
-                            alert(response.message);
-                        }
-                    },
-                    error: function(response) {
-                        alert('Connection error.');
-                    }
-                });
-            } else {
-                row.find('.edit-transaction-entry').toggleClass('hidden');
-                row.find("select[name=author_name]").val('').change();
-                row.find("select[name=type]").val('').change();
-            }
-           
-        });
-
         // in transaction entry modal
         $('#select_code').change(function(){
 
             const code = $(this).val();
-
             if(code != ''){
+                
                 $.ajax({
                     url: "{% url 'triplec:get_supplier_by_code' %}"+"?code="+code,
                     type: "get",
@@ -1372,12 +1374,14 @@
                     success: function(response) {
                         if (response.result === true){
                             $("#select_author_name").val(response.supplier[0].name).change();
-                            // $("#select_type").val(response.supplier[0].ccc).change();
                             $("#select_type option[value='"+ response.supplier[0].ccc +"']").attr("selected");
                             $('#modal_supplier_pk').val(response.supplier[0].id);
                             
                             var status = $('#status_txt').text() || '';
-                            if (status === 'Active') supplier_suggestion(code);
+                            if (status === 'Active' && $("#select_bureau").val() === '' && $("#select_section").val() === '' && $("#select_rate_code").val() === '') {
+                                
+                                supplier_suggestion(code);
+                            } 
                         } else {
                             alert(response.message);
                         }
@@ -1398,7 +1402,7 @@
 
             const row = $(this).closest('tr');
             const code = $(this).val();
-
+            
             if(code != ''){
                 $.ajax({
                     url: "{% url 'triplec:get_supplier_by_code' %}"+"?code="+code,
@@ -1472,7 +1476,7 @@
             $('#input_issue_date').val('');
             $('#select_section').val('').change();
             $('#input_article_title').val('');
-            $('#select_page').val('').change();
+            $('#input_page').val('');
             $('#input_no_of_words').val('');
             $('#input_no_of_characters').val('');
             $('#select_rate_code').val('').change();
@@ -1502,6 +1506,7 @@
 
         // Save Transction Entry
         $('#btn_save_transaction_entry').click(function(){
+            
             var fields_arr = [];
             fields_arr['pk'] = [$('#modal_pk').val()];
             fields_arr['supplier_pk'] = [$('#modal_supplier_pk').val()];
@@ -1511,14 +1516,14 @@
             fields_arr['author_name'] = [$('#select_author_name').val(), 'Author Name'];
             fields_arr['type'] = [$('#select_type').val(), 'Classification'];
             fields_arr['subtype'] = [$('#select_subtype').val(), 'Type'];
-            fields_arr['bureau'] = [$('#select_bureau').val(), 'Bureau'];
+            fields_arr['bureau'] = [$('#select_bureau').val()];
             fields_arr['section'] = [$('#select_section').val(), 'Section'];
             fields_arr['article_title'] = [$('#input_article_title').val(), 'Article Title'];
             fields_arr['no_of_ccc'] = [$('#input_no_of_ccc').val()];
             fields_arr['no_of_items'] = [$('#input_no_of_items').val()];
-            fields_arr['page_no'] = [$('#select_page option:selected').attr('data-id'), 'Page No.'];
-            fields_arr['no_of_words'] = [$('#input_no_of_words').val(), 'No. of Words'];
-            fields_arr['no_of_characters'] = [$('#input_no_of_characters').val(), 'No. of Characters'];
+            fields_arr['page_no'] = [$('#input_page').val()];
+            fields_arr['no_of_words'] = [$('#input_no_of_words').val()];
+            fields_arr['no_of_characters'] = [$('#input_no_of_characters').val()];
             fields_arr['length1'] = [$('#input_length1').val()];
             fields_arr['length2'] = [$('#input_length2').val()];
             fields_arr['length3'] = [$('#input_length3').val()];
@@ -1528,9 +1533,8 @@
             fields_arr['width3'] = [$('#input_width3').val()];
             fields_arr['width4'] = [$('#input_width4').val()];
             fields_arr['total_size'] = [$('#input_total_size').val()];
-            fields_arr['rate_code'] = [$('#select_rate_code').val(), 'Rate Code'];
+            fields_arr['rate_code'] = [$('#select_rate_code').val(), 'Rate'];
             fields_arr['amount'] = [$('#input_amount').val(), 'Amount'];
-            // fields_arr['confirmation'] = [$('#input_confirmation').val(), 'Confirmation'];
             
             is_success = true;
             for (var field in fields_arr){
@@ -1572,8 +1576,8 @@
                             'no_of_ccc': fields_arr['no_of_ccc'][0] || 0,
                             'no_of_items': fields_arr['no_of_items'][0] || 0,
                             'page_no': fields_arr['page_no'][0],
-                            'no_of_words': fields_arr['no_of_words'][0],
-                            'no_of_characters': fields_arr['no_of_characters'][0],
+                            'no_of_words': fields_arr['no_of_words'][0] || 0,
+                            'no_of_characters': fields_arr['no_of_characters'][0] || 0,
                             'length1': fields_arr['length1'][0] || 0,
                             'length2': fields_arr['length2'][0] || 0,
                             'length3': fields_arr['length3'][0] || 0,
@@ -1588,14 +1592,15 @@
                         },
                         success: function(response) {
 
-                            if (response.result === true){
+                        if (response.result === true){
 
-                                alert('Transaction saved successfully');
-                                $('#retrieve').trigger('click');
-                            } else {
-                                alert(response.message);
-                            }
+                            alert('Transaction saved successfully');
                             $('#transactionEntryModal').modal('hide');
+                            $('#retrieve').trigger('click');
+                        } else {
+                            alert(response.message);
+                        }
+                            
                         },
                         error: function(response) {
                             alert('Connection error.');

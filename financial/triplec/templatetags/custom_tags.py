@@ -23,7 +23,7 @@ def author_names_to_html(authors, loop_value):
         if author.name == loop_value:
             selected = 'selected'
         
-        html += '<option value="%s" %s>%s</option>' % (author.name, selected, author.name)
+        html += '<option value="%s" %s>%s</option>' % (author.name, selected, "["+ author.code +"] "+ author.name)
     return html
 
 
@@ -52,7 +52,7 @@ def author_names_to_options_html(authors):
     options_html = ""
     options_html += '<option value="%s">%s</option>' % ("", "-- Select --")
     for author in authors:
-        options_html += '<option value="%s">%s</option>' % (author.name, author.name)
+        options_html += '<option value="%s">%s</option>' % (author.name, "["+ author.code +"] "+ author.name)
     return options_html
 
 

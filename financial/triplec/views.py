@@ -38,6 +38,7 @@ from triplecpage.models import Triplecpage as Page
 from triplecrate.models import Triplecrate as Rate
 from triplecclassification.models import Triplecclassification as Classification
 from triplecsupplier.models import Triplecsupplier
+from . forms import ManualDataEntryForm
 
 
 upload_size = 3
@@ -61,6 +62,8 @@ class IndexView(AjaxListView):
         context['publications'] = Publication.objects.all().filter(isdeleted=0).order_by('code')
         context['pages'] = Page.objects.all().filter(isdeleted=0).order_by('code')
         context['classifications'] = Classification.objects.all().filter(isdeleted=0).order_by('code')
+        context['subtypes'] = Subtype.objects.all().filter(isdeleted=0).order_by('code')
+        context['rates'] = Rate.objects.all().filter(isdeleted=0).order_by('code')
         
         return context
 
@@ -103,7 +106,7 @@ class RetrieveView(DetailView):
                 triplec_data = triplec_data.filter(section=section)
 
             if page != '':
-                triplec_data = triplec_data.filter(page=page)
+                triplec_data = triplec_data.filter(Q(cms_page__icontains=page) | Q(page__icontains=page))
 
             context = {}
             context['triplec_data'] = triplec_data
@@ -277,6 +280,36 @@ def save_batch_tagging(request):
 
 
 @csrf_exempt
+def tag_as_pending(request):
+    if request.method == 'POST' and request.is_ajax():
+        result = 'success'
+        ids = json.loads(request.POST.getlist('data')[0])
+        try:
+            TripleC.objects.filter(id__in=ids, status='A').update(status='D') 
+        except:
+            result = 'failed'
+
+    return JsonResponse({
+        'result': result
+    })
+
+
+@csrf_exempt
+def tag_as_no_payment(request):
+    if request.method == 'POST' and request.is_ajax():
+        result = 'success'
+        ids = json.loads(request.POST.getlist('data')[0])
+        try:
+            TripleC.objects.filter(id__in=ids, status='A').update(status='Y') 
+        except:
+            result = 'failed'
+
+    return JsonResponse({
+        'result': result
+    })
+
+
+@csrf_exempt
 def get_supplier_by_type(request):
     if request.is_ajax and request.method == 'GET':
         ccc = request.GET['ccc']
@@ -343,9 +376,9 @@ def supplier_suggestion(request):
         try:
             if code != '':
                 supplier = Supplier.objects.get(code=code).pk
-                triplecsupplier = Triplecsupplier.objects.values('bureau', 'section').filter(supplier=supplier)
-                
-                data={'result': True, 'triplecsupplier': list(triplecsupplier)}
+                triplecsupplier = Triplecsupplier.objects.values('bureau', 'section', 'rate__code').filter(supplier=supplier)
+                rate_code = triplecsupplier.first()['rate__code'] if triplecsupplier.exists() else ''
+                data={'result': True, 'triplecsupplier': list(triplecsupplier), 'rate_code': rate_code}
             else:
                 data={'result': False, 'message': 'Code is required'}    
         except Exception as e:
@@ -415,7 +448,57 @@ def save_transaction_entry(request):
             print e, type(e)
             data = {
                     'result': False,
-                    'message': 'Unable to save this transaction'
+                    'message': 'Unable to save this transaction. '+ str(e)
+                }
+    else:
+        data = {
+                'result': False,
+                'message': 'Method not allowed'
+            }
+        
+    return JsonResponse(data)
+
+
+@csrf_exempt
+def manual_save_transaction_entry(request):
+    if request.is_ajax and request.method == 'POST':
+        try:
+            
+            form = ManualDataEntryForm(request.POST)
+            if form.is_valid():
+
+                instance = form.save(commit=False) 
+                
+                # include for default cms data to avoid error in other functions
+                instance.cms_issue_date=request.POST['issue_date']
+                instance.cms_publication='Inquirer'
+                instance.cms_page=request.POST['page']
+                instance.cms_article_title=request.POST['article_title']
+
+                if not request.POST['bureau']:
+                    instance.bureau=None
+                else:
+                    bureau_instance = Bureau.objects.get(pk=int(request.POST['bureau']))
+                    instance.bureau=bureau_instance
+
+                instance.page=request.POST['page']
+                instance.status='E' # Ready for Posting
+                instance.modifyby_id=request.user.id
+                instance.modifydate=datetime.datetime.now()
+                instance.manual=1
+
+                instance.save()
+
+                data = {'result': True}
+            else:
+                data = {'result': False, 
+                        'message': form.errors.as_text()
+                    }
+
+        except Exception as e:
+            data = {
+                    'result': False,
+                    'message': 'Unable to save this transaction. ' + str(e)
                 }
     else:
         data = {
@@ -621,7 +704,7 @@ def transaction_posting(request):
             olditem = ''
             newitem = ''
             existing = []
-            csnums = []
+            confirmation_numbers = []
 
             for item in transactions:
 
@@ -644,7 +727,7 @@ def transaction_posting(request):
                                 modifydate=datetime.datetime.now()
                             )
                             olditem = newitem
-                            csnums.append(new_csno)
+                            confirmation_numbers.append(new_csno)
 
                         else:
                             triplec.update(
@@ -664,7 +747,7 @@ def transaction_posting(request):
                     }
 
             if not existing:
-                success_quota = process_quota(request, csnums)
+                success_quota = process_quota(request, confirmation_numbers)
                 if success_quota == True:
                     response = {'result': True}
                 else:
@@ -693,70 +776,66 @@ def transaction_posting(request):
     return JsonResponse(response)
 
 
-def process_quota(request, csnums):
-    if csnums:
+def process_quota(request, confirmation_numbers):
+    if confirmation_numbers:
         try:
-            for i in range(len(csnums)):
-                transactions = TripleC.objects.filter(confirmation=csnums[i], type='COR')
+            for confirmation_number in confirmation_numbers:
+                transactions = TripleC.objects.filter(confirmation=confirmation_number, type='COR')
 
                 if transactions:
-
-                    num_items = transactions.aggregate(num_items=Sum('no_items'))
-                    total_size = transactions.aggregate(size=Sum('total_size'))
+                    num_items = sum(transaction.no_items for transaction in transactions)
+                    total_size = sum(transaction.total_size for transaction in transactions)
+                    
+                    additional = Triplecvariousaccount.objects.filter(isdeleted=0, type='addtl')
+                    
                     num_photos = transactions.filter(subtype__description__icontains='PHOTO').count()
                     num_articles = transactions.filter(subtype__description__icontains='ARTICLE').count()
 
-                    additional = Triplecvariousaccount.objects.filter(isdeleted=0, type='addtl')
-                    
-                    if (num_photos > 0 and (num_photos >= 8 or num_items['num_items'] >= 8)) and (num_articles > 0 and total_size >= 50):
-                        
-                        transpo = additional.get(code='TRANSPO').amount 
-                        transpo2 = additional.get(code='TRANSPO2').amount 
+                    kwargs = {
+                        'confirmation': confirmation_number,
+                        'no_item': max(num_articles, num_items),
+                        'enterby_id': request.user.id,
+                        'enterdate': datetime.datetime.now(),
+                        'modifyby_id': request.user.id,
+                        'modifydate': datetime.datetime.now(),
+                    }
 
-                        cellcard = additional.get(code='TEL').amount
-
-                        Triplecquota.objects.create(
-                            confirmation = csnums[i],
-                            no_item = max(num_articles, num_items['num_items']),
-                            type = 'A,P',
-                            transportation_amount = transpo,
-                            transportation2_amount = transpo2,
-                            cellcard_amount = cellcard,
-                            enterby_id = request.user.id,
-                            enterdate = datetime.datetime.now(),
-                            modifyby_id = request.user.id,
-                            modifydate = datetime.datetime.now()
-                        )
-
-                    elif num_photos > 0 and (num_photos >= 8 or num_items['num_items'] >= 8):
-
+                    # Photo & Article
+                    if num_photos >= 8 and num_articles > 0 and total_size >= 50:
+                        print 'Photo & Article', num_photos, num_articles, total_size
+                        transpo = additional.get(code='TRANSPO').amount
                         transpo2 = additional.get(code='TRANSPO2').amount
-                        Triplecquota.objects.create(
-                            confirmation=csnums[i],
-                            no_item = max(num_photos, num_items['num_items']),
-                            type = 'P',
-                            transportation2_amount = transpo2,
-                            enterby_id = request.user.id,
-                            enterdate = datetime.datetime.now(),
-                            modifyby_id = request.user.id,
-                            modifydate = datetime.datetime.now()
-                        )
-                    elif num_articles > 0 and total_size >= 50:
-
-                        transpo = additional.get(code='TRANSPO').amount 
                         cellcard = additional.get(code='TEL').amount
+                        kwargs.update({
+                            'type': 'A,P',
+                            'transportation_amount': transpo,
+                            'transportation2_amount': transpo2,
+                            'cellcard_amount': cellcard,
+                        })
+                        Triplecquota.objects.create(**kwargs)
 
-                        Triplecquota.objects.create(
-                            confirmation = csnums[i],
-                            no_item = max(num_articles, num_items['num_items']),
-                            type = 'A',
-                            transportation_amount = transpo,
-                            cellcard_amount = cellcard,
-                            enterby_id = request.user.id,
-                            enterdate = datetime.datetime.now(),
-                            modifyby_id = request.user.id,
-                            modifydate = datetime.datetime.now()
-                        )
+                    # Photo
+                    elif num_photos >= 8:
+                        print 'num_photos', num_photos
+                        transpo = additional.get(code='TRANSPO').amount
+                        kwargs.update({
+                            'type': 'P',
+                            'transportation_amount': transpo,
+                        })
+                        Triplecquota.objects.create(**kwargs)
+
+                    # Article
+                    elif num_articles > 0 and total_size >= 50:
+                        print 'num_articles', num_articles, total_size
+                        transpo = additional.get(code='TRANSPO').amount
+                        cellcard = additional.get(code='TEL').amount
+                        kwargs.update({
+                            'type': 'A',
+                            'transportation_amount': transpo,
+                            'cellcard_amount': cellcard,
+                        })
+                        Triplecquota.objects.create(**kwargs)
+
             return True
         except Exception as e:
             return e
@@ -1021,6 +1100,7 @@ def goposttriplec(request):
             already_posted = 0
             total_trans = 0
             successful_trans = 0
+            exception = ''
 
             for csno, ids in grouped_list.items():
                 
@@ -1030,8 +1110,8 @@ def goposttriplec(request):
                 try:
                     total_trans += 1
                     triplec = TripleC.objects.filter(confirmation=csno,status='O').first()
-
-                    if triplec.apv_no:
+                    print 'triplec.apv_no', triplec.apv_no
+                    if triplec.apv_no is not None and triplec.apv_no != "":
                         already_posted += 1
                     else:
                         supplier = Supplier.objects.get(pk=triplec.supplier_id)
@@ -1241,9 +1321,11 @@ def goposttriplec(request):
                         successful_trans += 1
 
                 except Exception as e:
-                    print 'errorrr', e
-                    response = {'status': 'error', 'message': 'Internal error occured'}
-            if already_posted > 0 and successful_trans > 0:
+                    exception = str(e)
+                    
+            if exception:
+                response = {'status': 'error', 'message': 'An exception occured: '+ exception}
+            elif already_posted > 0 and successful_trans > 0:
                 response = {'status': 'error', 'message': 'Successfully posted '+str(successful_trans)+' transactions. However, there are '+ str(already_posted)+ ' transactions have been already posted'}
             elif successful_trans == 0 or already_posted == total_trans:
                 response = {'status': 'error', 'message': 'All transactions have been posted and are not allowed for reposting.'}

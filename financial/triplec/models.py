@@ -16,30 +16,30 @@ class TripleC(models.Model):
     generated_key = models.CharField(max_length=250)
     cms_issue_date = models.DateField()
     cms_article_status = models.CharField(max_length=50, null=True)
-    cms_publication = models.TextField(null=True)
-    cms_section = models.TextField(null=True)
-    cms_page = models.CharField(max_length=50, null=True)
+    cms_publication = models.TextField(blank=True, null=True)
+    cms_section = models.TextField(blank=True, null=True)
+    cms_page = models.CharField(max_length=50, blank=True, null=True, default="")
     cms_article_id = models.CharField(max_length=50, null=True)
     cms_article_title = models.TextField()
-    cms_byline = models.TextField(null=True)
-    cms_author_name = models.TextField(null=True)
-    cms_created_by = models.TextField(null=True)
-    cms_no_of_words = models.IntegerField()
-    cms_no_of_characters = models.IntegerField()
+    cms_byline = models.TextField(blank=True, null=True)
+    cms_author_name = models.TextField(blank=True, null=True, default="")
+    cms_created_by = models.TextField(blank=True, null=True, default="")
+    cms_no_of_words = models.IntegerField(default=0, null=True)
+    cms_no_of_characters = models.IntegerField(default=0, null=True)
     supplier = models.ForeignKey(Supplier, related_name='triplec_supplier')
     TYPE_CHOICES = (
         ('COL', 'Columnist'),
         ('CON', 'Contributor'),
         ('COR', 'Correspondent')
     )
-    type = models.CharField(max_length=30, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=15, choices=TYPE_CHOICES)
     no_ccc = models.IntegerField(default=0)
     code = models.CharField(max_length=30, null=True)
-    author_name = models.TextField(null=True)
+    author_name = models.TextField(blank=True, null=True)
     issue_date = models.DateField()
     article_title = models.TextField()
-    no_of_words = models.IntegerField(default=0)
-    no_of_characters = models.IntegerField(default=0)
+    no_of_words = models.IntegerField(blank=True, null=True, default=0)
+    no_of_characters = models.IntegerField(blank=True, null=True, default=0)
     length1 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0.00)
     length2 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0.00)
     length3 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0.00)
@@ -50,10 +50,10 @@ class TripleC(models.Model):
     width4 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0.00)
     total_size = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0.00)
     subtype = models.ForeignKey(Subtype, related_name='triplec_subtype')
-    bureau = models.ForeignKey(Bureau, related_name='triplec_bureau')
+    bureau = models.ForeignKey(Bureau, blank=True, null=True, related_name='triplec_bureau')
     publication = models.ForeignKey(Publication, related_name='triplec_publication')
     section = models.ForeignKey(Section, related_name='triplec_section')
-    page = models.ForeignKey(Page, related_name='triplec_page')
+    page = models.CharField(max_length=15, blank=True, null=True)
     rate_code = models.CharField(max_length=30, null=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, default=0.00)
     confirmation = models.CharField(max_length=30, null=True)
@@ -64,6 +64,8 @@ class TripleC(models.Model):
         ('C', 'Cancelled'),
         ('O', 'Posted'),
         ('P', 'Printed'),
+        ('D', 'Pending'),
+        ('Y', 'No Payment'),
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='A')
     IMPORT_STATUS_CHOICES = (
@@ -80,9 +82,10 @@ class TripleC(models.Model):
     date_posted = models.DateField()
     no_items = models.IntegerField(default=0)
     enterby = models.ForeignKey(User, default=1, related_name='triplec_enter')
-    enterdate = models.DateTimeField(auto_now_add=True)
+    enterdate = models.DateField(auto_now_add=True)
     modifyby = models.ForeignKey(User, default=1, related_name='triplec_modify')
-    modifydate = models.DateTimeField(auto_now_add=True)
+    modifydate = models.DateField(auto_now_add=True)
+    manual = models.IntegerField(default=0)
     isdeleted = models.IntegerField(default=0)
 
     class Meta:

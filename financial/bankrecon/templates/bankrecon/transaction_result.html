@@ -5,6 +5,12 @@
 
 {% block extra_css %}
     <style>
+        ::-webkit-scrollbar {
+            width: 12px; /* Set the width of the scrollbar */
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            cursor: pointer !important;
+        }
         .matched {
                 border-left: #8bc34a 4px solid;
         }
@@ -1246,17 +1252,21 @@
                     });
                 }
             }
-            if(bank_filter.bank_type != ''){
-                $('.bank-document-type').each(function(){
-                    if( $(this).text().toLowerCase() === bank_filter.bank_type){
-                        if(!$(this).closest('tr').hasClass('dead')){
 
-                            $(this).closest('tr').show();
-                            
-                        }
+            if (bank_filter.bank_type) {
+                const bank_type = bank_filter.bank_type.toLowerCase();
+                
+                $('.bank-document-type').each(function() {
+                    const row = $(this).closest('tr');
+                    const debit_amount = row.find('.bankdebitamount').text();
+                    const credit_amount = row.find('.bankcreditamount').text();
+
+                    if (!row.hasClass('dead') && 
+                        ((bank_type === 'cv' && debit_amount !== '0.00') ||
+                        (bank_type === 'or' && credit_amount !== '0.00'))) {
+                        row.show();
                     } else {
-                        $(this).closest('tr').addClass('dead');
-                        $(this).closest('tr').hide();
+                        row.addClass('dead').hide();
                     }
                 });
             }
@@ -1297,9 +1307,9 @@
                     const debitAmount = row.find('.bankdebitamount').text();
                     const creditAmount = row.find('.bankcreditamount').text();
                     if (debitAmount === bank_filter.bank_amount || creditAmount === bank_filter.bank_amount) {
-                    row.show().removeClass('dead');
+                        row.show().removeClass('dead');
                     } else {
-                    row.hide().addClass('dead');
+                        row.hide().addClass('dead');
                     }
                 });
             }

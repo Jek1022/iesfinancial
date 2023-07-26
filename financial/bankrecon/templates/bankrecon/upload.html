@@ -327,8 +327,8 @@
                         );
                     });
                 },
-                error: function (response) {
-                    console.log("err "+JSON.stringify(response))
+                error: function (xhr, textStatus, errorThrown) {
+                    console.log("err ", xhr, textStatus, errorThrown);
                 },
                 cache: false,
                 contentType: false,
@@ -504,8 +504,8 @@
                             }
                             
                         },
-                        error: function (response) {
-                            alert('Delete operation could not perform. ' +response);
+                        error: function (xhr, textStatus, errorThrown) {
+                            alert('Delete operation could not perform. ' +textStatus);
                         }
                     });
                 }

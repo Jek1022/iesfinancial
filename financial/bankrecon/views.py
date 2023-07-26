@@ -139,20 +139,17 @@ def upload(request):
 def delete_upload(request):
     if request.method == 'POST':
         ids_list = request.POST.getlist('list_ids')[0].split(',')
-        ids = Bankrecon.objects.filter(pk__in=ids_list)
+        existing_ids = Bankrecon.objects.filter(pk__in=ids_list).values_list('id', flat=True)
 
-        existing_ids = Bankrecon.objects.filter(pk__in=ids).values_list('id', flat=True)
-
-        result = True
-        # validate all ids are existing
-        if len(ids) == len(existing_ids):
+        if len(ids_list) == len(existing_ids):
             # All ids exist as primary keys, proceed with the delete operation
-            Bankrecon.objects.filter(pk__in=ids).delete()
+            Bankrecon.objects.filter(pk__in=ids_list).delete()
             message = "Delete operation performed successfully. Click OK to reload."
+            result = True
         else:
-            result = False
             message = "Cannot perform delete operation. One or more IDs do not exist."
-        
+            result = False
+
         return JsonResponse({
             'result': result,
             'message': message

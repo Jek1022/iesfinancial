@@ -116,54 +116,91 @@
                         <td width="50%"><p>VAT REG TIN: {{ company.tinnum }}</p></td>
                     </tr>
                     <tr><td width="75%"></td></tr>
-                    {% if heading.summary_by %}
+                    {% if heading.report_title %}
                         <tr>
-                            <td width="50%"><p class="title">{{ heading.summary_by|upper }}</p></td>
-                            {% if heading.has_bureau %}
-                                <td ><p class="center title">BUREAU: {{ heading.bureau|upper }}</p></td>
-                            {% endif %}
+                            <td width="50%"><p class="title">{{ heading.report_title|upper }}</p></td>
                         </tr>
                     {% endif %}
                     <tr>
                         <td width="75%"><p class="title">{{ heading.dates|upper }}</p></td>
-                        {% if heading.has_section %}
-                            <td><p class="center title">SECTION: {{ heading.section|upper }}</p></td>
-                        {% endif %}
                     </tr>
-                    {% if heading.has_type %}
-                        <tr>
-                            <td><p class="title">{{ heading.ccc_type|upper }}</p></td>
-                        </tr>
-                    {% endif %}
-                    
                 </table>
-
-                <table class="table">
-                <thead>
-                    <tr>
-                        <th style="text-align:left;width:180px">Code</th>
-                        <th style="text-align:left;width:450px">Name</th>
-                        <th style="text-align:left;width:150px">No. of Articles</th>
-                        <th style="text-align:left;width:150px">No. of Photos</th>
-                        <th style="text-align:right;width:180px">Amount</th>
-                    </tr>
-                </thead>
-            </table>    
+                {% if report_type == "R" %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;width:180px">Code</th>
+                                <th style="text-align:left;width:450px">Name</th>
+                                <th style="text-align:left;width:150px">No. of Articles</th>
+                                <th style="text-align:left;width:150px">No. of Photos</th>
+                                <th style="text-align:right;width:180px">Amount</th>
+                            </tr>
+                        </thead>
+                    </table>
+                {% elif report_type == "Y" %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;width:450px">Name</th>
+                                <th style="text-align:left;width:150px">Issue Date</th>
+                                <th style="text-align:left;width:150px">Section</th>
+                                <th style="text-align:left;width:450px">Title</th>
+                                <th style="text-align:right;width:180px">Amount</th>
+                            </tr>
+                        </thead>
+                    </table>
+                {% endif %}
             </div>
         </div>
         
         <table id="content-data">
-            <tbody>
-                {% for item in list %}
+            {% if report_type == "R" %}
+                <tbody>
+                    {% for item in data_list %}
+                        <tr>
+                            <td style="text-align:left;width:180px">{{ item.code|upper }}</td>
+                            <td style="text-align:left;width:450px">{{ item.author_name|upper }}</td>
+                            <td style="text-align:center;width:150px">{{ item.totalarticles|intcomma }}</td>
+                            <td style="text-align:center;width:150px">{{ item.totalitems|intcomma }}</td>
+                            <td style="text-align:right;width:180px">{{ item.totalamount|intcomma }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            {% elif report_type == "Y" %}
+                <tbody>
+                    {% for item in data_list.values %}
+                        <tr>
+                            <td colspan="5">{{ item.author_name }}</td>
+                        </tr>
+                        {% for transaction in item.transactions %}
+                            <tr>
+                                <td style="text-align:left;width:450px"></td>
+                                <td style="text-align:center;width:150px">{{ transaction.issue_date }}</td>
+                                <td style="text-align:center;width:150px">{{ transaction.section__description }}</td>
+                                <td style="text-align:center;width:450px">{{ transaction.article_title|truncatechars:45 }}</td>
+                                <td style="text-align:right;width:180px">{{ transaction.amount|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="4"><b><i>Subtotal</i></b></td>
+                            <td style="border-top: 2px solid #000; text-align:right; padding-top: 5px;"><b>{{ item.subtotal|intcomma }}</b></td>
+                        </tr>
+                        <tr></tr>
+                    {% endfor %}
+                    
+                </tbody>
+            {% endif %}
+            {% if grand_total %}
+                <tfoot>
                     <tr>
-                        <td style="text-align:left;width:180px">{{ item.code|upper }}</td>
-                        <td style="text-align:left;width:450px">{{ item.author_name|upper }}</td>
-                        <td style="text-align:center;width:150px">{{ 0 }}</td>
-                        <td style="text-align:center;width:150px">{{ 0 }}</td>
-                        <td style="text-align:right;width:180px">{{ item.amount|intcomma }}</td>
+                        <td colspan="5"></td>    
                     </tr>
-                {% endfor %}                
-            </tbody>
+                    <tr>
+                        <td colspan="4"><b>Total</b></td>
+                        <td style="border-top: 2px solid #000; border-bottom: 4px double #000; padding-top: 10px; text-align: right;">{{ grand_total|intcomma }}</td>
+                    </tr>
+                </tfoot>
+            {% endif %}
         </table>
         <div id="footer_content" style="text-align:right">
             <p class="right">{{ company.report_footer14 }} / {{ username  }}</p>

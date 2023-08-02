@@ -13,11 +13,20 @@
         .select2-results__options{
             font-size: 12px;
         }
-        .pointer{
+
+        .pointer {
             cursor: pointer;
         }
 
-        .amount-right{
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    
+        .amount-right,
+        .size-field,
+        .number-right {
             text-align: right;
         }
 
@@ -37,11 +46,11 @@
                         <div class="input-daterange datarange">
                             <div class="input-group">
                                 <span class="input-group-addon"><i class="icon md-calendar" aria-hidden="true"></i></span>
-                                <input type="text" class="form-control datepickerfrom" id="dfrom" required />
+                                <input type="text" class="form-control datepickerfrom" autocomplete="off" id="dfrom" required />
                             </div>
                             <div class="input-group">
                                 <span class="input-group-addon">to</span>
-                                <input type="text" class="form-control datepickerto" id="dto" required />
+                                <input type="text" class="form-control datepickerto" autocomplete="off" id="dto" required />
                             </div>
                         </div>
                     </div>
@@ -74,15 +83,6 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <!-- <div class="form-group col-sm-2" >
-                        <label class="control-label small" for="publication">Publication:</label>
-                        <select class="form-control input-sm select2" id="publication">
-                            <option value="">-- All --</option>
-                            {% for publication in publications  %}
-                                <option value="{{ publication.id }}" data-publication-code="{{ publication.code }}">{{ publication.description }}</option>
-                            {% endfor %}
-                        </select>
-                    </div> -->
                     <div class="form-group col-sm-2" >
                         <label class="control-label small" for="section">Section:</label>
                         <select class="form-control input-sm select2" id="section">
@@ -183,7 +183,7 @@
                                         <label class="control-label" for="manual_select_code">Code: <span class="text-danger">*</span></label>
                                     </div>
                                     <div class="form-group col-md-2">
-                                        <select class="form-control input-sm manual-required-field" id="manual_select_code">
+                                        <select class="form-control input-sm select2 manual-required-field" style="width: auto;" id="manual_select_code">
                                             {% if authors %}
                                                 <option value="">-- Select --</option>
                                                 {% for author in authors  %}
@@ -197,23 +197,23 @@
                                         <label class="control-label" for="manual_select_author_name">Author Name: <span class="text-danger">*</span></label>
                                     </div>
                                     <div class="form-group col-md-6">
-                                        <select class="form-control input-sm manual-required-field" id="manual_select_author_name">
+                                        <select class="form-control input-sm select2 manual-required-field" style="width: auto" id="manual_select_author_name">
                                             <option value="">-- Select --</option>
                                             {% if authors %}
                                                 {% for author in authors  %}
-                                                    <option value="{{ author.name }}" data-code="{{ author.code }}">{{ author.name }}</option>
+                                                    <option value="{{ author.name }}" data-code="{{ author.code }}">{{ author.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ author.name }}</option>
                                                 {% endfor %}
                                             {% endif %}
                                         </select>
                                     </div>
                                 </div>
                                 
-                                <div class="form-group col-md-12 extra-field">
+                                <div class="form-group col-md-12 extra-field" style="margin-top: 40px;">
                                     <div class="form-group col-md-2">
                                         <label class="control-label" for="manual_select_type">Classification: <span class="text-danger">*</span></label>
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <select class="form-control input-sm manual-required-field" id="manual_select_type">
+                                        <select class="form-control input-sm select2 manual-required-field" style="width: auto;" id="manual_select_type">
                                             <option value="">-- Select --</option>
                                             {% for classification in classifications %}
                                                 <option value="{{ classification.code }}">{{ classification.description }}</option>
@@ -225,10 +225,10 @@
                                         <label class="control-label" for="manual_select_subtype">Type: <span class="text-danger">*</span></label>
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <select class="form-control input-sm manual-required-field" id="manual_select_subtype">
+                                        <select class="form-control input-sm select2 manual-required-field" style="width: auto;" id="manual_select_subtype">
                                             <option value="">-- Select --</option>
                                             {% for subtype in subtypes  %}
-                                                <option value="{{ subtype.id }}" data-code="{{ subtype.code }}">{{ subtype.description }}</option>
+                                                <option value="{{ subtype.id }}" data-code="{{ subtype.code }}">{{ subtype.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ subtype.description }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -239,10 +239,10 @@
                                         <label class="control-label" for="manual_select_bureau">Bureau: <span class="text-danger">*</span></label>
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <select class="form-control input-sm" id="manual_select_bureau">
+                                        <select class="form-control select2 input-sm" style="width: auto;" id="manual_select_bureau">
                                             <option value="">-- Select --</option>
                                             {% for bureau in bureaus  %}
-                                                <option value="{{ bureau.id }}" data-code="{{ bureau.code }}">{{ bureau.description }}</option>
+                                                <option value="{{ bureau.id }}" data-code="{{ bureau.code }}">{{ bureau.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ bureau.description }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -251,10 +251,10 @@
                                         <label class="control-label" for="manual_select_section">Section: <span class="text-danger">*</span></label>
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <select class="form-control input-sm manual-required-field" id="manual_select_section">
+                                        <select class="form-control input-sm select2 manual-required-field" style="width: auto;" id="manual_select_section">
                                             <option value="">-- Select --</option>
                                             {% for section in sections %}
-                                                <option value="{{ section.id }}" data-code="{{ section.code }}">{{ section.description }}</option>
+                                                <option value="{{ section.id }}" data-code="{{ section.code }}">{{ section.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ section.description }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -299,18 +299,18 @@
                                         <label class="control-label" for="manual_input_no_of_words">No. of Words: </label>
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <input type="number" class="form-control input-sm" id="manual_input_no_of_words">
+                                        <input type="number" class="form-control number-right input-sm" id="manual_input_no_of_words">
                                     </div>
     
                                     <div class="form-group col-md-2">
                                         <label class="control-label" for="manual_input_no_of_characters">No. of Characters: </label>
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <input type="number" class="form-control input-sm" id="manual_input_no_of_characters">
+                                        <input type="number" class="form-control number-right input-sm" id="manual_input_no_of_characters">
                                     </div>
                                 </div>
-                                <br><br>
-                                <div class="form-group col-md-12 extra-field">
+                                
+                                <div class="form-group col-md-12 extra-field" style="margin-top: 40px;">
                                     <div class="form-group col-md-2">
                                         <label class="control-label" for="manual_input_length1">Length1: </label>
                                     </div>
@@ -380,7 +380,7 @@
                                         <label class="control-label" for="manual_input_total_size">Total Size: </label>
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <input type="number" class="form-control input-sm" id="manual_input_total_size" readonly>
+                                        <input type="number" class="form-control number-right input-sm" id="manual_input_total_size" readonly>
                                     </div>
                                 </div>
                                 
@@ -389,7 +389,7 @@
                                         <label class="control-label" for="manual_select_rate_code">Rate: <span class="text-danger">*</span></label>
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <select class="form-control input-sm manual-required-field" id="manual_select_rate_code">
+                                        <select class="form-control input-sm select2 manual-required-field"  style="width: auto;" id="manual_select_rate_code">
                                             <option value="">-- Select --</option>
                                             <option value="customizable" data-amount="">Customizable</option>
                                             {% for rate in rates %}
@@ -405,11 +405,27 @@
                                         <input type="number" class="form-control input-sm amount-right manual-required-field" id="manual_input_amount">
                                     </div>
                                 </div>
+
+                                <div class="form-group col-md-12 extra-field">
+                                    <div class="form-group col-md-2">
+                                        <label class="control-label" for="input_no_of_words">Byline: </label>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <textarea class="form-control" maxlength="200" id="manual_textarea_byline" rows="1"></textarea>
+                                    </div>
+    
+                                    <div class="form-group col-md-2">
+                                        <label class="control-label" for="input_no_of_characters">Remarks: </label>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <textarea class="form-control" maxlength="200" id="manual_textarea_remarks" rows="1"></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-info" id="manual_btn_save_transaction_entry" disabled="disabled">Confirm and Save</button>
+                        <button type="button" class="btn btn-info" id="manual_btn_save_transaction_entry" disabled="disabled">Confirm and Save</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <button type="reset" id="btn_manual_reset" class="btn btn-primary">Reset Form</button>
                         <button type="button" id="btn_manual_close" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
@@ -421,68 +437,68 @@
     <!-- file upload modal -->
     <div id="uploadModal" class="modal fade" role="dialog">
         <form method="post" id="data" enctype="multipart/form-data">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" id="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Data Upload</h4>
-                </div>
-                <div class="modal-body" style="overflow:hidden;">
-                    <div class="row" id="fileUploadInput">
-                        <div class="form-group col-md-12">
-                            <label for="data_file" class="control-label">XLS File</label>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <input type="file" id="data_file" class="form-control input-sm" name="data_file" required>
-                            <br>
-                            <br>
-                            <div style="border: 1px solid #e0e0e0; padding: 4px;">
-                                Tips:
-                                <ul>
-                                    <li>File uploading usually takes less than a minute. When it exceeds the specified time, kindly reload the page and try again.</li>
-                                    <li>The recommended date range of data to upload is 1-15 days only.</li>
-                                </ul>
+            {% csrf_token %}
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" id="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Data Upload</h4>
+                    </div>
+                    <div class="modal-body" style="overflow:hidden;">
+                        <div class="row" id="fileUploadInput">
+                            <div class="form-group col-md-12">
+                                <label for="data_file" class="control-label">XLS File</label>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <input type="file" name="data_file" id="data_file" class="form-control input-sm" required>
+                                <br>
+                                <br>
+                                <div style="border: 1px solid #e0e0e0; padding: 4px;">
+                                    Tips:
+                                    <ul>
+                                        <li>File uploading usually takes less than a minute. When it exceeds the specified time, kindly reload the page and try again.</li>
+                                        <li>The recommended date range of data to upload is 1-15 days only.</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         
-                    </div>
-                    
-                    <div class="row" id="data_summary" style="display: none; max-height: 500px; overflow-y: scroll;">
-                        <br>
-                        <div class="col-md-12">
-                            <span>
-                                RESULT: A total of <b id="success_count" class="text-success"></b> successfully processed data &#8212; and a total of 
-                                <b id="failed_count" class="text-warning"></b> failed/unable to process data are as follows:
-                            </span>
-                            <br><br>
-                            <table class="table table-condensed" id="failed_table">
-                                <thead class="bg-red-400" style="position: sticky; top: 0; z-index: 1;">
-                                    <tr>
-                                        <th></th>
-                                        <th style="color:white"><small><b>Issue Date</b><div class="pull-right"></div></small></th>
-                                        <th style="color:white">Article ID</th>
-                                        <th style="color:white">Article Title</th>
-                                        <th style="color:white">Number of Words</th>
-                                        <th style="color:white">Number of Characters</th>
-                                        <th style="color:white">Remarks</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
+                        <div class="row" id="data_summary" style="display: none; max-height: 500px; overflow-y: scroll;">
+                            <br>
+                            <div class="col-md-12">
+                                <span>
+                                    RESULT: A total of <b id="success_count" class="text-success"></b> successfully processed data &#8212; and a total of 
+                                    <b id="failed_count" class="text-warning"></b> failed/unable to process data are as follows:
+                                </span>
+                                <br><br>
+                                <table class="table table-condensed" id="failed_table">
+                                    <thead class="bg-red-400" style="position: sticky; top: 0; z-index: 1;">
+                                        <tr>
+                                            <th></th>
+                                            <th style="color:white"><small><b>Issue Date</b><div class="pull-right"></div></small></th>
+                                            <th style="color:white">Article ID</th>
+                                            <th style="color:white">Article Title</th>
+                                            <th style="color:white">Number of Words</th>
+                                            <th style="color:white">Number of Characters</th>
+                                            <th style="color:white">Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-info" id="fileUploadSubmit">Upload</button>
-                    <button type="button" disabled="disabled" class="btn btn-info" style="display: none;" id="fileUploadProcessing">
-                        <i class="icon fa-spinner fa-spin font-16 margin-right-10" aria-hidden="true" style="vertical-align: middle"></i>
-                        PROCESSING ...
-                    </button>
-                    <button type="button" class="btn btn-info" style="display: none;" id="fileReloadPage" onClick="window.location.reload();return false;">Reload page and upload more</button>
-                    <button type="button" class="btn btn-default" id="fileUploadClose" data-dismiss="modal">Close</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-info" id="fileUploadSubmit">Upload</button>
+                        <button type="button" disabled="disabled" class="btn btn-info" style="display: none;" id="fileUploadProcessing">
+                            <i class="icon fa-spinner fa-spin font-16 margin-right-10" aria-hidden="true" style="vertical-align: middle"></i>
+                            PROCESSING ...
+                        </button>
+                        <button type="button" class="btn btn-info" style="display: none;" id="fileReloadPage" onClick="window.location.reload();return false;">Reload page and upload more</button>
+                        <button type="button" class="btn btn-default" id="fileUploadClose" data-dismiss="modal">Close</button>
+                    </div>
                 </div>
             </div>
-        </div>
         </form>
     </div>
     <!-- end file upload modal -->
@@ -508,7 +524,15 @@
 		$(document).on('click', '#fileUploadSubmit', function(e){
             $('#fileUploadSubmit').fadeOut(300);
             $('#fileUploadProcessing').delay(300).fadeIn(300, function() {
-                $("form#data").submit();                
+                if ($('#data_file').get(0).files.length === 0) {
+                    $('#fileUploadProcessing').fadeOut(300);
+                    $('#fileUploadInput').fadeIn();
+                    $('#fileUploadSubmit').delay(300).fadeIn(300);
+                    customAlert($('#upload-form-required'));
+                    return false;
+                } else{
+                    $("form#data").submit();                
+                }
             });
         });
 
@@ -516,53 +540,49 @@
             form_refresh();
         });
 
-        $('form#data').submit(function(){
-	        if ($('#data_file').get(0).files.length === 0) {
-                $('#fileUploadProcessing').fadeOut(300);
-                $('#fileUploadInput').fadeIn();
-                $('#fileUploadSubmit').delay(300).fadeIn(300);
-	            customAlert($('#upload-form-required'));
-	        }
-	        else{
-	            var formData = new FormData(this);
-	            $.ajax({
-	                url: "{% url 'triplec:upload' %}",
-	                type: 'POST',
-	                data: formData,
-	                async: false,
-	                success: function (data) {
-                        $('#fileUploadInput').fadeOut(300);
-                        $('#fileUploadProcessing').fadeOut(300);
-                        $('#fileUploadSubmit').fadeOut(300);
-                        $('form#data').trigger('reset');
-                        switch(data['result']) {
-                            case 1:
-                                customAlert($('#upload-success'));
+        $('form#data').submit(function(e){
+            e.preventDefault();
+	        
+            var formData = new FormData();
+            formData.append('data_file', $('#data_file')[0].files[0]); // Append the selected file
+            $.ajax({
+                url: "{% url 'triplec:upload' %}",
+                type: 'POST',
+                data: formData,
+                async: false,
+                success: function (data) {
+                    $('#fileUploadInput').fadeOut(300);
+                    $('#fileUploadProcessing').fadeOut(300);
+                    $('#fileUploadSubmit').fadeOut(300);
+                    $('form#data').trigger('reset');
+                    switch(data['result']) {
+                        case 1:
+                            customAlert($('#upload-success'));
+                            $('#uploadModal').modal('toggle');
+                            break;
+                        case 2:
+                            if(data['records_count'] == data['failed_data'].length){
                                 $('#uploadModal').modal('toggle');
-                                break;
-                            case 2:
-                                if(data['records_count'] == data['failed_data'].length){
-                                    $('#uploadModal').modal('toggle');
-                                    customAlert($('#upload-file-exist'));
-                                } else {
-                                    $('#data_summary').fadeIn();
-                                    $('#fileReloadPage').fadeIn();
-                                    datasummary(data);
-                                }
-                                break;
-                            case 3:
-                                customAlert($('#upload-failed'));
-                                $('#uploadModal').modal('toggle');
-                                break;
-                            default:
-                                customAlert($('#upload-file-error'));
-                        }
-	                },
-	                cache: false,
-	                contentType: false,
-	                processData: false
-	            });
-	        }
+                                customAlert($('#upload-file-exist'));
+                            } else {
+                                $('#data_summary').fadeIn();
+                                $('#fileReloadPage').fadeIn();
+                                datasummary(data);
+                            }
+                            break;
+                        case 3:
+                            customAlert($('#upload-failed'));
+                            $('#uploadModal').modal('toggle');
+                            break;
+                        default:
+                            customAlert($('#upload-file-error'));
+                    }
+                },
+                cache: false,
+                contentType: false,
+                processData: false
+            });
+	        
 			return false;
 	    });
 
@@ -757,11 +777,44 @@
             }
         });
 
+        // reset modal fields
+        function resetTransactionEntryModal(){
+            
+            $('#manual_input_issue_date').val('');
+            $('#manual_select_section').val('').change();
+            $('#manual_input_article_title').val('');
+            $('#manual_input_page').val('');
+            $('#manual_input_no_of_words').val('');
+            $('#manual_input_no_of_characters').val('');
+            $('#manual_select_rate_code').val('').change();
+            $('#manual_input_amount').val('');
+            $('#manual_select_type').val('').change();
+            $('#manual_select_code').val('').change();
+            $('#manual_select_author_name').val('').change();
+            $('#manual_select_subtype').val('').change();
+            $('#manual_select_bureau').val('').change();
+            $('#manual_input_confirmation').val('');
+            $('#manual_input_no_of_ccc').val('');
+            $('#manual_input_no_of_items').val('');
+            $('#manual_input_length1').val('');
+            $('#manual_input_length2').val('');
+            $('#manual_input_length3').val('');
+            $('#manual_input_length4').val('');
+            $('#manual_input_width1').val('');
+            $('#manual_input_width2').val('');
+            $('#manual_input_width3').val('');
+            $('#manual_input_width4').val('');
+            $('#manual_input_total_size').val('');
+            $('#manual_textarea_byline').val('');
+            $('#manual_textarea_remarks').val('');
+
+            return true;
+        }
+
         // Save Transction Entry
         $('#manual_btn_save_transaction_entry').click(function(){
-            
+
             var fields_arr = [];
-            console.log('b', $('#manual_select_bureau').val());
             fields_arr['issue_date'] = [$('#manual_input_issue_date').val(), 'Issue Date'];
             fields_arr['code'] = [$('#manual_select_code').val(), 'Code'];
             fields_arr['author_name'] = [$('#manual_select_author_name').val(), 'Author Name'];
@@ -786,6 +839,8 @@
             fields_arr['total_size'] = [$('#manual_input_total_size').val()];
             fields_arr['rate_code'] = [$('#manual_select_rate_code').val(), 'Rate'];
             fields_arr['amount'] = [$('#manual_input_amount').val(), 'Amount'];
+            fields_arr['byline'] = [$('#manual_textarea_byline').val()];
+            fields_arr['remarks'] = [$('#manual_textarea_remarks').val()];
             
             is_success = true;
             for (var field in fields_arr){
@@ -833,6 +888,8 @@
                         'total_size': fields_arr['total_size'][0] || 0,
                         'rate_code': fields_arr['rate_code'][0],
                         'amount': fields_arr['amount'][0],
+                        'byline': fields_arr['byline'][0],
+                        'remarks': fields_arr['remarks'][0],
                     },
                     success: function(response) {
 
@@ -850,7 +907,7 @@
                         
                     }
                 });
-
+                resetTransactionEntryModal();
                 return false;
             }
         });

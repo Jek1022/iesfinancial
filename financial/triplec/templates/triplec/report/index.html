@@ -61,18 +61,14 @@
 
                 <div class="row">
                     <div class="form-group col-sm-12" style="padding-left: 0px; padding-right: 0px;">
-                        <div class="form-group col-sm-4">
-                            <label class="control-label small">CS No.</label><br>
-                            <div class="input-daterange datarange">
-                                <div class="input-group">
-                                    <span class="input-group-addon"><i class="icon md-file" aria-hidden="true"></i></span>
-                                    <input type="text" class="form-control" id="csno_from" />
-                                </div>
-                                <div class="input-group">
-                                    <span class="input-group-addon">to</span>
-                                    <input type="text" class="form-control" id="csno_to" />
-                                </div>
-                            </div>
+                        <div class="form-group col-sm-2" >
+                            <label class="control-label small" for="section">Section</label>
+                            <select class="form-control select2" id="section">
+                                <option value="">-- All --</option>
+                                {% for section in sections  %}
+                                    <option value="{{ section.id }}" data-section-code="{{ section.code }}">{{ section.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ section.description }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="form-group col-sm-2" >
                             <label class="control-label small" for="bureau">Bureau</label>
@@ -84,20 +80,30 @@
                             </select>
                         </div>
                         <div class="form-group col-sm-2" >
-                            <label class="control-label small" for="section">Section</label>
-                            <select class="form-control select2" id="section">
-                                <option value="">-- All --</option>
-                                {% for section in sections  %}
-                                    <option value="{{ section.id }}" data-section-code="{{ section.code }}">{{ section.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ section.description }}</option>
-                                {% endfor %}
+                            <label class="control-label small" for="status">Status</label>
+                            <select class="form-control select2" id="status">
+                                <option value="O" selected>Posted</option>
+                                <option value="A">Active</option>
                             </select>
                         </div>
-                        
+                        <div class="form-group col-sm-2" >
+                            <label class="control-label small" for="report_type">Report Type</label>
+                            <select class="form-control select2" id="report_type">
+                                <option value="R" selected>Regular</option>
+                                <option value="Y">Yearly (detailed)</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-sm-4" >
+                            <label class="control-label small" for="report_title">Report Title</label>
+                            <input type="text" class="form-control" value="Triple C Summary Report" id="report_title">
+                        </div>
                     </div>
                 </div>
             </div>
+            <br>
+            <br>
             <div class="col-md-12" style="min-height: 800px">
-                <iframe src="{% url 'triplec:pdf' %}?from=&to=&type=&bureau=&section&csno_from&csno_to=&blank=1" id="result" height="800px" width="100%"></iframe>
+                <iframe src="{% url 'triplec:pdf' %}?from=&to=&type=&bureau=&section&blank=1" id="result" height="800px" width="100%"></iframe>
             </div>
             <div class="clearfix"></div>
         </div>
@@ -115,10 +121,8 @@ $(function(){
     $('#generate').click(function(){
         var date_from = $('#dfrom').val() || '';
         var date_to = $('#dto').val() || '';
-        var csno_from = $('#csno_from').val() || '';
-        var csno_to = $('#csno_to').val() || '';
 
-        if((date_from === '' && date_to === '') && (csno_from === '' && csno_to === '')){
+        if((date_from === '' && date_to === '')){
             alert('Issue date or CS# is required');
             return false;
         }
@@ -127,7 +131,10 @@ $(function(){
         var bureau = $('#bureau').val() || '';
         var section = $('#section').val() || '';
         var type = $('#type').val() || '';
-        url = "{% url 'triplec:pdf' %}"+"?from="+date_from+"&to="+date_to+"&author="+author+"&bureau="+bureau+"&section="+section+"&type="+type+"&csno_from="+csno_from+"&csno_to="+csno_to+"&blank=0";
+        var status = $('#status').val() || '';
+        var report_type = $('#report_type').val() || '';
+        var report_title = $('#report_title').val() || '';
+        url = "{% url 'triplec:pdf' %}"+"?from="+date_from+"&to="+date_to+"&author="+author+"&bureau="+bureau+"&section="+section+"&type="+type+"&status="+status+"&report_type="+report_type+"&report_title="+report_title+"&blank=0";
         $('#result').prop('src', url);
 
     });

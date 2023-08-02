@@ -25,4 +25,5 @@ class ManualDataEntryForm(forms.ModelForm):
             'total_size',
             'rate_code', 
             'amount', 
+            'byline', 
         ]

@@ -27,7 +27,7 @@ urlpatterns = [
     url(r'^pdf/$', views.GeneratePDF.as_view(), name='pdf'),
     url(r'^goposttriplec/$', views.goposttriplec, name='goposttriplec'),
     url(r'^revert_transaction/$', views.revert_transaction, name='revert_transaction'),
-    url(r'^count_csno/$', views.count_csno, name='count_csno'),
+    url(r'^having_quota/$', views.having_quota, name='having_quota'),
     url(r'^generic_retrieve/$', views.RetrieveView.as_view(), name='generic_retrieve'),
     url(r'^get_ap_id/$', views.get_ap_id, name='get_ap_id'),
 

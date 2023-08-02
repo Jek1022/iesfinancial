@@ -12,9 +12,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.template.loader import render_to_string, get_template
 from django.views.generic import ListView, View, DetailView, UpdateView
-from django.db.models import Q, Sum, Count
-from django.db.models import Max
-from django.db import connection
+from django.db.models import Q, Sum, Count, Max, F
+from django.db import connection, IntegrityError
 from collections import namedtuple
 from annoying.functions import get_object_or_None
 from endless_pagination.views import AjaxListView
@@ -39,6 +38,7 @@ from triplecrate.models import Triplecrate as Rate
 from triplecclassification.models import Triplecclassification as Classification
 from triplecsupplier.models import Triplecsupplier
 from . forms import ManualDataEntryForm
+from django.db.models import Sum, Case, When, IntegerField
 
 
 upload_size = 3
@@ -146,11 +146,6 @@ def get_ap_id(request):
         return JsonResponse(response)
 
 
-def generate_hash_key(issue_date,article_id,numofwords,numofcharacters):
-    hash = hashlib.md5(str(issue_date) + str(article_id) + str(numofwords) + str(numofcharacters))
-    return hash.hexdigest()
-
-
 def fileprocess(request):
     df = pandas.read_excel(request.FILES['data_file'])
 
@@ -181,20 +176,15 @@ def upload(request):
                     successrecords = []
                     
                     for record in records:
-                        generated_key = generate_hash_key(record['Issue Date'], record['Article ID'], record['Number Of words'], record['NumberofCharacters'])
                         issue_date = pandas.to_datetime(record['Issue Date'], unit='ms')
                         
-                        if TripleC.objects.filter(generated_key=generated_key).exists():
-                            existscount += 1
-                            faileddata.append([issue_date, record['Article ID'], record['Article Title'], record['Number Of words'], record['NumberofCharacters'], dataexists, textsuccess])
+                        save = savedata(record,issue_date)
+                        if save:
+                            successrecords.append([record])
+                            successcount += 1
                         else:
-                            save = savedata(record,generated_key,issue_date)
-                            if save:
-                                successrecords.append([record])
-                                successcount += 1
-                            else:
-                                failedcount += 1
-                                faileddata.append([issue_date, record['Article ID'], record['Article Title'], record['Number Of words'], record['NumberofCharacters'], errorsavingdata, textwarning])
+                            failedcount += 1
+                            faileddata.append([issue_date, record['Article ID'], record['Article Title'], record['Number Of words'], record['NumberofCharacters'], errorsavingdata, textwarning])
                     
                     if successcount == records_count:
                         result = 1 
@@ -218,11 +208,7 @@ def upload(request):
                         'result': 3
                     })
     else:
-        context = {
-            # "banks": Bank.objects.all().order_by('description'),
-            # "bankaccount": Bankaccount.objects.all().filter(isdeleted=0).order_by('code'),
-            # "username": request.user,
-        }
+        context = {}
         return render(request, 'triplec/upload.html', context)
     
 
@@ -235,14 +221,13 @@ def strip_non_ascii(string):
     return ''.join(stripped)
 
 
-def savedata(record,generated_key,issue_date):
+def savedata(record,issue_date):
     try:
         article_title = strip_non_ascii(record['Article Title'])
         byline = strip_non_ascii(record['Byline'])
         created_by = strip_non_ascii(record['Created by'])
        
         TripleC.objects.create(
-            generated_key=generated_key,
             cms_issue_date=issue_date,
             cms_article_status='A',
             cms_publication=str(record['Publication']),
@@ -400,6 +385,9 @@ def save_transaction_entry(request):
             triplec = TripleC.objects.filter(pk=request.POST['id'])
             
             status = 'E'
+            having_quota = False
+            csno_count = 0
+
             if triplec[0].apv_no:
                 return JsonResponse({
                     'result': False,
@@ -407,45 +395,53 @@ def save_transaction_entry(request):
                 })
             elif triplec[0].status == 'O':
                 status = 'O'
+                having_quota = Triplecquota.objects.filter(confirmation=triplec[0].confirmation, status='A', isdeleted=0).exists()
+                csno_count = TripleC.objects.filter(confirmation=triplec[0].confirmation, isdeleted=0).count()
                 
-            triplec.update(
-                issue_date=request.POST['issue_date'],
-                supplier_id=request.POST['supplier_id'],
-                code=request.POST['code'],
-                author_name=request.POST['author_name'],
-                type=request.POST['type'],
-                subtype=request.POST['subtype'],
-                bureau=request.POST['bureau'],
-                section=request.POST['section'],
-                article_title=request.POST['article_title'],
-                no_ccc=request.POST['no_of_ccc'],
-                no_items=request.POST['no_of_items'],
-                page=request.POST['page_no'],
-                no_of_words=request.POST['no_of_words'],
-                no_of_characters=request.POST['no_of_characters'],
-                length1=request.POST['length1'],
-                length2=request.POST['length2'],
-                length3=request.POST['length3'],
-                length4=request.POST['length4'],
-                width1=request.POST['width1'],
-                width2=request.POST['width2'],
-                width3=request.POST['width3'],
-                width4=request.POST['width4'],
-                total_size=request.POST['total_size'],
-                rate_code=request.POST['rate_code'],
-                amount=request.POST['amount'],
-                status=status,
-                modifyby_id=request.user.id, 
-                modifydate=datetime.datetime.now()
-            )
-            data = {'result': True}
-            # else:
-            #     data = {
-            #         'result': False,
-            #         'message': 'Updating is not allowed with this status'
-            #     }
+            if having_quota and csno_count > 0:
+                return JsonResponse({
+                        'result': False,
+                        'message': 'Updating is not allowed to posted transaction having quota. Please use the revert process.'
+                    })
+            else:
+                triplec.update(
+                    issue_date=request.POST['issue_date'],
+                    supplier_id=request.POST['supplier_id'],
+                    code=request.POST['code'],
+                    author_name=request.POST['author_name'],
+                    type=request.POST['type'],
+                    subtype=request.POST['subtype'],
+                    bureau=request.POST['bureau'],
+                    section=request.POST['section'],
+                    article_title=request.POST['article_title'],
+                    byline=request.POST['byline'],
+                    no_ccc=request.POST['no_of_ccc'],
+                    no_items=request.POST['no_of_items'],
+                    page=str(request.POST['page_no']).upper(),
+                    no_of_words=request.POST['no_of_words'],
+                    no_of_characters=request.POST['no_of_characters'],
+                    length1=request.POST['length1'],
+                    length2=request.POST['length2'],
+                    length3=request.POST['length3'],
+                    length4=request.POST['length4'],
+                    width1=request.POST['width1'],
+                    width2=request.POST['width2'],
+                    width3=request.POST['width3'],
+                    width4=request.POST['width4'],
+                    total_size=request.POST['total_size'],
+                    rate_code=request.POST['rate_code'],
+                    amount=request.POST['amount'],
+                    remarks=request.POST['remarks'],
+                    status=status,
+                    modifyby_id=request.user.id, 
+                    modifydate=datetime.datetime.now()
+                )
+
+                data = {
+                    'result': True
+                }
+
         except Exception as e:
-            print e, type(e)
             data = {
                     'result': False,
                     'message': 'Unable to save this transaction. '+ str(e)
@@ -472,7 +468,7 @@ def manual_save_transaction_entry(request):
                 # include for default cms data to avoid error in other functions
                 instance.cms_issue_date=request.POST['issue_date']
                 instance.cms_publication='Inquirer'
-                instance.cms_page=request.POST['page']
+                instance.cms_page=str(request.POST['page']).upper()
                 instance.cms_article_title=request.POST['article_title']
 
                 if not request.POST['bureau']:
@@ -480,8 +476,10 @@ def manual_save_transaction_entry(request):
                 else:
                     bureau_instance = Bureau.objects.get(pk=int(request.POST['bureau']))
                     instance.bureau=bureau_instance
-
-                instance.page=request.POST['page']
+                
+                instance.page=str(request.POST['page']).upper()
+                instance.byline=request.POST['byline']
+                instance.remarks=request.POST['remarks']
                 instance.status='E' # Ready for Posting
                 instance.modifyby_id=request.user.id
                 instance.modifydate=datetime.datetime.now()
@@ -509,38 +507,52 @@ def manual_save_transaction_entry(request):
     return JsonResponse(data)
 
 
-# revert transaction status as Ready for Posting
 @csrf_exempt
 def revert_transaction(request):
     if request.is_ajax and request.method == 'POST':
         try:
+            # Note: if CS contains quota, set all associated transactions to 'E'
+            # else if no quota for the CS, only the reverted transaction will be 'E'
+            # CS number shoud remain as is
 
             triplec = TripleC.objects.filter(pk=request.POST['id'])
 
-            if triplec[0].status == 'O' and (triplec[0].apv_no == None or triplec[0].apv_no == ''):
-
+            if triplec[0].status == 'O' and not triplec[0].apv_no:
+                # Posted CS
                 confirmation = triplec[0].confirmation
+                has_quota = Triplecquota.objects.filter(confirmation=confirmation, status='A', isdeleted=0).exists()
 
-                Triplecquota.objects.filter(confirmation=confirmation).update(
-                    isdeleted=1,
-                    modifyby_id=request.user.id,
-                    modifydate=datetime.datetime.now()
-                )
+                if has_quota:
 
-                triplec.update(
-                    confirmation='',
-                    status='E',
-                    modifyby_id=request.user.id,
-                    modifydate=datetime.datetime.now()
-                )
+                    transactions = TripleC.objects.filter(confirmation=confirmation)
+                    for transaction in transactions:
+                        transaction.status = 'E'
+                        transaction.modifyby = request.user
+                        transaction.modifydate = datetime.datetime.now()
+                        transaction.save()
+
+                    # add Cancelled - C to CS number, isdeleted = 1
+                    Triplecquota.objects.filter(confirmation=confirmation).update(
+                        confirmation = confirmation,
+                        status='C',
+                        isdeleted=1,
+                        modifyby_id=request.user.id,
+                        modifydate=datetime.datetime.now()
+                    )
+                else:
+                    triplec.update(
+                        status='E',
+                        modifyby_id=request.user.id,
+                        modifydate=datetime.datetime.now()
+                    )
                 data = {
                     'result': True,
-                    'message': 'Revert transaction successful.'
+                    'message': 'Revert process successful. You may now update the transaction.'
                 }
-            elif triplec[0].status == 'E' and triplec[0].confirmation == '':
+            elif triplec[0].status == 'E':
                 data = {
                     'result': False,
-                    'message': 'This transaction is Ready for Posting or has been reverted already.'
+                    'message': 'This transaction is already reverted as Ready for Posting.'
                 }
             else:
                 data = {
@@ -562,15 +574,16 @@ def revert_transaction(request):
 
 
 @csrf_exempt
-def count_csno(request):
+def having_quota(request):
     if request.is_ajax and request.method == 'POST':
         try:
-            count = TripleC.objects.filter(confirmation=request.POST['csno']).count()
-            print 'countcs', count
+            having_quota = Triplecquota.objects.filter(confirmation=request.POST['csno'], status='A', isdeleted=0).exists()
+            csno_count = TripleC.objects.filter(confirmation=request.POST['csno'], isdeleted=0).count()
             data = {
                     'result': True,
                     'message': 'Success',
-                    'count': count
+                    'having_quota': having_quota,
+                    'csno_count': csno_count
                 }
         except Exception as e:
             data = {
@@ -659,7 +672,6 @@ class GenerateProcessTransaction(View):
             
             if author_name != '':
                 triplec_data = triplec_data.filter(author_name=author_name)
-            # print triplec_data[0]['code'], triplec_data[0]['total']
             
             param = {}
             for key in range(len(triplec_data)):
@@ -684,17 +696,6 @@ class GenerateProcessTransaction(View):
             })
 
 
-# @csrf_exempt
-# def transaction_posting(request):
-#     if request.method == 'POST':
-#         transactions = json.loads(request.POST.getlist('data')[0])
-#         year = dt.strptime(transactions[0]['issue_date'], "%Y-%m-%d").year
-#         csno = get_confirmation('2024')
-#         print year, csno
-
-#         return JsonResponse({'result': True})
-
-
 @csrf_exempt
 def transaction_posting(request):
     if request.method == 'POST':
@@ -717,26 +718,32 @@ def transaction_posting(request):
                     triplec = TripleC.objects.filter(pk=item['pk'])
                     
                     if triplec[0].status != 'O':
-                        if newitem != olditem:
+
+                        kwargs = {
+                            'date_posted': datetime.datetime.now(), 
+                            'status': 'O', 
+                            'modifyby_id': request.user.id,
+                            'modifydate': datetime.datetime.now(),
+                        }
+
+                        if triplec[0].confirmation:
+                            confirmation_numbers.append(triplec[0].confirmation)
+
+                        elif newitem != olditem:
                             new_csno = int(csno) + 1
-                            triplec.update(
-                                confirmation=new_csno, 
-                                date_posted= datetime.datetime.now(), 
-                                status='O', 
-                                modifyby_id=request.user.id,
-                                modifydate=datetime.datetime.now()
+                            kwargs.update(
+                                confirmation=new_csno,
                             )
                             olditem = newitem
                             confirmation_numbers.append(new_csno)
 
                         else:
-                            triplec.update(
+                            kwargs.update(
                                 confirmation=csno, 
-                                date_posted= datetime.datetime.now(), 
-                                status='O', 
-                                modifyby_id=request.user.id,
-                                modifydate=datetime.datetime.now()
                             )
+
+                        triplec.update(**kwargs)
+
                     else:
                         existing.append([triplec[0].confirmation, newitem])
 
@@ -747,9 +754,13 @@ def transaction_posting(request):
                     }
 
             if not existing:
+                confirmation_numbers = list(dict.fromkeys(confirmation_numbers))
                 success_quota = process_quota(request, confirmation_numbers)
-                if success_quota == True:
-                    response = {'result': True}
+                if success_quota == 'success':
+                    response = {
+                        'result': True,
+                        'confirmation_numbers': confirmation_numbers
+                        }
                 else:
                     response = {
                         'result': False,
@@ -778,67 +789,139 @@ def transaction_posting(request):
 
 def process_quota(request, confirmation_numbers):
     if confirmation_numbers:
-        try:
-            for confirmation_number in confirmation_numbers:
+
+        string_errors = ""
+        csno_errors = ""
+        has_exception = False
+
+        for confirmation_number in confirmation_numbers:
+            try:
+                quota = Triplecquota.objects.filter(confirmation=confirmation_number)
                 transactions = TripleC.objects.filter(confirmation=confirmation_number, type='COR')
 
                 if transactions:
-                    num_items = sum(transaction.no_items for transaction in transactions)
-                    total_size = sum(transaction.total_size for transaction in transactions)
+                    num_items = sum(transaction.no_items for transaction in transactions) # PHOTOS
+                    total_size = sum(transaction.total_size for transaction in transactions) # ARTICLE and used for BREAKING NEWS
                     
                     additional = Triplecvariousaccount.objects.filter(isdeleted=0, type='addtl')
                     
-                    num_photos = transactions.filter(subtype__description__icontains='PHOTO').count()
+                    photos = transactions.filter(subtype__description__icontains='PHOTO').count()
+                    num_photos = max(photos, num_items)
+
                     num_articles = transactions.filter(subtype__description__icontains='ARTICLE').count()
 
+                    num_type_breaking_news = transactions.filter(subtype__code__icontains='INSNB').count()
+                    num_section_breaking_news = transactions.filter(section__code__icontains='INSNB').count()
+                    num_breaking_news = max(num_type_breaking_news, num_section_breaking_news)
+
+                    # used to create new quota
                     kwargs = {
                         'confirmation': confirmation_number,
-                        'no_item': max(num_articles, num_items),
+                        'no_item': num_photos,
                         'enterby_id': request.user.id,
                         'enterdate': datetime.datetime.now(),
-                        'modifyby_id': request.user.id,
-                        'modifydate': datetime.datetime.now(),
                     }
 
                     # Photo & Article
                     if num_photos >= 8 and num_articles > 0 and total_size >= 50:
-                        print 'Photo & Article', num_photos, num_articles, total_size
                         transpo = additional.get(code='TRANSPO').amount
                         transpo2 = additional.get(code='TRANSPO2').amount
                         cellcard = additional.get(code='TEL').amount
-                        kwargs.update({
+
+                        # used to update existing quota
+                        photo_and_article_quota = {
                             'type': 'A,P',
                             'transportation_amount': transpo,
                             'transportation2_amount': transpo2,
                             'cellcard_amount': cellcard,
-                        })
-                        Triplecquota.objects.create(**kwargs)
+                            'status': 'A',
+                            'isdeleted': 0,
+                            'modifyby_id': request.user.id,
+                            'modifydate': datetime.datetime.now(),
+                        }
+
+                        if quota.exists():
+                            quota.update(**photo_and_article_quota)
+                        else:
+                            kwargs.update(photo_and_article_quota)
+                            Triplecquota.objects.create(**kwargs)
 
                     # Photo
                     elif num_photos >= 8:
-                        print 'num_photos', num_photos
                         transpo = additional.get(code='TRANSPO').amount
-                        kwargs.update({
+
+                        # used to update existing quota
+                        photo_quota = {
                             'type': 'P',
                             'transportation_amount': transpo,
-                        })
-                        Triplecquota.objects.create(**kwargs)
+                            'status': 'A',
+                            'isdeleted': 0,
+                            'modifyby_id': request.user.id,
+                            'modifydate': datetime.datetime.now(),
+                        }
+
+                        if quota.exists():
+                            quota.update(**photo_quota)
+                        else:
+                            kwargs.update(photo_quota)
+                            Triplecquota.objects.create(**kwargs)
 
                     # Article
                     elif num_articles > 0 and total_size >= 50:
-                        print 'num_articles', num_articles, total_size
                         transpo = additional.get(code='TRANSPO').amount
                         cellcard = additional.get(code='TEL').amount
-                        kwargs.update({
+
+                        # used to update existing quota
+                        article_quota = {
                             'type': 'A',
                             'transportation_amount': transpo,
                             'cellcard_amount': cellcard,
-                        })
-                        Triplecquota.objects.create(**kwargs)
+                            'status': 'A',
+                            'isdeleted': 0,
+                            'modifyby_id': request.user.id,
+                            'modifydate': datetime.datetime.now(),
+                        }
 
-            return True
-        except Exception as e:
-            return e
+                        if quota.exists():
+                            quota.update(**article_quota)
+                        else:
+                            kwargs.update(article_quota)
+                            Triplecquota.objects.create(**kwargs)
+                    
+                    # BREAKING NEWS
+                    # total_size = number of peices
+                    elif num_breaking_news > 0 and total_size >= 50:
+                        transpo3 = additional.get(code='TRANSPO3').amount
+                        cellcard = additional.get(code='TEL').amount
+
+                        # used to update existing quota
+                        breaking_news_quota = {
+                            'type': 'INSNB',
+                            'transportation_amount': transpo3,
+                            'cellcard_amount': cellcard,
+                            'status': 'A',
+                            'isdeleted': 0,
+                            'modifyby_id': request.user.id,
+                            'modifydate': datetime.datetime.now(),
+                        }
+
+                        if quota.exists():
+                            quota.update(**breaking_news_quota)
+                        else:
+                            kwargs.update(breaking_news_quota)
+                            Triplecquota.objects.create(**kwargs)
+
+            except Exception as e:
+                has_exception = True
+                csno_errors += str(confirmation_number)  + ", "
+                string_errors += str(e) + ", "
+        if has_exception:
+            result = "Unable to process the quota of ff: " + csno_errors + string_errors
+        else:
+            result = 'success'
+    else:
+        result = 'No CS numbers to process.'
+    return result
           
 
 def print_cs(request):
@@ -958,94 +1041,103 @@ class ReportView(ListView):
 class GeneratePDF(View):
     def get(self, request):
 
-        company = Companyparameter.objects.all().first()
+        company = Companyparameter.objects.filter(status='A').first()
         datalist = []
         parameter = {}
-
+        
         if request.method == 'GET' and request.GET['blank'] != '1':
 
-            csno_from = request.GET['csno_from']
-            csno_to = request.GET['csno_to']
             dfrom = request.GET['from']
             dto = request.GET['to']
-
-            # if 
-
-            # else:
 
             type = request.GET['type']
             bureau = request.GET['bureau']
             section = request.GET['section']
+            report_type = request.GET['report_type']
+            report_title = request.GET['report_title']
+            status = request.GET['status']
+            grand_total = 0
 
-            q = TripleC.objects.filter(issue_date__range=[dfrom, dto], status='O', isdeleted=0)\
-                .values('pk', 'code', 'author_name', 'subtype_id', 'amount').annotate(totalamount=Sum('amount')).order_by('code')
-            
-            has_bureau = False
-            has_section = False
-            has_type = False
-            summary_by = 'CCC Summary Report'
-            ccc_type = ''
+            filter_kwargs = {'isdeleted': 0}
 
-            if type:
-                has_type = True
-                summary_by = 'Summary Report by CCC'
-                if type == 'CON':
-                    ccc_type = 'CONTRIBUTOR'
-                elif type == 'COL':
-                    ccc_type = 'COLUMNIST'
-                elif type == 'COR':
-                    ccc_type = 'CORRESPONDENT'
+            if status in ('O', 'A'):
+                filter_kwargs['issue_date__range' if status == 'O' else 'cms_issue_date__range'] = [dfrom, dto]
+                filter_kwargs['status'] = status
 
-            if bureau:
-                has_bureau = True
-                summary_by = 'Summary Report by Bureau'
+            # free format - Regular
+            if report_type == 'R':
+                q = TripleC.objects.filter(**filter_kwargs)\
+                                .values('pk', 'code', 'author_name', 'subtype_id', 'amount')\
+                                .annotate(totalamount=Sum('amount'))\
+                                .annotate(totalitems=Sum('no_items'))\
+                                .order_by('code')
 
-                q.filter(bureau=bureau)
+                # subtype_id of 10 = Article
+                q = q.annotate(totalarticles=Sum(
+                    Case(
+                        When(subtype_id=10, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ))
 
-            if section: 
-                has_section = True
-                summary_by = 'Summary Report by Section'
-            q.annotate(totalamount=Sum('amount')).order_by('code')
-            print 'Whole', q
-            # stopped here, do the computation of amount and quantity
-            # grouped_list = defaultdict(list)
-            # for item in q: 
-            #     grouped_list[
-            #         item['code']
-            #     ].append(
-            #         [item['pk']]
-            #     )
-            
-            # print grouped_list
+                grand_total = q.aggregate(grand_total=Sum('totalamount'))['grand_total']
 
-            # for code, ids in grouped_list.items():
-            #     parameter[code] = {}
-            #     amount = 0
-            #     photos = 0
-            #     articles = 0
-            #     for id in ids:
-            #         # print id[0]
-            #         row = TripleC.objects.filter(id=id[0]).values('subtype', 'amount').get()
-            #         print row
-            #         print row['subtype'], row['amount']
-            datalist = q
+                if type:
+                    q = q.filter(type=type)
+
+                if bureau:
+                    q = q.filter(bureau=bureau)
+
+                if section:
+                    q = q.filter(section=section)
+
+                datalist = q
+
+            # Fixed format - Yearly
+            elif report_type == 'Y':
+                # name, issue_date, section, title, amount
+                q = TripleC.objects.filter(**filter_kwargs) \
+                        .values('pk', 'issue_date', 'author_name', 'section__description', 'article_title', 'amount') \
+                        .annotate(subtotal=Sum('amount')) \
+                        .order_by('code')
+
+                if type:
+                    q = q.filter(type=type)
+
+                if bureau:
+                    q = q.filter(bureau=bureau)
+
+                if section:
+                    q = q.filter(section=section)
+
+                datalist = {}
+                for transaction in q:
+                    author_name = transaction['author_name']
+                    if author_name not in datalist:
+                        datalist[author_name] = {
+                            'author_name': author_name,
+                            'transactions': [],
+                            'subtotal': 0,
+                        }
+                    datalist[author_name]['transactions'].append(transaction)
+                    datalist[author_name]['subtotal'] += transaction['subtotal']
+                    grand_total += transaction['subtotal']
+
+                print 'hoy', datalist
             dates = 'AS OF ' + datetime.datetime.strptime(dfrom, '%Y-%m-%d').strftime('%b. %d, %Y')\
                 + ' TO ' + datetime.datetime.strptime(dto, '%Y-%m-%d').strftime('%b. %d, %Y')
-            
+
             context = {
                 "today": timezone.now(),
                 "company": company,
-                "list": datalist,
+                "data_list": datalist,
                 "username": request.user,
+                "report_type": report_type,
+                "grand_total": grand_total,
                 "heading": {
                     'dates': dates,
-                    'bureau':bureau,
-                    'section': section, 
-                    'ccc_type': ccc_type,
-                    'has_bureau': has_bureau, 
-                    'has_section': has_section, 
-                    'has_type':has_type,
-                    'summary_by': summary_by,
+                    'report_title': report_title,
                     'logo': request.build_absolute_uri('/static/images/pdi.jpg'),
                 }
             }
@@ -1053,7 +1145,6 @@ class GeneratePDF(View):
              context = {
                 "today": timezone.now(),
                 "company": company,
-                "list": list,
                 "username": request.user,
                 "heading": {
                     'logo': request.build_absolute_uri('/static/images/pdi.jpg'),
@@ -1204,7 +1295,7 @@ def goposttriplec(request):
                             amount += tc['sum_amount']
                             counter += 1
 
-                        has_quota = get_object_or_None(Triplecquota, confirmation=csno)
+                        has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
 
                         if has_quota:
                             # quota - transpo
@@ -1413,8 +1504,7 @@ class QuotaView(AjaxListView):
                 Q(type__icontains=query) |
                 Q(transportation_amount__icontains=query) |
                 Q(transportation2_amount__icontains=query) |
-                Q(cellcard_amount__icontains=query),
-                isdeleted=0
+                Q(cellcard_amount__icontains=query)
             )
         else:
             queryset = self.model.objects.filter(isdeleted=0)

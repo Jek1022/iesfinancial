@@ -128,7 +128,7 @@
         e.preventDefault();
 
         var transaction_ids = [];
-        var for_cs = [];
+        
         $('tr.transaction_row').each(function () {
             if ($(this).find('input[type="checkbox"]').is(':checked')) {
                 var pk = $(this).attr('id');
@@ -141,7 +141,6 @@
                     "code" : code,
                     "type" : type
                 });
-                for_cs.push(pk);
             }
         });
         console.log('transaction_ids', transaction_ids);
@@ -159,8 +158,9 @@
                     success: function(response) {
                         if(response.result == true){
                             $('#generate').trigger('click');
-                            if(confirm("Transaction posting has been done successfully. Would you like to view the Confirmation Sheets?")){
-                                $("#trigger_cs").attr("href", "{% url 'triplec:print_cs' %}" + "?q=" + encodeURIComponent(JSON.stringify(for_cs)));
+                            confirmation_numbers = response.confirmation_numbers;
+                            if(confirm("Transaction posting has been processed successfully. Would you like to view the Confirmation Sheets?")){
+                                $("#trigger_cs").attr("href", "{% url 'triplec:print_cs' %}" + "?batch=1&q=" + encodeURIComponent(JSON.stringify(confirmation_numbers)));
                                 $('#trigger_cs')[0].click();
                             }
                         } else if(response.result == false){
@@ -170,8 +170,9 @@
                             alert(response.message);
                         }
                     },
-                    error: function(response) {
-                        alert("An error occured");
+                    error: function(xhr, textStatus, errorThrown) {
+                        console.log(xhr, textStatus, errorThrown);
+                        alert("An error occured"+ textStatus);
                     }
                 });
             }

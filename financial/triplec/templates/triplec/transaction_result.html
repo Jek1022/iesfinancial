@@ -8,18 +8,6 @@
 <link rel="stylesheet" href="{% static 'financial-layout/assets/plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}" />
 {% block extra_css %}
     <style>
-        .pointer {
-            cursor: pointer;
-        }
-        input[type=number]::-webkit-outer-spin-button,
-        input[type=number]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-    
-        .amount-right{
-            text-align: right;
-        }
 
         td {
             font-weight: bold;
@@ -153,6 +141,8 @@
                                     <input type="hidden" name="data_width3" value="{{ data.width3 }}" />
                                     <input type="hidden" name="data_width4" value="{{ data.width4 }}" />
                                     <input type="hidden" name="data_total_size" value="{{ data.total_size }}" />
+                                    <input type="hidden" name="data_remarks" value="{{ data.remarks }}" />
+                                    <input type="hidden" name="data_cms_section" value="{{ data.cms_section }}" />
                                     <input type="hidden" name="data_confirmation" value="{{ data.confirmation }}" />
                                     <input type="hidden" name="data_apv_no" value="{{ data.apv_no }}" />
                                     <input type="hidden" name="data_apv_date" value="{{ data.date_apv }}" />
@@ -168,7 +158,7 @@
                                     <td class="c4">{{ data.section.description }}</td>
                                     <td class="c5">{{ data.page }}</td>
                                     <td class="c6">{{ data.article_title }}</td>
-                                    <td class="c7">{{ data.cms_byline|default:"" }}</td>
+                                    <td class="c7">{{ data.byline|default:"" }}</td>
                                     <td class="c8">
                                         <select class="form-control input-sm select2" style="width: 110px;" name="code">
                                             {% if data.code %}
@@ -217,7 +207,7 @@
                                                 </a>
                                                 {% if data.status == 'O' %}
                                                     {% if not data.apv_no or data.apv_no == '' %}
-                                                        <a class="pointer revert-transaction-entry" title="Revert transaction status as Ready for Posting. Associated data like quota and CS No. will be removed.">
+                                                        <a class="pointer revert-transaction-entry" title="Revert transaction status as Ready for Posting (Editable format).">
                                                             <i class="icon md-refresh" aria-hidden="true">&nbsp;&nbsp;</i>
                                                         </a>
                                                     {% endif %}
@@ -433,7 +423,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Transaction Entry #<span id="label_transaction_entry_number"></span></h4>
+                    <h4 class="modal-title">Transaction Entry #<span id="label_transaction_entry_number"></span>&nbsp;&nbsp;&nbsp;<span class="badge badge-info" id="label_cms_section"></span></h4>
                 </div>
                 <div class="modal-body" style="overflow:auto;">
                     <div class="row">
@@ -457,7 +447,7 @@
                                     <label class="control-label" for="select_code">Code: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <select class="form-control input-sm required-field" id="select_code">
+                                    <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_code">
                                         {% if authors %}
                                             <option value="">-- Select --</option>
                                             {% for author in authors  %}
@@ -471,7 +461,7 @@
                                     <label class="control-label" for="select_author_name">Author Name: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-6">
-                                    <select class="form-control input-sm required-field" id="select_author_name">
+                                    <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_author_name">
                                         <option value="">-- Select --</option>
                                         {% if authors %}
                                             {% for author in authors  %}
@@ -482,12 +472,12 @@
                                 </div>
                             </div>
                             
-                            <div class="form-group col-md-12 extra-field">
+                            <div class="form-group col-md-12 extra-field" style="margin-top: 40px;">
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="select_type">Classification: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <select class="form-control input-sm required-field" id="select_type">
+                                    <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_type">
                                         <option value="">-- Select --</option>
                                         {% for classification in classifications %}
                                             <option value="{{ classification.code }}">{{ classification.description }}</option>
@@ -499,7 +489,7 @@
                                     <label class="control-label" for="select_subtype">Type: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <select class="form-control input-sm required-field" id="select_subtype">
+                                    <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_subtype">
                                         <option value="">-- Select --</option>
                                         {% for subtype in subtypes  %}
                                             <option value="{{ subtype.id }}" data-code="{{ subtype.code }}">{{ subtype.description }}</option>
@@ -513,7 +503,7 @@
                                     <label class="control-label" for="select_bureau">Bureau: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <select class="form-control input-sm" id="select_bureau">
+                                    <select class="form-control select2 input-sm" style="width: auto;" id="select_bureau">
                                         <option value="">-- Select --</option>
                                         {% for bureau in bureaus  %}
                                             <option value="{{ bureau.id }}" data-code="{{ bureau.code }}">{{ bureau.description }}</option>
@@ -525,7 +515,7 @@
                                     <label class="control-label" for="select_section">Section: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <select class="form-control input-sm required-field" id="select_section">
+                                    <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_section">
                                         <option value="">-- Select --</option>
                                         {% for section in sections %}
                                             <option value="{{ section.id }}" data-code="{{ section.code }}">{{ section.description }}</option>
@@ -564,7 +554,7 @@
                                     <label class="control-label" for="input_page">Page No.: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="text" class="form-control input-md required-field" id="input_page"/>
+                                    <input type="text" class="form-control input-md required-field input-page" id="input_page"/>
                                 </div>
                             </div>
 
@@ -573,30 +563,30 @@
                                     <label class="control-label" for="input_no_of_words">No. of Words: </label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_words">
+                                    <input type="number" class="form-control number-right input-sm" id="input_no_of_words">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_no_of_characters">No. of Characters: </label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_characters">
+                                    <input type="number" class="form-control number-right input-sm" id="input_no_of_characters">
                                 </div>
                             </div>
-                            <br><br>
-                            <div class="form-group col-md-12 extra-field">
+                            
+                            <div class="form-group col-md-12 extra-field" style="margin-top: 40px;">
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_length1">Length1: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm size-field" id="input_length1">
+                                    <input type="number" class="form-control input-sm size-field" id="input_length1">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_width1">Width1: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm size-field" id="input_width1">
+                                    <input type="number" class="form-control input-sm size-field" id="input_width1">
                                 </div>
                             </div>
 
@@ -605,14 +595,14 @@
                                     <label class="control-label" for="input_length2">Length2: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm size-field" id="input_length2">
+                                    <input type="number" class="form-control input-sm size-field" id="input_length2">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_width2">Width2: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm size-field" id="input_width2">
+                                    <input type="number" class="form-control input-sm size-field" id="input_width2">
                                 </div>
                             </div>
 
@@ -622,14 +612,14 @@
                                     <label class="control-label" for="input_length3">Length3: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm size-field" id="input_length3">
+                                    <input type="number" class="form-control input-sm size-field" id="input_length3">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_width3">Width3: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm size-field" id="input_width3">
+                                    <input type="number" class="form-control input-sm size-field" id="input_width3">
                                 </div>
                             </div>
 
@@ -638,14 +628,14 @@
                                     <label class="control-label" for="input_length4">Length4: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm size-field" id="input_length4">
+                                    <input type="number" class="form-control input-sm size-field" id="input_length4">
                                 </div>
 
                                 <div class="form-group col-md-2">
                                     <label class="control-label" for="input_width4">Width4: </label>
                                 </div>
                                 <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm size-field" id="input_width4">
+                                    <input type="number" class="form-control input-sm size-field" id="input_width4">
                                 </div>
                             </div>
 
@@ -654,7 +644,7 @@
                                     <label class="control-label" for="input_total_size">Total Size: </label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <input type="number" class="form-control text-center input-sm" id="input_total_size" readonly>
+                                    <input type="number" class="form-control number-right input-sm" id="input_total_size" readonly>
                                 </div>
                             </div>
                             
@@ -663,7 +653,7 @@
                                     <label class="control-label" for="select_rate_code">Rate: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <select class="form-control input-sm required-field" id="select_rate_code">
+                                    <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_rate_code">
                                         <option value="">-- Select --</option>
                                         <option value="customizable" data-amount="">Customizable</option>
                                         {% for rate in rates %}
@@ -679,8 +669,25 @@
                                     <input type="number" class="form-control input-sm amount-right required-field" id="input_amount">
                                 </div>
                             </div>
+
+                            <div class="form-group col-md-12 extra-field">
+                                <div class="form-group col-md-2">
+                                    <label class="control-label" for="input_no_of_words">Byline: </label>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <textarea class="form-control" maxlength="200" id="textarea_byline" rows="1"></textarea>
+                                </div>
+
+                                <div class="form-group col-md-2">
+                                    <label class="control-label" for="input_no_of_characters">Remarks: </label>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <textarea class="form-control" maxlength="200" id="textarea_remarks" rows="1"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     <hr>
                     <div class="row">
                         <div class="form-group col-md-12">
@@ -776,7 +783,7 @@
                     <div align="center">
                         <button type="button" class="btn btn-info" id="btn_save_transaction_entry" disabled="disabled">Save</button>
                         &nbsp;&nbsp;
-                        <button type="button" class="btn btn-default" id="btn_cancel_transaction_entry" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-default close-modal-btn" id="btn_cancel_transaction_entry" data-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -788,9 +795,9 @@
 {% block extra_js %}
     <script type="text/javascript">
     $(function(){
-        $('.select2').select2({
-            dropdownParent: $('#triplec_result')
-        });
+        // $('.select2').select2({
+        //     dropdownParent: $('#triplec_result')
+        // });
         $('#apdate').datepicker('setDate', 'now');
         // row numbering
         if($('#triplec_table > tbody > tr').length > 0){
@@ -1117,6 +1124,7 @@
             const row = $(this).closest('tr');
             
             var pk = row.find("input[name=data_id]").val();
+            var cms_section = row.find("input[name=data_cms_section]").val();
             var status = row.find("input[name=data_status]").val();
             var status_txt = row.find("input[name=data_status_txt]").val();
             var row_num = row.find('.c0').text();
@@ -1124,6 +1132,7 @@
             var section = row.find('.c4').text().toUpperCase();
             var page_no = row.find('.c5').text();
             var article_title = row.find('.c6').text();
+            var byline = row.find('.c7').text();
             var no_of_words = row.find('.c12').text();
             var no_of_characters = row.find('.c13').text();
             var bureau = row.find('.c14').text();
@@ -1145,6 +1154,7 @@
             var width3 = row.find("input[name=data_width3]").val();
             var width4 = row.find("input[name=data_width4]").val();
             var total_size = row.find("input[name=data_total_size]").val();
+            var remarks = row.find("input[name=data_remarks]").val();
             var confirmation = row.find("input[name=data_confirmation]").val();
             var apv_no = row.find("input[name=data_apv_no]").val();
             var apv_date = row.find("input[name=data_apv_date]").val();
@@ -1152,6 +1162,9 @@
             var author_name = row.find("select[name=author_name]").val();
 
             $('#label_transaction_entry_number').text(row_num);
+            if(cms_section !== 'None'){
+                $('#label_cms_section').text(cms_section);
+            }
             $('#input_issue_date').val(issue_date);
             
             $('#input_article_title').val(article_title);
@@ -1171,15 +1184,24 @@
             $('#input_width3').val(width3);
             $('#input_width4').val(width4);
             $('#input_total_size').val(total_size);
+            
+            $('#textarea_byline').val(byline);
+            $('#textarea_remarks').val(remarks);
 
             $('#status_txt').text(status_txt);
             $('#modal_status').val(status);
 
             $('#modal_pk').val(pk);
             $('#apv_view_area').hide();
+            
             if(confirmation !== 'None' && confirmation !== ''){
                 
                 $('#input_confirmation').val(confirmation);
+
+                $('#select_author_name, #select_code').select2({
+                    disabled: true
+                });
+
                 if(apv_no !== 'None'  && apv_no !== ''){
                     $('#apv_view_area').show();
                     $('#input_apv_no').val(apv_no);
@@ -1187,6 +1209,11 @@
                 } else {
                     $('#apv_view_area').hide();
                 }
+
+            } else {
+                $('#select_author_name, #select_code').select2({
+                    disabled: true
+                });
             }
 
             if(type != ''){
@@ -1240,7 +1267,7 @@
             
             if(csno != '' && id != ''){
                 $.ajax({
-                    url: "{% url 'triplec:count_csno' %}",
+                    url: "{% url 'triplec:having_quota' %}",
                     type: "post",
                     data: {
                         'csno': csno,
@@ -1249,12 +1276,14 @@
                     success: function(response) {
                         if (response.result === true){
 
-                            var count_csnum = response.count;
+                            var having_quota = response.having_quota;
+                            var csno_count = response.csno_count;
                             var confirm_message = '';
-                            if (count_csnum > 1){
-                                confirm_message = 'Warning: The CS No. of this transaction have '+ count_csnum +' related transactions. Are you sure to proceed? Reverting will recompute the NET amount.';
+
+                            if (having_quota){
+                                confirm_message = "Caution: This transaction's CS No. has QUOTA associated with "+ csno_count +" transaction(s) and will be included in the revert process. Are you sure to proceed?";
                             } else {
-                                confirm_message = 'Are you sure to revert transaction status? Associated data like quota and CS No. will be removed.';
+                                confirm_message = 'Are you sure to revert the status of this transaction?';
                             }
 
                             if(confirm(confirm_message)){
@@ -1315,6 +1344,7 @@
                     success: function(response) {
                         if (response.result === true){
                             custom_success_alert(response.message);
+                            $('#retrieve').trigger('click');
                         } else {
                             custom_failed_alert(response.message);
                         }
@@ -1431,39 +1461,6 @@
            
         });
 
-        // in table row - author name
-        // $('select[name=author_name]').change(function(){
-        //     const row = $(this).closest('tr');
-        //     const name = $(this).val();
-        //     if(name != ''){
-        //         $.ajax({
-        //             url: "{% url 'triplec:get_supplier_by_name' %}"+"?name="+name,
-        //             type: "get",
-        //             data: {
-        //                 'csrfmiddlewaretoken': "{{csrf_token}}",
-        //             },
-        //             success: function(response) {
-        //                 if (response.result === true){
-        //                     row.find('.edit-transaction-entry').removeClass('hidden');
-        //                     row.find("select[name=code]").val(response.supplier[0].code).change();
-        //                     row.find("select[name=type]").val(response.supplier[0].ccc).change();
-                            
-        //                 } else {
-        //                     alert(response.message);
-        //                 }
-        //             },
-        //             error: function(response) {
-        //                 alert('Connection error.');
-        //             }
-        //         });
-        //     } else {
-        //         row.find('a.edit-transaction-entry').toggleClass('hidden');
-        //         row.find("select[name=code]").val('').change();
-        //         row.find("select[name=type]").val('').change();
-        //     }
-        //     return false;
-        // });
-
         // cancel modal
         $('#btn_cancel_transaction_entry').click(function(){
             resetTransactionEntryModal();
@@ -1473,6 +1470,7 @@
         function resetTransactionEntryModal(){
             
             $('#label_transaction_entry_number').text('');
+            $('#label_cms_section').text('');
             $('#input_issue_date').val('');
             $('#select_section').val('').change();
             $('#input_article_title').val('');
@@ -1498,8 +1496,9 @@
             $('#input_width3').val('');
             $('#input_width4').val('');
             $('#input_total_size').val('');
+            $('#textarea_byline').val('');
+            $('#textarea_remarks').val('');
             $('#status_txt').text('');
-            // $('input[name=radio_status]').attr('checked', false);
 
             return true;
         }
@@ -1533,6 +1532,8 @@
             fields_arr['width3'] = [$('#input_width3').val()];
             fields_arr['width4'] = [$('#input_width4').val()];
             fields_arr['total_size'] = [$('#input_total_size').val()];
+            fields_arr['byline'] = [$('#textarea_byline').val()];
+            fields_arr['remarks'] = [$('#textarea_remarks').val()];
             fields_arr['rate_code'] = [$('#select_rate_code').val(), 'Rate'];
             fields_arr['amount'] = [$('#input_amount').val(), 'Amount'];
             
@@ -1588,6 +1589,8 @@
                             'width4': fields_arr['width4'][0] || 0,
                             'total_size': fields_arr['total_size'][0] || 0,
                             'rate_code': fields_arr['rate_code'][0],
+                            'byline': fields_arr['byline'][0],
+                            'remarks': fields_arr['remarks'][0],
                             'amount': fields_arr['amount'][0],
                         },
                         success: function(response) {
@@ -1595,8 +1598,10 @@
                         if (response.result === true){
 
                             alert('Transaction saved successfully');
-                            $('#transactionEntryModal').modal('hide');
+                            $('.close-modal-btn').trigger('click');
                             $('#retrieve').trigger('click');
+                            $('body').removeClass('modal-open');
+                            $('.modal-backdrop').remove();
                         } else {
                             alert(response.message);
                         }
@@ -1604,7 +1609,9 @@
                         },
                         error: function(response) {
                             alert('Connection error.');
-                            $('#transactionEntryModal').modal('hide');
+                            $('.close-modal-btn').trigger('click');
+                            $('body').removeClass('modal-open');
+                            $('.modal-backdrop').remove();
                         }
                     });
                 }

@@ -805,10 +805,12 @@ def process_quota(request, confirmation_numbers):
                     
                     additional = Triplecvariousaccount.objects.filter(isdeleted=0, type='addtl')
                     
-                    photos = transactions.filter(subtype__description__icontains='PHOTO').count()
+                    # P - Photo
+                    photos = transactions.filter(subtype=11).count()
                     num_photos = max(photos, num_items)
 
-                    num_articles = transactions.filter(subtype__description__icontains='ARTICLE').count()
+                    # A - Article
+                    num_articles = transactions.filter(subtype=10).count()
 
                     num_type_breaking_news = transactions.filter(subtype__code__icontains='INSNB').count()
                     num_section_breaking_news = transactions.filter(section__code__icontains='INSNB').count()

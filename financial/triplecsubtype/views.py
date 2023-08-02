@@ -45,7 +45,7 @@ class CreateView(CreateView):
         self.object.enterby = self.request.user
         self.object.modifyby = self.request.user
         self.object.save()
-        return HttpResponseRedirect('/triplecsubtype')
+        return HttpResponseRedirect('/triplectype')
 
 
 @method_decorator(login_required, name='dispatch')
@@ -72,7 +72,7 @@ class UpdateView(UpdateView):
         self.object.modifyby = self.request.user
         self.object.modifydate = datetime.datetime.now()
         self.object.save(update_fields=['description', 'various_account', 'modifyby', 'modifydate'])
-        return HttpResponseRedirect('/triplecsubtype')
+        return HttpResponseRedirect('/triplectype')
 
 
 @method_decorator(login_required, name='dispatch')
@@ -92,7 +92,7 @@ class DeleteView(DeleteView):
         self.object.isdeleted = 1
         self.object.status = 'I'
         self.object.save()
-        return HttpResponseRedirect('/triplecsubtype')
+        return HttpResponseRedirect('/triplectype')
 
 @method_decorator(login_required, name='dispatch')
 class GeneratePDF(View):

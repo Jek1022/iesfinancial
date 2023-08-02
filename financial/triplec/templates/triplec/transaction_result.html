@@ -423,7 +423,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Transaction Entry #<span id="label_transaction_entry_number"></span>&nbsp;&nbsp;&nbsp;<span class="badge badge-info" id="label_cms_section"></span></h4>
+                    <h4 class="modal-title">Transaction Entry #<span id="label_transaction_entry_number"></span>&nbsp;&nbsp;&nbsp;<span class="badge badge-info" id="label_cms_section" style="font-size: 14px;"></span></h4>
                 </div>
                 <div class="modal-body" style="overflow:auto;">
                     <div class="row">
@@ -1186,7 +1186,7 @@
             $('#input_total_size').val(total_size);
             
             $('#textarea_byline').val(byline);
-            $('#textarea_remarks').val(remarks);
+            if (remarks !== 'None' && remarks !== '') $('#textarea_remarks').val(remarks);
 
             $('#status_txt').text(status_txt);
             $('#modal_status').val(status);
@@ -1195,7 +1195,7 @@
             $('#apv_view_area').hide();
             
             if(confirmation !== 'None' && confirmation !== ''){
-                
+                // posted
                 $('#input_confirmation').val(confirmation);
 
                 $('#select_author_name, #select_code').select2({
@@ -1211,8 +1211,9 @@
                 }
 
             } else {
+                // active, ready for posting
                 $('#select_author_name, #select_code').select2({
-                    disabled: true
+                    disabled: false
                 });
             }
 

@@ -52,6 +52,11 @@ class IndexView(AjaxListView):
 
     page_template = 'bankrecon/index_list.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('bankrecon.view_bankrecon'):
+            raise Http404
+        return super(AjaxListView, self).dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
        context = super(IndexView, self).get_context_data(**kwargs)
        context['bankaccount'] = Bankaccount.objects.all().filter(isdeleted=0).order_by('code')

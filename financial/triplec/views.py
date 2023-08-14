@@ -96,6 +96,10 @@ class RetrieveView(DetailView):
                     triplec_data = triplec_data.filter(status__icontains='O', apv_no__isnull=False).exclude(apv_no__exact='')
                 elif status == 'O':
                     triplec_data = triplec_data.filter(status__icontains=status).exclude(confirmation__exact='').exclude(apv_no__isnull=False)
+                elif status == 'Reverted':
+                    triplec_data = triplec_data.filter(status='E').exclude(Q(confirmation__isnull=True) | Q(confirmation=''))
+                elif status == 'M':
+                    triplec_data = triplec_data.filter(status='E', manual=1)
                 else:
                     triplec_data = triplec_data.filter(status__icontains=status)
 
@@ -117,6 +121,7 @@ class RetrieveView(DetailView):
             context['subtypes'] = Subtype.objects.filter(isdeleted=0).order_by('code')
             context['rates'] = Rate.objects.filter(isdeleted=0).order_by('code')
             context['classifications'] = Classification.objects.filter(isdeleted=0).order_by('code')
+            context['parameter'] = Companyparameter.objects.filter(isdeleted=0, status='A').first()
             context['dfrom'] = dfrom
             context['dto'] = dto
             # time benchmarking
@@ -850,7 +855,7 @@ def process_quota(request, confirmation_numbers):
 
                     # Photo
                     elif num_photos >= 8:
-                        transpo = additional.get(code='TRANSPO').amount
+                        transpo = additional.get(code='TRANSPO2').amount
 
                         # used to update existing quota
                         photo_quota = {

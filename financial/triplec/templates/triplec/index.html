@@ -46,11 +46,11 @@
                         <div class="input-daterange datarange">
                             <div class="input-group">
                                 <span class="input-group-addon"><i class="icon md-calendar" aria-hidden="true"></i></span>
-                                <input type="text" class="form-control datepickerfrom" autocomplete="off" id="dfrom" required />
+                                <input type="text" class="form-control datepickerfrom" autocomplete="off" id="dfrom" style="height: 35px;" required />
                             </div>
                             <div class="input-group">
                                 <span class="input-group-addon">to</span>
-                                <input type="text" class="form-control datepickerto" autocomplete="off" id="dto" required />
+                                <input type="text" class="form-control datepickerto" autocomplete="off" id="dto" style="height: 35px;" required />
                             </div>
                         </div>
                     </div>
@@ -100,16 +100,24 @@
                     
                     <div class="form-group col-sm-1" >
                         <label class="control-label small" for="page">Page:</label>
-                        <input class="form-control input-md input-page" id="page" />
+                        <input class="form-control input-md input-page" id="page" style="height: 35px; margin-top: 1px;" />
                     </div>
                     <div class="form-group col-sm-2" >
                         <label class="control-label small" for="status">Status:</label>
                         <select class="form-control input-sm select2" id="status">
                             <option value="">-- All --</option>
-                            <option value="A">Active</option>
-                            <option value="E">Ready for Posting</option>
-                            <option value="O">Posted (CS)</option>
-                            <option value="O_APV">Posted (APV)</option>
+                            <optgroup label="Transactions">
+                                <option value="A">Active</option>
+                                <option value="E">Ready for Posting (All)</option>
+                                <option value="M">Ready for Posting (Manually entered only)</option>
+                                <option value="O">Posted (CS)</option>
+                                <option value="O_APV">Posted (APV)</option>
+                            </optgroup>
+                            <optgroup label="Others">
+                                <option value="Reverted">Reverted</option>
+                                <option value="Y">No Payment</option>
+                                <option value="D">Pending</option>
+                            </optgroup>
                         </select>
                     </div>
                     <div class="form-group col-sm-1">
@@ -149,7 +157,7 @@
         
         <div class="row" id="result_panel" style="display: none;">
             <div class="panel panel-default">
-                <div class="panel-body" id="viewhtml">
+                <div class="panel-body" id="viewhtml" style="padding: 0;">
                    
                 </div>
                 <div class="clearfix"></div>
@@ -426,7 +434,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-info" id="manual_btn_save_transaction_entry" disabled="disabled">Confirm and Save</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <button type="reset" id="btn_manual_reset" class="btn btn-primary">Reset Form</button>
+                        <button type="reset" id="btn_manual_reset" class="btn btn-default">Reset Form</button>
                         <button type="button" id="btn_manual_close" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                 </div>
@@ -728,11 +736,34 @@
             });
             
         }
+
+        function bureau_required(is_required){
+            var bureau_label = $('label[for="manual_select_bureau"]');
+            var span = bureau_label.find('span');
+            
+            if(is_required) {
+                $("#manual_select_bureau").addClass("manual-required-field");
+                
+                if (span.length > 1) {
+                    span.slice(1).remove();
+                }
+                if (span.length === 0) {
+                    bureau_label.append('<span class="text-danger">*</span>');
+                }
+
+            } else {
+                $("#manual_select_bureau").removeClass("manual-required-field");
+                span.remove();
+            } 
+        }
+
         $('#manual_select_type').change(function(){
         
             var type = $(this).val();
+            var is_required = type === "COL" ? false : true;
+            var is_disabled = type === "COR" ? false : true;
 
-            var is_disabled = type === 'COR' ? false : true;
+            bureau_required(is_required);
             size_fields(is_disabled);
         });
 
@@ -910,6 +941,12 @@
                 resetTransactionEntryModal();
                 return false;
             }
+        });
+
+        $("#btn_manual_reset").click(function(){
+            $('form#data').find('select').each(function() {
+                $(this).val(null).trigger('change');
+            });
         });
 
         $("#manual_input_no_of_ccc, #manual_input_length1, #manual_input_width1, #manual_input_length2, #manual_input_width2, #manual_input_length3, #manual_input_width3, #manual_input_length4, #manual_input_width4").on('change paste keyup input blur', function(){

@@ -38,7 +38,7 @@ class TripleC(models.Model):
     author_name = models.TextField(blank=True, null=True)
     issue_date = models.DateField()
     article_title = models.TextField()
-    byline = models.TextField(blank=True, null=True)
+    byline = models.TextField(blank=True, null=True, default="")
     no_of_words = models.IntegerField(blank=True, null=True, default=0)
     no_of_characters = models.IntegerField(blank=True, null=True, default=0)
     length1 = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0.00)
@@ -57,7 +57,7 @@ class TripleC(models.Model):
     page = models.CharField(max_length=15, blank=True, null=True)
     rate_code = models.CharField(max_length=30, null=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, default=0.00)
-    remarks = models.TextField(blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True, default="")
     confirmation = models.CharField(max_length=30, null=True)
     STATUS_CHOICES = (
         ('A', 'Active'),

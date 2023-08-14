@@ -23,6 +23,67 @@
             border-left: 3px solid purple;
         }
         
+        .fixed-size-table {
+            width: 100%;
+            table-layout: fixed; /* Forces table to use the specified column widths */
+        }
+        .thead-number{
+            width: 22px;
+        }
+        .thead-checkbox{
+            width: 10px;
+        }
+        .thead-issue-date {
+            width: 40px;
+        }
+        .thead-publication{
+            width: 50px;
+        }
+        .thead-bureau{
+            width: 50px;
+        }
+        .thead-section{
+            width: 50px;
+        }
+        .thead-page{
+            width: 30px;
+        }
+        .thead-article-title {
+            width: 95px;
+        }
+        .thead-byline {
+            width: 80px;
+        }
+        .thead-code {
+            width: 75px;
+        }
+        .thead-author-name {
+            width: 100px;
+        }
+        .thead-classification {
+            width: 75px;
+        }
+        .thead-type {
+            width: 40px;
+        }
+        .thead-created-by {
+            width: 40px;
+        }
+        .thead-number-words{
+            width: 30px;
+        }
+        .thead-number-characters{
+            width: 30px;
+        }
+        .thead-cs-no{
+            width: 60px;
+        }
+        .thead-status{
+            width: 40px;
+        }
+        .thead-action{
+            width: 40px;
+        }
     </style>
 {% endblock extra_css %}
 
@@ -44,22 +105,25 @@
     </div>
     {% if triplec_data %}
     <div class="page-wrap">
-        <h3>THE PHILIPPINE DAILY INQUIRER, INC.</h3>
-        <h4>TRIPLE-C TRANSACTION LISTING </h4>
-        <h4 style="text-transform:uppercase">AS OF {{ dfrom }} to {{ dto }}</h4>
-        <br>
-        <div class="row">
+        <div class="row" style="padding: 30px 30px;">
+            <div class="col-md-12">
+                <h3>{{ parameter.description }}</h3>
+                <h4>TRIPLE-C TRANSACTION LISTING </h4>
+                <h4 style="text-transform:uppercase">AS OF {{ dfrom }} to {{ dto }}</h4>
+            </div>
+        </div>
+        <div class="row" style="padding: 0 30px;">
             
             <div class="col-md-12">
                 <div class="row">
                     <div class="col-sm-8">
-                        <button class="btn btn-primary waves-effect waves-dark" id="batch_tagging" disabled title="Batch tagging of Class and Author Name" data-toggle="modal" data-target="#batchTagging">
+                        <button class="btn btn-primary waves-effect waves-dark" id="batch_tagging" disabled title="Batch tagging of Class and Author to all displayed transactions." data-toggle="modal" data-target="#batchTagging">
                             <i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;Batch Tagging
                         </button>
-                        <button class="btn btn-primary waves-effect waves-dark" id="batch_save" disabled title="Selected rows with Class and Author Name will be saved.">
+                        <button class="btn btn-primary waves-effect waves-dark" id="batch_save" disabled title="Selected rows with Tagged Class and Author Name will be saved.">
                             <i class="fa fa-save" aria-hidden="true"></i>&nbsp;&nbsp;Batch Save
                         </button>
-                        <button class="btn btn-primary waves-effect waves-dark" id="batch_print" disabled title="Selected and posted transactions will be included for printing.">
+                        <button class="btn btn-primary waves-effect waves-dark" id="batch_print" disabled title="Selected and posted transactions will be included for batch printing.">
                             <i class="fa fa-print" aria-hidden="true"></i>&nbsp;&nbsp;Batch Print
                         </button>
                         <button class="btn btn-primary waves-effect waves-dark" id="post_ap" disabled title="Selected and posted transactions will be included for AP posting." data-toggle="modal" data-target="#postAP">
@@ -84,31 +148,30 @@
             </div>
         </div>
         <br>
-       
         <div class="row">
             <div class="col-md-12" style="min-height: 500px; max-height: 900px; overflow: auto;">
-                <table class="table table-striped" id="triplec_table">
+                <table class="table table-striped table-hover fixed-size-table" id="triplec_table">
                     <thead style="position: sticky; top: 0; z-index: 1; background: ghostwhite; border: none;">
                         <tr class="border-0" id="triplec_table_header">
-                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">#</th>
-                            <th style="color:#424242"><input type="checkbox" class="pointer" name="chb_all" id="chb_all" /></th>
-                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">Issue Date</th>
-                            <th style="color:#424242">Publication</th>
-                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">Bureau</th>
-                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">Section</th>
-                            <th class="pointer sortable" title="Data sort ascending | descending" style="color:#424242">Page</th>
-                            <th style="color:#424242">Article Title</th>
-                            <th style="color:#424242">Byline</th>
-                            <th style="color:#424242">Code</th>
-                            <th style="color:#424242">Author Name</th>
-                            <th style="color:#424242">Classification</th>
-                            <th style="color:#424242">Type</th>
-                            <th style="color:#424242">Created by</th>
-                            <th style="color:#424242">No. of Words</th>
-                            <th style="color:#424242">No. of Characters</th>
-                            <th style="color:#424242">CS No.</th>
-                            <th style="color:#424242">Status</th>
-                            <th style="color:#424242">Action</th>
+                            <th class="thead-number pointer sortable" title="Data sort ascending | descending" style="color:#424242">#</th>
+                            <th class="thead-checkbox" style="color:#424242"><input type="checkbox" class="pointer" name="chb_all" id="chb_all" /></th>
+                            <th class="thead-issue-date pointer sortable" title="Data sort ascending | descending" style="color:#424242">Issue Date</th>
+                            <th class="thead-publication" style="color:#424242">Publication</th>
+                            <th class="thead-bureau pointer sortable" title="Data sort ascending | descending" style="color:#424242">Bureau</th>
+                            <th class="thead-section pointer sortable" title="Data sort ascending | descending" style="color:#424242">Section</th>
+                            <th class="thead-page pointer sortable" title="Data sort ascending | descending" style="color:#424242">Page</th>
+                            <th class="thead-article-title" style="color:#424242;">Article Title</th>
+                            <th class="thead-byline" style="color:#424242">Byline</th>
+                            <th class="thead-code" style="color:#424242">Code</th>
+                            <th class="thead-author-name" style="color:#424242">Author Name</th>
+                            <th class="thead-classification" style="color:#424242">Classification</th>
+                            <th class="thead-type" style="color:#424242">Type</th>
+                            <th class="thead-created-by" style="color:#424242">Created by</th>
+                            <th class="thead-number-words" style="color:#424242">Words</th>
+                            <th class="thead-number-characters" style="color:#424242">Chars</th>
+                            <th class="thead-cs-no" style="color:#424242">CS No.</th>
+                            <th class="thead-status" style="color:#424242">Status</th>
+                            <th class="thead-action" style="color:#424242">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -503,7 +566,7 @@
                                     <label class="control-label" for="select_bureau">Bureau: <span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <select class="form-control select2 input-sm" style="width: auto;" id="select_bureau">
+                                    <select class="form-control input-sm select2" style="width: auto;" id="select_bureau">
                                         <option value="">-- Select --</option>
                                         {% for bureau in bureaus  %}
                                             <option value="{{ bureau.id }}" data-code="{{ bureau.code }}">{{ bureau.description }}</option>
@@ -798,6 +861,11 @@
         // $('.select2').select2({
         //     dropdownParent: $('#triplec_result')
         // });
+        
+        $("[id^='select_']").select2({
+            dropdownParent: $('#triplec_result')
+        });
+        
         $('#apdate').datepicker('setDate', 'now');
         // row numbering
         if($('#triplec_table > tbody > tr').length > 0){
@@ -1359,9 +1427,38 @@
             }
         }
 
+        function bureau_required(is_required){
+            var bureau_label = $('label[for="select_bureau"]');
+            var span = bureau_label.find('span');
+            
+            if(is_required) {
+                $("#select_bureau").addClass("required-field");
+                
+                if (span.length > 1) {
+                    span.slice(1).remove();
+                }
+                if (span.length === 0) {
+                    bureau_label.append('<span class="text-danger">*</span>');
+                }
+
+            } else {
+                $("#select_bureau").removeClass("required-field");
+                span.remove();
+            } 
+        }
+
         $('#select_type').change(function(){
             var type = $(this).val();
+            var is_required;
+
             $("#select_type option[value='"+ type +"']").attr("selected");
+            if(type === "COL"){
+                is_required = false;
+            } else {
+                is_required = true;
+            }
+
+            bureau_required(is_required);
 
             var is_disabled = type === 'COR' ? false : true;
             size_fields(is_disabled);
@@ -1621,20 +1718,20 @@
         });
 
         // Disable save button if inputs are empty
-        $('.required-field').on('input change propertychange', function() {
-            
-            var empty = false;
+        $(document).on('input change propertychange', '.required-field', function() {
+            var allFieldsFilled = true;
+
             $('.required-field').each(function() {
-                if ($(this).val().length == 0) {
-                    empty = true;
-                    return false;
+                if ($(this).val().trim() === '') {
+                    allFieldsFilled = false;
+                    return false; // Exit the loop
                 }
             });
 
-            if (empty) {
-                $('#btn_save_transaction_entry').attr('disabled', 'disabled');
+            if (allFieldsFilled) {
+                $('#btn_save_transaction_entry').prop('disabled', false);
             } else {
-                $('#btn_save_transaction_entry').removeAttr('disabled');
+                $('#btn_save_transaction_entry').prop('disabled', true);
             }
         });
 

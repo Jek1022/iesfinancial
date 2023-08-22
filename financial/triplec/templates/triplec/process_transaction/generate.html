@@ -74,7 +74,7 @@
                             <tr>
                                 <!-- <td></td> -->
                                 <td ><small></small>[{{ data|length }}]</td>
-                                <td colspan="9">
+                                <td colspan="9" style="font-weight: 400; font-size: 15px;">
                                         &nbsp;&nbsp;&nbsp;Author&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                         <b>{{ data.0.code }}</b>  &nbsp;-&nbsp;  {{ data.0.author_name }} &nbsp;-&nbsp; {{ data.0.get_type_display }}
                                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -82,7 +82,7 @@
                             </tr>
                             
                             {% for item in data %}
-                                <tr class="transaction_row" style="background:linear-gradient(to right, #4e7692, #5b8aa3); height: 47px; color: white; font-weight: 500; font-size: 14px;" data-code="{{ item.code }}" id="{{ item.id }}" data-type="{{ item.type }}" data-issue-date="{{ item.issue_date|date:'Y-m-d' }}">
+                                <tr class="transaction_row" style="background:linear-gradient(to right, #2079b0, #166b8b); height: 40px; color: white; font-weight: 400; font-size: 15px;" data-code="{{ item.code }}" id="{{ item.id }}" data-type="{{ item.type }}" data-issue-date="{{ item.issue_date|date:'Y-m-d' }}">
                                     <td><input type="checkbox" class="transaction-checkbox pointer" name="chb_{{ item.id }}" id="chb_{{ item.id }}" title="Select to include transaction" checked /></td>
                                     <td style="text-align:left; min-width:100px; vertical-align:top;">{{ item.issue_date|default:"" }}</td>
                                     <td style="text-align:left; min-width:100px; vertical-align:top;">{{ item.get_type_display|default:"" }}</td>

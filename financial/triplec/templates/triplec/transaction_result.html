@@ -27,6 +27,9 @@
             width: 100%;
             table-layout: fixed; /* Forces table to use the specified column widths */
         }
+        .fixed-size-table tr td{
+            word-wrap: break-word;
+        }
         .thead-number{
             width: 22px;
         }
@@ -40,16 +43,16 @@
             width: 50px;
         }
         .thead-bureau{
-            width: 50px;
+            width: 30px;
         }
         .thead-section{
-            width: 50px;
+            width: 30px;
         }
         .thead-page{
             width: 30px;
         }
         .thead-article-title {
-            width: 95px;
+            width: 100px;
         }
         .thead-byline {
             width: 80px;
@@ -64,7 +67,7 @@
             width: 75px;
         }
         .thead-type {
-            width: 40px;
+            width: 50px;
         }
         .thead-created-by {
             width: 40px;
@@ -207,6 +210,7 @@
                                     <input type="hidden" name="data_remarks" value="{{ data.remarks }}" />
                                     <input type="hidden" name="data_cms_section" value="{{ data.cms_section }}" />
                                     <input type="hidden" name="data_confirmation" value="{{ data.confirmation }}" />
+                                    <input type="hidden" name="data_date_posted" value="{{ data.date_posted }}" />
                                     <input type="hidden" name="data_apv_no" value="{{ data.apv_no }}" />
                                     <input type="hidden" name="data_apv_date" value="{{ data.date_apv }}" />
                                     <input type="checkbox" class="triplec-checkbox pointer" name="chb_{{ data.id }}" id="chb_{{ data.id }}" />
@@ -217,8 +221,8 @@
 
                                     <td class="c2">{{ data.issue_date|date:'Y-m-d' }}</td>
                                     <td class="c3">{{ data.cms_publication }}</td>
-                                    <td class="c14">{{ data.bureau.description|default:"" }}</td>
-                                    <td class="c4">{{ data.section.description }}</td>
+                                    <td class="c14">{{ data.bureau.code|default:"" }}</td>
+                                    <td class="c4">{{ data.section.code }}</td>
                                     <td class="c5">{{ data.page }}</td>
                                     <td class="c6">{{ data.article_title }}</td>
                                     <td class="c7">{{ data.byline|default:"" }}</td>
@@ -459,6 +463,7 @@
                             <thead>
                                 <tr>
                                 <!-- <th scope="row"><input type="checkbox" id="checkAll"></th> -->
+                                <!-- <td scope="row"><b>Qty.</b></td> -->
                                 <td scope="row"><b>CS No.</b></td>
                                 <td scope="row"><b>Issue Date</b></td>
                                 <td scope="row"><b>Class</b></td>
@@ -494,7 +499,7 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_issue_date">Issue Date: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="input_issue_date">Issue Date<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <!-- pk -->
@@ -507,7 +512,7 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_code">Code: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="select_code">Code<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_code">
@@ -521,7 +526,7 @@
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_author_name">Author Name: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="select_author_name">Author Name<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-6">
                                     <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_author_name">
@@ -537,7 +542,7 @@
                             
                             <div class="form-group col-md-12 extra-field" style="margin-top: 40px;">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_type">Classification: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="select_type">Classification<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_type">
@@ -549,7 +554,7 @@
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_subtype">Type: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="select_subtype">Type<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_subtype">
@@ -563,7 +568,7 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_bureau">Bureau: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="select_bureau">Bureau<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <select class="form-control input-sm select2" style="width: auto;" id="select_bureau">
@@ -575,7 +580,7 @@
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_section">Section: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="select_section">Section<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_section">
@@ -589,7 +594,7 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_article_title">Article Title: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="input_article_title">Article Title<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-10">
                                     <input type="text" class="form-control input-sm required-field" id="input_article_title" />
@@ -598,23 +603,7 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_no_of_ccc">No. of CCC: </label>
-                                </div>
-                                <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_ccc">
-                                </div>
-
-                                <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_no_of_items">No. of Items: </label>
-                                </div>
-                                <div class="form-group col-md-2">
-                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_items">
-                                </div>
-                            </div>
-
-                            <div class="form-group col-md-12 extra-field">
-                                <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_page">Page No.: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="input_page">Page No.<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="text" class="form-control input-md required-field input-page" id="input_page"/>
@@ -623,14 +612,30 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_no_of_words">No. of Words: </label>
+                                    <label class="control-label" for="input_no_of_ccc">No. of CCC</label>
+                                </div>
+                                <div class="form-group col-md-2">
+                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_ccc">
+                                </div>
+
+                                <div class="form-group col-md-2">
+                                    <label class="control-label" for="input_no_of_items">No. of Items</label>
+                                </div>
+                                <div class="form-group col-md-2">
+                                    <input type="number" class="form-control text-center input-sm" id="input_no_of_items">
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12 extra-field">
+                                <div class="form-group col-md-2">
+                                    <label class="control-label" for="input_no_of_words">No. of Words</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <input type="number" class="form-control number-right input-sm" id="input_no_of_words">
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_no_of_characters">No. of Characters: </label>
+                                    <label class="control-label" for="input_no_of_characters">No. of Characters</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <input type="number" class="form-control number-right input-sm" id="input_no_of_characters">
@@ -639,14 +644,14 @@
                             
                             <div class="form-group col-md-12 extra-field" style="margin-top: 40px;">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_length1">Length1: </label>
+                                    <label class="control-label" for="input_length1">Length1</label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="number" class="form-control input-sm size-field" id="input_length1">
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_width1">Width1: </label>
+                                    <label class="control-label" for="input_width1">Width1</label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="number" class="form-control input-sm size-field" id="input_width1">
@@ -655,14 +660,14 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_length2">Length2: </label>
+                                    <label class="control-label" for="input_length2">Length2</label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="number" class="form-control input-sm size-field" id="input_length2">
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_width2">Width2: </label>
+                                    <label class="control-label" for="input_width2">Width2</label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="number" class="form-control input-sm size-field" id="input_width2">
@@ -672,14 +677,14 @@
                             <br><br>
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_length3">Length3: </label>
+                                    <label class="control-label" for="input_length3">Length3</label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="number" class="form-control input-sm size-field" id="input_length3">
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_width3">Width3: </label>
+                                    <label class="control-label" for="input_width3">Width3</label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="number" class="form-control input-sm size-field" id="input_width3">
@@ -688,14 +693,14 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_length4">Length4: </label>
+                                    <label class="control-label" for="input_length4">Length4</label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="number" class="form-control input-sm size-field" id="input_length4">
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_width4">Width4: </label>
+                                    <label class="control-label" for="input_width4">Width4</label>
                                 </div>
                                 <div class="form-group col-md-2">
                                     <input type="number" class="form-control input-sm size-field" id="input_width4">
@@ -704,7 +709,7 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_total_size">Total Size: </label>
+                                    <label class="control-label" for="input_total_size">Total Size</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <input type="number" class="form-control number-right input-sm" id="input_total_size" readonly>
@@ -713,7 +718,7 @@
                             
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="select_rate_code">Rate: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="select_rate_code">Rate<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <select class="form-control input-sm select2 required-field" style="width: auto;" id="select_rate_code">
@@ -726,7 +731,7 @@
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_amount">Amount: <span class="text-danger">*</span></label>
+                                    <label class="control-label text-info" for="input_amount">Amount<span class="text-danger">*</span></label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <input type="number" class="form-control input-sm amount-right required-field" id="input_amount">
@@ -735,14 +740,14 @@
 
                             <div class="form-group col-md-12 extra-field">
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_no_of_words">Byline: </label>
+                                    <label class="control-label" for="input_no_of_words">Byline</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <textarea class="form-control" maxlength="200" id="textarea_byline" rows="1"></textarea>
                                 </div>
 
                                 <div class="form-group col-md-2">
-                                    <label class="control-label" for="input_no_of_characters">Remarks: </label>
+                                    <label class="control-label" for="input_no_of_characters">Remarks</label>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <textarea class="form-control" maxlength="200" id="textarea_remarks" rows="1"></textarea>
@@ -777,13 +782,6 @@
                                 </div>
                                 <div class="col-md-4">
                                     <span id="status_txt"></span>
-                                    <!-- <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="radio_status" id="radio_status_active" value="active">
-                                        <label class="form-check-label" for="radio_status_active">Active</label>
-                                        &nbsp;&nbsp;
-                                        <input class="form-check-input" type="radio" name="radio_status" id="radio_status_posted" value="posted">
-                                        <label class="form-check-label" for="radio_status_posted">Posted</label>
-                                    </div> -->
                                 </div>
 
                                 <div class="form-group col-md-2">
@@ -1224,6 +1222,7 @@
             var total_size = row.find("input[name=data_total_size]").val();
             var remarks = row.find("input[name=data_remarks]").val();
             var confirmation = row.find("input[name=data_confirmation]").val();
+            var date_posted = row.find("input[name=data_date_posted]").val();
             var apv_no = row.find("input[name=data_apv_no]").val();
             var apv_date = row.find("input[name=data_apv_date]").val();
             var type = row.find("select[name=type]").val();
@@ -1265,7 +1264,7 @@
             if(confirmation !== 'None' && confirmation !== ''){
                 // posted
                 $('#input_confirmation').val(confirmation);
-
+                $('#input_date_posted').val(date_posted);
                 $('#select_author_name, #select_code').select2({
                     disabled: true
                 });
@@ -1288,8 +1287,8 @@
             if(type != ''){
                 $('#select_type').val(type).change();
 
-                var is_disabled = type === 'COR' ? false : true;
-                size_fields(is_disabled);
+                var is_required = type === 'COR' ? true : false;
+                size_fields(is_required);
             }
 
             $('#select_subtype').val(subtype_id).change();
@@ -1449,26 +1448,18 @@
 
         $('#select_type').change(function(){
             var type = $(this).val();
-            var is_required;
-
             $("#select_type option[value='"+ type +"']").attr("selected");
-            if(type === "COL"){
-                is_required = false;
-            } else {
-                is_required = true;
-            }
-
+            
+            var is_required = type === 'COR' ? true : false;
             bureau_required(is_required);
-
-            var is_disabled = type === 'COR' ? false : true;
-            size_fields(is_disabled);
+            size_fields(is_required);
         });
 
-        function size_fields(is_disabled){
-            if(is_disabled){
-                $('.size-field').attr('disabled', 'disabled');
-            } else {
+        function size_fields(is_required){
+            if(is_required){
                 $('.size-field').removeAttr('disabled');
+            } else {
+                $('.size-field').attr('disabled', 'disabled');
             }
         }
 
@@ -1583,6 +1574,7 @@
             $('#select_subtype').val('').change();
             $('#select_bureau').val('').change();
             $('#input_confirmation').val('');
+            $('#input_date_posted').val('');
             $('#input_no_of_ccc').val('');
             $('#input_no_of_items').val('');
             $('#input_length1').val('');
@@ -1771,7 +1763,7 @@
                 }
             });
             
-            console.log(for_posting);
+            // console.log(for_posting);
         });
 
         // AP posting
@@ -1811,7 +1803,30 @@
                             if(response.status === 'success'){
                                 alert('Posting to AP of '+post_length+' '+transaction_text+' has been successful!');
                             } else {
-                                alert(response.message);
+                                if(response.status === 'validation_error'){
+                                    var errors = JSON.parse(response.error_json);
+                                    var errorMessage = '';
+
+                                    for (var i = 0; i < errors.length; i++) {
+                                        var error = errors[i];
+
+                                        if (error.errors_list && Array.isArray(error.errors_list)) {
+                                            var csno = error.csno;
+                                            var errorsList = error.errors_list.join('\n');
+
+                                            errorMessage += 'Errors for CS ' + csno + ':\n' + errorsList + '\n\n';
+                                        } 
+                                    }
+
+                                    if (errorMessage) {
+                                        alert(response.message+'\n\n'+errorMessage);
+                                    } else {
+                                        alert(response.message);
+                                    }
+                                    
+                                } else {
+                                    alert(response.message);
+                                }
                             }
                         }, error: function(response) {
                             alert('Posting to AP of '+post_length+' '+transaction_text+' failed.');

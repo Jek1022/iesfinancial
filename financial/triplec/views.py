@@ -607,24 +607,42 @@ def having_quota(request):
 # change year into year of transaction date and add validation for uniqueness
 def get_confirmation(year):
     try:
-        year = str(year)
-        matching_records = TripleC.objects.filter(confirmation__startswith=year)
-        
-        if matching_records:
-            # Get the maximum last six digits from the filtered records
-            max_last_six_digits = matching_records.aggregate(max_last_six=Max('confirmation'))['max_last_six'][-6:]
-            
-            last_cs = year + str(max_last_six_digits)
-
+        record = TripleC.objects.exclude(confirmation__isnull=True).exclude(confirmation__exact='').order_by('-confirmation')[:1]
+        last_cs = str(record[0].confirmation)
+        if last_cs:
+            # Get the maximum last six digits from the filtered record
+            series = last_cs[-6:]
+            confirmation_number = str(year) + str(series)
         else:
             # first cs
-            last_cs = year + '000001'
-        
-        return last_cs
+            confirmation_number = str(year) + '000001'
+
+        return confirmation_number
         
     except Exception:
         # fault tolerance - for datafixing
-        return '0000000000'
+        return '1111111111'
+    
+    # old version: sorted by year and will reset series each new year to 000001
+    # try:
+    #     year = str(year)
+    #     matching_records = TripleC.objects.filter(confirmation__startswith=year)
+        
+    #     if matching_records:
+    #         # Get the maximum last six digits from the filtered records
+    #         max_last_six_digits = matching_records.aggregate(max_last_six=Max('confirmation'))['max_last_six'][-6:]
+            
+    #         last_cs = year + str(max_last_six_digits)
+
+    #     else:
+    #         # first cs
+    #         last_cs = year + '000001'
+        
+    #     return last_cs
+        
+    # except Exception:
+    #     # fault tolerance - for datafixing
+    #     return '0000000000'
 
 
 @method_decorator(login_required, name='dispatch')
@@ -760,6 +778,7 @@ def transaction_posting(request):
 
             if not existing:
                 confirmation_numbers = list(dict.fromkeys(confirmation_numbers))
+                print 'confirmation_numbers', confirmation_numbers
                 success_quota = process_quota(request, confirmation_numbers)
                 if success_quota == 'success':
                     response = {
@@ -805,6 +824,15 @@ def process_quota(request, confirmation_numbers):
                 transactions = TripleC.objects.filter(confirmation=confirmation_number, type='COR')
 
                 if transactions:
+                    num_items=0
+                    total_size=0
+                    photos=0
+                    num_photos=0
+                    num_articles=0
+                    num_type_breaking_news=0
+                    num_section_breaking_news=0
+                    num_breaking_news=0
+
                     num_items = sum(transaction.no_items for transaction in transactions) # PHOTOS
                     total_size = sum(transaction.total_size for transaction in transactions) # ARTICLE and used for BREAKING NEWS
                     
@@ -828,7 +856,6 @@ def process_quota(request, confirmation_numbers):
                         'enterby_id': request.user.id,
                         'enterdate': datetime.datetime.now(),
                     }
-
                     # Photo & Article
                     if num_photos >= 8 and num_articles > 0 and total_size >= 50:
                         transpo = additional.get(code='TRANSPO').amount
@@ -1174,6 +1201,141 @@ def get_apnum(pdate):
     return apnum
     
 
+def validate_autoap_check(data_list):
+
+    validation_list = []
+    result = True
+    try:
+        already_posted = 0
+
+        grouped_list = defaultdict(list)
+        for item in data_list:
+            grouped_list[
+                item['confirmation']
+            ].append(
+                [item['pk']]
+            )
+        
+        for csno, ids in grouped_list.items():
+            errors_list = []
+
+            triplec = TripleC.objects.filter(confirmation=csno,status='O').first()
+            if triplec.apv_no is not None and triplec.apv_no != "":
+                already_posted += 1
+            else:
+                supplier = Supplier.objects.get(pk=triplec.supplier_id)
+                if not supplier:
+                    errors_list.append({'Triple C supplier #'+str(triplec.supplier_id)+' does not exist in Supplier.'})
+
+                various_account = Triplecvariousaccount.objects
+                entries = []
+
+                triplec_supplier = Triplecsupplier.objects.filter(supplier=supplier.id).first()
+                if not triplec_supplier:
+                    errors_list.append({'Supplier '+str(supplier.name)+' does not exist in Triplecsupplier.'})
+
+                department = get_object_or_None(Department, pk=triplec_supplier.department_id)
+                if not department:
+                    errors_list.append({'triplec_supplier Department ID '+str(triplec_supplier.department_id)+' does not exist in Department.'})
+                
+                else:
+                    expchart = get_object_or_None(Chartofaccount, pk=department.expchartofaccount_id)
+                    if not expchart:
+                        errors_list.append({'Department COA ID '+str(department.expchartofaccount_id)+' does not exist in Chartofaccount.'})
+
+                    # identify chartofaccount of each transaction
+                    for id in ids:
+                        expc = get_expc(expchart, id)
+                        entries.append({'id':id, 'expc':expc})
+
+                    grouped_entries = defaultdict(list)
+
+                    for item in entries:
+                        grouped_entries[
+                            item['expc']
+                        ].append(
+                            item['id']
+                        )
+
+                    has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
+                    print 'has_quota', has_quota, csno
+                    if has_quota:
+                        # quota - transpo
+                        transpo = get_object_or_None(Triplecvariousaccount, code='TRANSPO', type='addtl', isdeleted=0)
+                        if transpo:
+                            
+                            if expchart.accountcode == '5100000000':
+                                transpoexpc = transpo.chartexpcostofsale_id
+                            elif expchart.accountcode == '5200000000':
+                                transpoexpc = transpo.chartexpgenandadmin_id
+                            else:
+                                transpoexpc = transpo.chartexpsellexp_id
+
+                            if not transpoexpc:
+                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO.'})
+
+                        # quota - transpo2
+                        transpo2 = get_object_or_None(Triplecvariousaccount, code='TRANSPO2', type='addtl', isdeleted=0)
+                        if transpo2:
+                            
+                            if expchart.accountcode == '5100000000':
+                                transpoexpc = transpo2.chartexpcostofsale_id
+                            elif expchart.accountcode == '5200000000':
+                                transpoexpc = transpo2.chartexpgenandadmin_id
+                            else:
+                                transpoexpc = transpo2.chartexpsellexp_id
+
+                            if not transpoexpc:
+                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO2.'})
+
+                        # quota - transpo3
+                        transpo2 = get_object_or_None(Triplecvariousaccount, code='TRANSPO3', type='addtl', isdeleted=0)
+                        if transpo2:
+                            
+                            if expchart.accountcode == '5100000000':
+                                transpoexpc = transpo2.chartexpcostofsale_id
+                            elif expchart.accountcode == '5200000000':
+                                transpoexpc = transpo2.chartexpgenandadmin_id
+                            else:
+                                transpoexpc = transpo2.chartexpsellexp_id
+
+                            if not transpoexpc:
+                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO3.'})
+
+                        # quota - cellcard
+                        cellcard = get_object_or_None(Triplecvariousaccount, code='TEL', type='addtl', isdeleted=0)
+                        if cellcard:
+
+                            if expchart.accountcode == '5100000000':
+                                cellcardexpc = cellcard.chartexpcostofsale_id
+                            elif expchart.accountcode == '5200000000':
+                                cellcardexpc = cellcard.chartexpgenandadmin_id
+                            else:
+                                cellcardexpc = cellcard.chartexpsellexp_id
+
+                            if not cellcardexpc:
+                                errors_list.append({'Quota variousaccount chartexp does not exist in TEL.'})
+
+                    atc_id = get_object_or_None(Supplier, pk=supplier.id)
+                    atc_id = atc_id.atc_id if atc_id is not None else None
+                    if not atc_id:
+                        errors_list.append({'atc_id of Supplier ID '+str(supplier.id)+' does not exist in Supplier.'})
+
+                    rate = get_object_or_None(Ataxcode, pk=atc_id)
+                    rate = rate.rate if rate is not None else None
+                    if not rate:
+                        if rate != 0:
+                            errors_list.append({'rate of ATC ID '+str(atc_id)+' does not exist in Ataxcode.'})
+            
+            if errors_list:
+                validation_list.append({'csno': csno, 'errors_list': errors_list})
+                result = False
+    except:
+        result = False
+
+    return {'result': result, 'validation_list': validation_list}
+
+    
 @csrf_exempt
 def goposttriplec(request):
 
@@ -1184,7 +1346,8 @@ def goposttriplec(request):
         pdate = datetime.datetime.strptime(postdate, '%m/%d/%Y').strftime('%Y-%m-%d')
 
         data_list = TripleC.objects.filter(pk__in=pkslist,isdeleted=0,status='O').values('pk', 'confirmation')
-        
+        validated = validate_autoap_check(data_list)
+
         grouped_list = defaultdict(list)
 
         for item in data_list:
@@ -1193,8 +1356,8 @@ def goposttriplec(request):
             ].append(
                 [item['pk']]
             )
-        
-        if grouped_list:
+
+        if grouped_list and validated['result']:
             already_posted = 0
             total_trans = 0
             successful_trans = 0
@@ -1305,67 +1468,102 @@ def goposttriplec(request):
                         has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
 
                         if has_quota:
-                            # quota - transpo
-                            transpo = various_account.get(code='TRANSPO', type='addtl', isdeleted=0)
-                            if transpo:
-                                
-                                if expchart.accountcode == '5100000000':
-                                    transpoexpc = transpo.chartexpcostofsale_id
-                                elif expchart.accountcode == '5200000000':
-                                    transpoexpc = transpo.chartexpgenandadmin_id
-                                else:
-                                    transpoexpc = transpo.chartexpsellexp_id
 
-                                counter += 1
-                                Apdetail.objects.create(
-                                    apmain_id = main.id,
-                                    ap_num = main.apnum,
-                                    ap_date = main.apdate,
-                                    item_counter = counter,
-                                    debitamount = has_quota.transportation_amount,
-                                    creditamount = '0.00',
-                                    balancecode = 'D',
-                                    amount = has_quota.transportation_amount,
-                                    chartofaccount_id = transpoexpc,
-                                    department_id = department.id,
-                                    status='A',
-                                    enterby_id = request.user.id,
-                                    enterdate = datetime.datetime.now(),
-                                    modifyby_id = request.user.id,
-                                    modifydate = datetime.datetime.now()
-                                )
-                                amount += has_quota.transportation_amount
+                            # quota - transpo
+                            if has_quota.transportation_amount:
+                                transpo = various_account.get(code='TRANSPO', type='addtl', isdeleted=0)
+                                if transpo:
+                                    
+                                    if expchart.accountcode == '5100000000':
+                                        transpoexpc = transpo.chartexpcostofsale_id
+                                    elif expchart.accountcode == '5200000000':
+                                        transpoexpc = transpo.chartexpgenandadmin_id
+                                    else:
+                                        transpoexpc = transpo.chartexpsellexp_id
+
+                                    counter += 1
+                                    Apdetail.objects.create(
+                                        apmain_id = main.id,
+                                        ap_num = main.apnum,
+                                        ap_date = main.apdate,
+                                        item_counter = counter,
+                                        debitamount = has_quota.transportation_amount,
+                                        creditamount = '0.00',
+                                        balancecode = 'D',
+                                        amount = has_quota.transportation_amount,
+                                        chartofaccount_id = transpoexpc,
+                                        department_id = department.id,
+                                        status='A',
+                                        enterby_id = request.user.id,
+                                        enterdate = datetime.datetime.now(),
+                                        modifyby_id = request.user.id,
+                                        modifydate = datetime.datetime.now()
+                                    )
+                                    amount += has_quota.transportation_amount
+
+                            # quota - transpo2
+                            if has_quota.transportation2_amount:
+                                transpo2 = various_account.get(code='TRANSPO2', type='addtl', isdeleted=0)
+                                if transpo2:
+                                    
+                                    if expchart.accountcode == '5100000000':
+                                        transpoexpc = transpo2.chartexpcostofsale_id
+                                    elif expchart.accountcode == '5200000000':
+                                        transpoexpc = transpo2.chartexpgenandadmin_id
+                                    else:
+                                        transpoexpc = transpo2.chartexpsellexp_id
+
+                                    counter += 1
+                                    Apdetail.objects.create(
+                                        apmain_id = main.id,
+                                        ap_num = main.apnum,
+                                        ap_date = main.apdate,
+                                        item_counter = counter,
+                                        debitamount = has_quota.transportation2_amount,
+                                        creditamount = '0.00',
+                                        balancecode = 'D',
+                                        amount = has_quota.transportation2_amount,
+                                        chartofaccount_id = transpoexpc,
+                                        department_id = department.id,
+                                        status='A',
+                                        enterby_id = request.user.id,
+                                        enterdate = datetime.datetime.now(),
+                                        modifyby_id = request.user.id,
+                                        modifydate = datetime.datetime.now()
+                                    )
+                                    amount += has_quota.transportation2_amount
 
                             # quota - cellcard
-                            cellcard = various_account.get(code='TEL', type='addtl', isdeleted=0)
-                            if cellcard:
+                            if  has_quota.cellcard_amount:
+                                cellcard = various_account.get(code='TEL', type='addtl', isdeleted=0)
+                                if cellcard:
 
-                                if expchart.accountcode == '5100000000':
-                                    cellcardexpc = cellcard.chartexpcostofsale_id
-                                elif expchart.accountcode == '5200000000':
-                                    cellcardexpc = cellcard.chartexpgenandadmin_id
-                                else:
-                                    cellcardexpc = cellcard.chartexpsellexp_id
+                                    if expchart.accountcode == '5100000000':
+                                        cellcardexpc = cellcard.chartexpcostofsale_id
+                                    elif expchart.accountcode == '5200000000':
+                                        cellcardexpc = cellcard.chartexpgenandadmin_id
+                                    else:
+                                        cellcardexpc = cellcard.chartexpsellexp_id
 
-                                counter += 1
-                                Apdetail.objects.create(
-                                    apmain_id = main.id,
-                                    ap_num = main.apnum,
-                                    ap_date = main.apdate,
-                                    item_counter = counter,
-                                    debitamount = has_quota.cellcard_amount,
-                                    creditamount = '0.00',
-                                    balancecode = 'D',
-                                    amount = has_quota.cellcard_amount,
-                                    chartofaccount_id = cellcardexpc,
-                                    department_id = department.id,
-                                    status='A',
-                                    enterby_id = request.user.id,
-                                    enterdate = datetime.datetime.now(),
-                                    modifyby_id = request.user.id,
-                                    modifydate = datetime.datetime.now()
-                                )
-                                amount += has_quota.cellcard_amount
+                                    counter += 1
+                                    Apdetail.objects.create(
+                                        apmain_id = main.id,
+                                        ap_num = main.apnum,
+                                        ap_date = main.apdate,
+                                        item_counter = counter,
+                                        debitamount = has_quota.cellcard_amount,
+                                        creditamount = '0.00',
+                                        balancecode = 'D',
+                                        amount = has_quota.cellcard_amount,
+                                        chartofaccount_id = cellcardexpc,
+                                        department_id = department.id,
+                                        status='A',
+                                        enterby_id = request.user.id,
+                                        enterdate = datetime.datetime.now(),
+                                        modifyby_id = request.user.id,
+                                        modifydate = datetime.datetime.now()
+                                    )
+                                    amount += has_quota.cellcard_amount
 
                         companyparameter = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
                         atc_id = Supplier.objects.get(pk=supplier.id).atc_id
@@ -1430,7 +1628,14 @@ def goposttriplec(request):
             else:
                 response = {'status': 'success'}
         else:
-            response = {'status': 'error', 'message': 'Transactions for posting to AP could not be found. No CS#'}
+            errors = validated['validation_list']
+            for error in errors:
+                error['errors_list'] = [list(error_set) for error_set in error['errors_list']]
+
+            # Serialize to JSON
+            error_json = json.dumps(errors)
+            print 'error_json', error_json
+            response = {'status': 'validation_error', 'message': 'Transactions for posting to AP have failed the validation.', 'error_json': error_json}
     else:
         response = {'status': 'error', 'message': 'Method not allowed'}
     

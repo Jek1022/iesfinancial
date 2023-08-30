@@ -1472,9 +1472,6 @@ def goposttriplec(request):
                             vat_id = 8, # NA 8
                             vatcode = 'VATNA', # NA 8
                             vatrate = 0,
-                            atax_id = 66, # NO ATC 66
-                            ataxcode = 'WX000', # NO ATC 66
-                            ataxrate = 0,
                             duedate = pdate,
                             refno = triplec.confirmation,
                             currency_id = 1,
@@ -1658,8 +1655,12 @@ def goposttriplec(request):
                             particulars_quota = " PLUS CELLPHONE ALLO."
 
                         companyparameter = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
-                        atc_id = Supplier.objects.get(pk=supplier.id).atc_id
-                        rate = Ataxcode.objects.get(pk=atc_id).rate
+                        
+                        supplier_atc = Supplier.objects.get(pk=supplier.id)
+                        atc_id = supplier_atc.atc_id
+
+                        ataxcode = Ataxcode.objects.get(pk=atc_id)
+                        rate = ataxcode.rate
                         
                         # default 25% or for Rank&File
                         wtax_rate = 25
@@ -1716,10 +1717,14 @@ def goposttriplec(request):
                             modifyby_id = request.user.id,
                             modifydate = datetime.datetime.now()
                         )
+                        print 'teest', atc_id, ataxcode.code, ataxcode.rate
+                        main.atax_id = atc_id
+                        main.ataxcode = ataxcode.code
+                        main.ataxrate = ataxcode.rate
 
                         issue_dates = triplec_all.values('issue_date')
                         particulars = apv_particulars(issue_dates, particulars_quota)
-                        print 'particulars', particulars
+                        
                         main.particulars = particulars
                         main.amount = amount
                         main.save()

@@ -208,11 +208,20 @@
                         <td colspan="1" align="right" style="border-top: 2px solid #000; padding-top: 10px;">{{ value.subtotal|floatformat:2|intcomma }}</td>
                     </tr>
                 {% endif %}
-                <tr>
-                    <td colspan="3" style="padding-top: 10px;"><b>LESS {{ value.ataxrate }}% EXPANDED WITHHOLDING TAX</b></td>
-                    <td colspan="3" style="padding-top: 10px; text-align: right;"><b>-</b></td>
-                    <td style="padding-top: 10px; text-align: right;">{{ value.ewt|floatformat:2|intcomma }}</td>
-                </tr>
+
+                {% if value.is_ewt and value.ataxrate %}
+                    <tr>
+                        <td colspan="3" style="padding-top: 10px;"><b>LESS {{ value.ataxrate }}% EXPANDED WITHHOLDING TAX</b></td>
+                        <td colspan="3" style="padding-top: 10px; text-align: right;"><b>-</b></td>
+                        <td style="padding-top: 10px; text-align: right;">{{ value.ewt|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% elif not value.is_ewt and value.wtax_rate %}
+                    <tr>
+                        <td colspan="3" style="padding-top: 10px;"><b>LESS {{ value.wtax_rate }}% WITHHOLDING TAX</b></td>
+                        <td colspan="3" style="padding-top: 10px; text-align: right;"><b>-</b></td>
+                        <td style="padding-top: 10px; text-align: right;">{{ value.wtax|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% endif %}
                 <tr>
                     <td style="padding-top: 10px;"><b>NET</b></td>
                     <td colspan="5"></td>

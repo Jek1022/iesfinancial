@@ -1,6 +1,6 @@
 import datetime
 from datetime import datetime as dt, timedelta
-import hashlib
+import requests
 import json
 import urllib2
 from django import forms
@@ -20,6 +20,7 @@ from endless_pagination.views import AjaxListView
 from collections import defaultdict
 from chartofaccount.models import Chartofaccount
 from department.models import Department
+from employee.models import Employee
 from triplecvariousaccount.models import Triplecvariousaccount
 from .models import TripleC
 from .models import Triplecquota
@@ -95,7 +96,7 @@ class RetrieveView(DetailView):
                 if status == 'O_APV':
                     triplec_data = triplec_data.filter(status__icontains='O', apv_no__isnull=False).exclude(apv_no__exact='')
                 elif status == 'O':
-                    triplec_data = triplec_data.filter(status__icontains=status).exclude(confirmation__exact='').exclude(apv_no__isnull=False)
+                    triplec_data = triplec_data.filter(status__icontains=status).exclude(confirmation__exact='')
                 elif status == 'Reverted':
                     triplec_data = triplec_data.filter(status='E').exclude(Q(confirmation__isnull=True) | Q(confirmation=''))
                 elif status == 'M':
@@ -1022,15 +1023,45 @@ def print_cs(request):
         subtotal = batch_cs.aggregate(subtotal=Sum('amount'))
         subtotal = float(subtotal['subtotal'])
         total = subtotal + float(quota_amount)
-        ewt = percentage(float(rate), total)
-        net = total - ewt
 
+        ewt = 0
+        is_ewt = True
+        tax = 0
+        wtax = 0
+        # RANK & FILE or default to 25% wtax
+        wtax_rate = 25
+        if rate:
+            ewt = percentage(float(rate), total)
+            tax = ewt
+        else:
+            is_ewt = False
+            if parameter[csno]['main'].supplier_id is not None:
+
+                employeenumber = get_object_or_None(Employee, supplier=parameter[csno]['main'].supplier_id)
+                if employeenumber:
+                    withholding_tax = get_withholding_tax(employeenumber.code)
+                    employee_level = withholding_tax[0].get('employee_level', None)
+
+                    if employee_level and employee_level != "RANK & FILE":
+                        wtax_rate = 30
+                        
+                if not parameter[csno]['main'].wtax:
+                    save_wtax(csno, wtax_rate)
+
+            wtax = percentage(float(wtax_rate), total)
+            tax = wtax
+                
+        net = total - tax
+        
         parameter[csno]['size'] = batch_cs.aggregate(total_size=Sum('total_size'))
         parameter[csno]['with_additional'] = with_additional
         parameter[csno]['ataxrate'] = rate
+        parameter[csno]['wtax_rate'] = wtax_rate
         parameter[csno]['subtotal'] = subtotal
         parameter[csno]['total'] = total
+        parameter[csno]['is_ewt'] = is_ewt
         parameter[csno]['ewt'] = ewt
+        parameter[csno]['wtax'] = wtax
         parameter[csno]['net'] = net
         
         for id in ids:
@@ -1045,11 +1076,31 @@ def print_cs(request):
     return render(request, 'triplec/process_transaction/print_cs.html', {'info': info, 'parameter': parameter})
 
 
+def get_withholding_tax(employeenumber):
+    base_url = 'http://45.77.32.35/api/employees'
+    params = {
+        'access_key': 'acf42e4acf8fe9f39e382e0a255d88ce1b59900b',
+        'employeenumber': employeenumber
+    }
+
+    response = requests.get(base_url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    
+    return [{}]
+
+
 def percentage(percent, whole):
     if whole:
         return (percent * whole) / 100.0
     
     return 0.00
+
+
+def save_wtax(csno, wtax_rate):
+    TripleC.objects.filter(confirmation=csno).update(wtax=int(wtax_rate))
+
 
 
 @method_decorator(login_required, name='dispatch')
@@ -1201,137 +1252,165 @@ def get_apnum(pdate):
     return apnum
     
 
+def apv_particulars(issue_dates, particulars_quota):
+    date_groups = defaultdict(list)
+    for item in issue_dates:
+        date_obj = item['issue_date']
+        month_name = date_obj.strftime('%b.').upper()
+        day = date_obj.day
+        year = date_obj.year
+        date_groups[(month_name, year)].append(day)
+
+    formatted_dates = []
+    for (month, year), day_list in date_groups.items():
+        day_str = ', '.join(str(day) for day in day_list)
+        formatted_dates.append("{} {}, {}".format(month, day_str, year))
+
+    particulars = ', '.join(formatted_dates)
+    if particulars_quota:
+        particulars = particulars + particulars_quota
+    return particulars
+
+
 def validate_autoap_check(data_list):
 
     validation_list = []
     result = True
-    try:
-        already_posted = 0
 
-        grouped_list = defaultdict(list)
-        for item in data_list:
-            grouped_list[
-                item['confirmation']
-            ].append(
-                [item['pk']]
-            )
+    already_posted = 0
+
+    grouped_list = defaultdict(list)
+    for item in data_list:
+        grouped_list[
+            item['confirmation']
+        ].append(
+            [item['pk']]
+        )
         
-        for csno, ids in grouped_list.items():
-            errors_list = []
+    for csno, ids in grouped_list.items():
+        errors_list = []
+        try:
 
             triplec = TripleC.objects.filter(confirmation=csno,status='O').first()
             if triplec.apv_no is not None and triplec.apv_no != "":
                 already_posted += 1
             else:
-                supplier = Supplier.objects.get(pk=triplec.supplier_id)
-                if not supplier:
-                    errors_list.append({'Triple C supplier #'+str(triplec.supplier_id)+' does not exist in Supplier.'})
-
-                various_account = Triplecvariousaccount.objects
-                entries = []
-
-                triplec_supplier = Triplecsupplier.objects.filter(supplier=supplier.id).first()
-                if not triplec_supplier:
-                    errors_list.append({'Supplier '+str(supplier.name)+' does not exist in Triplecsupplier.'})
-
-                department = get_object_or_None(Department, pk=triplec_supplier.department_id)
-                if not department:
-                    errors_list.append({'triplec_supplier Department ID '+str(triplec_supplier.department_id)+' does not exist in Department.'})
                 
+                if not triplec.supplier_id:
+                    errors_list.append({'Supplier ID is empty.'})
                 else:
-                    expchart = get_object_or_None(Chartofaccount, pk=department.expchartofaccount_id)
-                    if not expchart:
-                        errors_list.append({'Department COA ID '+str(department.expchartofaccount_id)+' does not exist in Chartofaccount.'})
+                    supplier = Supplier.objects.get(pk=triplec.supplier_id)
 
-                    # identify chartofaccount of each transaction
-                    for id in ids:
-                        expc = get_expc(expchart, id)
-                        entries.append({'id':id, 'expc':expc})
+                    if not supplier:
+                        errors_list.append({'Triple C supplier #'+str(triplec.supplier_id)+' does not exist in Supplier.'})
+                    else:
+                        
+                        entries = []
 
-                    grouped_entries = defaultdict(list)
-
-                    for item in entries:
-                        grouped_entries[
-                            item['expc']
-                        ].append(
-                            item['id']
-                        )
-
-                    has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
-                    print 'has_quota', has_quota, csno
-                    if has_quota:
-                        # quota - transpo
-                        transpo = get_object_or_None(Triplecvariousaccount, code='TRANSPO', type='addtl', isdeleted=0)
-                        if transpo:
+                        triplec_supplier = Triplecsupplier.objects.filter(supplier=supplier.id).first()
+                        if not triplec_supplier:
+                            errors_list.append({'Supplier '+str(supplier.name)+' does not exist in Triplecsupplier.'})
+                        else:
+                            department = get_object_or_None(Department, pk=triplec_supplier.department_id)
+                            if not department:
+                                errors_list.append({'triplec_supplier Department ID '+str(triplec_supplier.department_id)+' does not exist in Department.'})
                             
-                            if expchart.accountcode == '5100000000':
-                                transpoexpc = transpo.chartexpcostofsale_id
-                            elif expchart.accountcode == '5200000000':
-                                transpoexpc = transpo.chartexpgenandadmin_id
                             else:
-                                transpoexpc = transpo.chartexpsellexp_id
+                                expchart = get_object_or_None(Chartofaccount, pk=department.expchartofaccount_id)
+                                if not expchart:
+                                    errors_list.append({'Department COA ID '+str(department.expchartofaccount_id)+' does not exist in Chartofaccount.'})
+                                else:
+                                    # identify chartofaccount of each transaction
+                                    for id in ids:
+                                        expc = get_expc(expchart, id)
+                                        entries.append({'id':id, 'expc':expc})
 
-                            if not transpoexpc:
-                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO.'})
+                                    grouped_entries = defaultdict(list)
 
-                        # quota - transpo2
-                        transpo2 = get_object_or_None(Triplecvariousaccount, code='TRANSPO2', type='addtl', isdeleted=0)
-                        if transpo2:
-                            
-                            if expchart.accountcode == '5100000000':
-                                transpoexpc = transpo2.chartexpcostofsale_id
-                            elif expchart.accountcode == '5200000000':
-                                transpoexpc = transpo2.chartexpgenandadmin_id
-                            else:
-                                transpoexpc = transpo2.chartexpsellexp_id
+                                    for item in entries:
+                                        grouped_entries[
+                                            item['expc']
+                                        ].append(
+                                            item['id']
+                                        )
 
-                            if not transpoexpc:
-                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO2.'})
+                                    has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
+                                    print 'has_quota', has_quota, csno
+                                    if has_quota:
+                                        # quota - transpo
+                                        transpo = get_object_or_None(Triplecvariousaccount, code='TRANSPO', type='addtl', isdeleted=0)
+                                        if transpo:
+                                            
+                                            if expchart.accountcode == '5100000000':
+                                                transpoexpc = transpo.chartexpcostofsale_id
+                                            elif expchart.accountcode == '5200000000':
+                                                transpoexpc = transpo.chartexpgenandadmin_id
+                                            else:
+                                                transpoexpc = transpo.chartexpsellexp_id
 
-                        # quota - transpo3
-                        transpo2 = get_object_or_None(Triplecvariousaccount, code='TRANSPO3', type='addtl', isdeleted=0)
-                        if transpo2:
-                            
-                            if expchart.accountcode == '5100000000':
-                                transpoexpc = transpo2.chartexpcostofsale_id
-                            elif expchart.accountcode == '5200000000':
-                                transpoexpc = transpo2.chartexpgenandadmin_id
-                            else:
-                                transpoexpc = transpo2.chartexpsellexp_id
+                                            if not transpoexpc:
+                                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO.'})
 
-                            if not transpoexpc:
-                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO3.'})
+                                        # quota - transpo2
+                                        transpo2 = get_object_or_None(Triplecvariousaccount, code='TRANSPO2', type='addtl', isdeleted=0)
+                                        if transpo2:
+                                            
+                                            if expchart.accountcode == '5100000000':
+                                                transpoexpc = transpo2.chartexpcostofsale_id
+                                            elif expchart.accountcode == '5200000000':
+                                                transpoexpc = transpo2.chartexpgenandadmin_id
+                                            else:
+                                                transpoexpc = transpo2.chartexpsellexp_id
 
-                        # quota - cellcard
-                        cellcard = get_object_or_None(Triplecvariousaccount, code='TEL', type='addtl', isdeleted=0)
-                        if cellcard:
+                                            if not transpoexpc:
+                                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO2.'})
 
-                            if expchart.accountcode == '5100000000':
-                                cellcardexpc = cellcard.chartexpcostofsale_id
-                            elif expchart.accountcode == '5200000000':
-                                cellcardexpc = cellcard.chartexpgenandadmin_id
-                            else:
-                                cellcardexpc = cellcard.chartexpsellexp_id
+                                        # quota - transpo3
+                                        transpo2 = get_object_or_None(Triplecvariousaccount, code='TRANSPO3', type='addtl', isdeleted=0)
+                                        if transpo2:
+                                            
+                                            if expchart.accountcode == '5100000000':
+                                                transpoexpc = transpo2.chartexpcostofsale_id
+                                            elif expchart.accountcode == '5200000000':
+                                                transpoexpc = transpo2.chartexpgenandadmin_id
+                                            else:
+                                                transpoexpc = transpo2.chartexpsellexp_id
 
-                            if not cellcardexpc:
-                                errors_list.append({'Quota variousaccount chartexp does not exist in TEL.'})
+                                            if not transpoexpc:
+                                                errors_list.append({'Quota variousaccount chartexp does not exist in TRANSPO3.'})
 
-                    atc_id = get_object_or_None(Supplier, pk=supplier.id)
-                    atc_id = atc_id.atc_id if atc_id is not None else None
-                    if not atc_id:
-                        errors_list.append({'atc_id of Supplier ID '+str(supplier.id)+' does not exist in Supplier.'})
+                                        # quota - cellcard
+                                        cellcard = get_object_or_None(Triplecvariousaccount, code='TEL', type='addtl', isdeleted=0)
+                                        if cellcard:
 
-                    rate = get_object_or_None(Ataxcode, pk=atc_id)
-                    rate = rate.rate if rate is not None else None
-                    if not rate:
-                        if rate != 0:
-                            errors_list.append({'rate of ATC ID '+str(atc_id)+' does not exist in Ataxcode.'})
-            
-            if errors_list:
-                validation_list.append({'csno': csno, 'errors_list': errors_list})
-                result = False
-    except:
-        result = False
+                                            if expchart.accountcode == '5100000000':
+                                                cellcardexpc = cellcard.chartexpcostofsale_id
+                                            elif expchart.accountcode == '5200000000':
+                                                cellcardexpc = cellcard.chartexpgenandadmin_id
+                                            else:
+                                                cellcardexpc = cellcard.chartexpsellexp_id
+
+                                            if not cellcardexpc:
+                                                errors_list.append({'Quota variousaccount chartexp does not exist in TEL.'})
+
+                                    atc_id = get_object_or_None(Supplier, pk=supplier.id)
+                                    atc_id = atc_id.atc_id if atc_id is not None else None
+                                    if not atc_id:
+                                        errors_list.append({'atc_id of Supplier ID '+str(supplier.id)+' does not exist in Supplier.'})
+                                    else:
+                                        rate = get_object_or_None(Ataxcode, pk=atc_id)
+                                        rate = rate.rate if rate is not None else None
+                                        if not rate:
+                                            if rate != 0:
+                                                errors_list.append({'rate of ATC ID '+str(atc_id)+' does not exist in Ataxcode.'})
+                
+        except Exception as e:
+            print 'validation error: ', e
+            errors_list.append({'Exception: '+ str(e)})
+
+        if errors_list:
+            validation_list.append({'csno': csno, 'errors_list': errors_list})
+            result = False
 
     return {'result': result, 'validation_list': validation_list}
 
@@ -1356,7 +1435,7 @@ def goposttriplec(request):
             ].append(
                 [item['pk']]
             )
-
+        print validated, validated['result']
         if grouped_list and validated['result']:
             already_posted = 0
             total_trans = 0
@@ -1370,8 +1449,9 @@ def goposttriplec(request):
                 
                 try:
                     total_trans += 1
-                    triplec = TripleC.objects.filter(confirmation=csno,status='O').first()
-                    print 'triplec.apv_no', triplec.apv_no
+                    triplec_all = TripleC.objects.filter(confirmation=csno,status='O')
+                    triplec = triplec_all.first()
+                    
                     if triplec.apv_no is not None and triplec.apv_no != "":
                         already_posted += 1
                     else:
@@ -1397,7 +1477,6 @@ def goposttriplec(request):
                             ataxrate = 0,
                             duedate = pdate,
                             refno = triplec.confirmation,
-                            particulars = str(triplec.type)+' '+str(billingremarks),
                             currency_id = 1,
                             fxrate = 1,
                             designatedapprover_id = 225, # Arlene Astapan
@@ -1467,6 +1546,9 @@ def goposttriplec(request):
 
                         has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
 
+                        particulars_quota = ''
+                        has_transpo = False
+                        has_cellcard = False
                         if has_quota:
 
                             # quota - transpo
@@ -1500,6 +1582,7 @@ def goposttriplec(request):
                                         modifydate = datetime.datetime.now()
                                     )
                                     amount += has_quota.transportation_amount
+                                    has_transpo = True
 
                             # quota - transpo2
                             if has_quota.transportation2_amount:
@@ -1532,6 +1615,7 @@ def goposttriplec(request):
                                         modifydate = datetime.datetime.now()
                                     )
                                     amount += has_quota.transportation2_amount
+                                    has_transpo = True
 
                             # quota - cellcard
                             if  has_quota.cellcard_amount:
@@ -1564,26 +1648,48 @@ def goposttriplec(request):
                                         modifydate = datetime.datetime.now()
                                     )
                                     amount += has_quota.cellcard_amount
+                                    has_cellcard = True
+
+                        if has_transpo and has_cellcard:
+                            particulars_quota = " PLUS TRANSPO AND CELLPHONE ALLO."
+                        elif has_transpo:
+                            particulars_quota = " PLUS TRANSPO ALLO."
+                        elif has_cellcard:
+                            particulars_quota = " PLUS CELLPHONE ALLO."
 
                         companyparameter = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
                         atc_id = Supplier.objects.get(pk=supplier.id).atc_id
                         rate = Ataxcode.objects.get(pk=atc_id).rate
                         
-                        ewt = percentage(float(rate), float(amount))
-                        aptrade_amount = float(amount) - float(ewt)
+                        # default 25% or for Rank&File
+                        wtax_rate = 25
+                        tax = 0
+                        if rate:
+                            ewt = percentage(float(rate), float(amount))
+                            tax = ewt
+                            coa_id = companyparameter.coa_ewtax_id
+                        else:
+                            if triplec.wtax:
+                                # Officer 30%
+                                wtax_rate = triplec.wtax
+                            wtax = percentage(float(wtax_rate), float(amount))
+                            tax = wtax
+                            coa_id = 315
+
+                        aptrade_amount = float(amount) - float(tax)
                         counter += 1
 
-                        # EWT
+                        # EWT / WTAX
                         Apdetail.objects.create(
                             apmain_id = main.id,
                             ap_num = main.apnum,
                             ap_date = main.apdate,
                             item_counter = counter,
                             debitamount = '0.00',
-                            creditamount = ewt,
+                            creditamount = tax,
                             balancecode = 'C',
                             ataxcode_id = atc_id,
-                            chartofaccount_id = companyparameter.coa_ewtax_id,
+                            chartofaccount_id = coa_id,
                             supplier_id = supplier.id,      
                             status='A',
                             enterby_id = request.user.id,
@@ -1611,6 +1717,10 @@ def goposttriplec(request):
                             modifydate = datetime.datetime.now()
                         )
 
+                        issue_dates = triplec_all.values('issue_date')
+                        particulars = apv_particulars(issue_dates, particulars_quota)
+                        print 'particulars', particulars
+                        main.particulars = particulars
                         main.amount = amount
                         main.save()
 
@@ -1620,7 +1730,7 @@ def goposttriplec(request):
                     exception = str(e)
                     
             if exception:
-                response = {'status': 'error', 'message': 'An exception occured: '+ exception}
+                response = {'status': 'error', 'message': 'An exception occured: ('+ exception+') - Note: other transactions may have been successfully saved.'}
             elif already_posted > 0 and successful_trans > 0:
                 response = {'status': 'error', 'message': 'Successfully posted '+str(successful_trans)+' transactions. However, there are '+ str(already_posted)+ ' transactions have been already posted'}
             elif successful_trans == 0 or already_posted == total_trans:

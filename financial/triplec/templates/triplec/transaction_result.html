@@ -147,6 +147,9 @@
                             <i class="fa fa-ban" aria-hidden="true"></i>&nbsp;&nbsp;Tag as No Payment
                         </button>
                     </div>
+                    <div class="col-md-4">
+                        <p class="text-right text-info"><b><span id="rows_count"></span> Transactions found</b></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -874,6 +877,7 @@
                     $(this).find("td:nth-child(1)").text(t);
                 }
             });
+            $('#rows_count').text(t);
         }
 
         $('#full_screen').click(function(){

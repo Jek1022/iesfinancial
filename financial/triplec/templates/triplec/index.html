@@ -209,7 +209,7 @@
                                             <option value="">-- Select --</option>
                                             {% if authors %}
                                                 {% for author in authors  %}
-                                                    <option value="{{ author.name }}" data-code="{{ author.code }}">{{ author.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ author.name }}</option>
+                                                    <option value="{{ author.name }}" data-code="{{ author.code }}" data-supplier-id="{{ author.id }}">{{ author.code }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ author.name }}</option>
                                                 {% endfor %}
                                             {% endif %}
                                         </select>
@@ -760,18 +760,17 @@
         $('#manual_select_type').change(function(){
         
             var type = $(this).val();
-            var is_required = type === "COL" ? false : true;
-            var is_disabled = type === "COR" ? false : true;
+            var is_required = type === "COR" ? true : false;
 
             bureau_required(is_required);
-            size_fields(is_disabled);
+            size_fields(is_required);
         });
 
         function size_fields(is_disabled){
             if(is_disabled){
-                $('.size-field').attr('disabled', 'disabled');
-            } else {
                 $('.size-field').removeAttr('disabled');
+            } else {
+                $('.size-field').attr('disabled', 'disabled');
             }
         }
 
@@ -849,6 +848,7 @@
             fields_arr['issue_date'] = [$('#manual_input_issue_date').val(), 'Issue Date'];
             fields_arr['code'] = [$('#manual_select_code').val(), 'Code'];
             fields_arr['author_name'] = [$('#manual_select_author_name').val(), 'Author Name'];
+            fields_arr['supplier'] = [$('#manual_select_author_name option:selected').attr('data-supplier-id')];
             fields_arr['type'] = [$('#manual_select_type').val(), 'Classification'];
             fields_arr['subtype'] = [$('#manual_select_subtype').val(), 'Type'];
             fields_arr['bureau'] = [$('#manual_select_bureau').val()];
@@ -898,6 +898,7 @@
                         'issue_date': fields_arr['issue_date'][0],
                         'code': fields_arr['code'][0],
                         'author_name': fields_arr['author_name'][0],
+                        'supplier': fields_arr['supplier'][0],
                         'type': fields_arr['type'][0],
                         'subtype': fields_arr['subtype'][0],
                         'bureau': fields_arr['bureau'][0],

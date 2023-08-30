@@ -8,6 +8,7 @@ class ManualDataEntryForm(forms.ModelForm):
             'issue_date', 
             'code', 
             'author_name', 
+            'supplier',
             'type', 
             'subtype', 
             'section', 

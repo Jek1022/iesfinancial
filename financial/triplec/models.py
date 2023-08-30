@@ -13,7 +13,6 @@ from triplecpublication.models import Triplecpublication as Publication
 
 # Create your models here.
 class TripleC(models.Model):
-    generated_key = models.CharField(max_length=250)
     cms_issue_date = models.DateField()
     cms_article_status = models.CharField(max_length=50, null=True)
     cms_publication = models.TextField(blank=True, null=True)
@@ -56,6 +55,7 @@ class TripleC(models.Model):
     section = models.ForeignKey(Section, related_name='triplec_section')
     page = models.CharField(max_length=15, blank=True, null=True)
     rate_code = models.CharField(max_length=30, null=True)
+    wtax = models.IntegerField(blank=True, null=True, default=0)
     amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, default=0.00)
     remarks = models.TextField(blank=True, null=True, default="")
     confirmation = models.CharField(max_length=30, null=True)
@@ -115,7 +115,7 @@ class TripleC(models.Model):
     
 
 class Triplecquota(models.Model):
-    confirmation = models.CharField(max_length=30, unique=False)
+    confirmation = models.CharField(max_length=30, unique=True)
     no_item = models.IntegerField(default=0)
     TYPE_CHOICES = (
         ('P', 'Photo'),

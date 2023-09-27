@@ -11,6 +11,10 @@ class Triplecclassification(models.Model):
                                             related_name='triplecclassification_various_account', null=True, blank=True)
     various_account2 = models.ForeignKey('triplecvariousaccount.Triplecvariousaccount',
                                             related_name='triplecclassification_various_account2', null=True, blank=True)
+    various_account3 = models.ForeignKey('triplecvariousaccount.Triplecvariousaccount',
+                                            related_name='triplecclassification_various_account3', null=True, blank=True)
+    various_account4 = models.ForeignKey('triplecvariousaccount.Triplecvariousaccount',
+                                            related_name='triplecclassification_various_account4', null=True, blank=True)
     STATUS_CHOICES = (
         ('A', 'Active'),
         ('I', 'Inactive'),

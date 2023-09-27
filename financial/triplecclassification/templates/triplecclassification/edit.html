@@ -47,6 +47,26 @@
                             </select>
                             <span class="help-block form-error">{{ form.various_account2.errors.as_text }}</span>
                         </div>
+                        <div class="form-group {{ form.various_account3.errors|yesno:'has-error,' }}">
+                            <label for="id_various_account3" class="control-label">Account 3</label>
+                            <select name="various_account3" class="form-control select2" id="id_various_account3">
+                                <option value="">-- Select --</option>
+                                {% for data in various_account %}
+                                    <option value="{{ data.id }}" {% if form.various_account3.value == data.id %}selected="selected"{% endif %}>[{{ data.code }}] {{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.various_account3.errors.as_text }}</span>
+                        </div>
+                        <div class="form-group {{ form.various_account4.errors|yesno:'has-error,' }}">
+                            <label for="id_various_account4" class="control-label">Account 4</label>
+                            <select name="various_account4" class="form-control select2" id="id_various_account4">
+                                <option value="">-- Select --</option>
+                                {% for data in various_account %}
+                                    <option value="{{ data.id }}" {% if form.various_account4.value == data.id %}selected="selected"{% endif %}>[{{ data.code }}] {{ data.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block form-error">{{ form.various_account4.errors.as_text }}</span>
+                        </div>
                         <div class="form-group margin-bottom-0">
                             <button type="submit" class="btn btn-info" id="validateButton">Submit</button>
                         </div>

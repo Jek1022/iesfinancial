@@ -3,7 +3,6 @@ from datetime import datetime as dt, timedelta
 import requests
 import json
 import urllib2
-from django import forms
 import pandas
 from django.http import JsonResponse, Http404, HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
@@ -12,8 +11,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.template.loader import render_to_string, get_template
 from django.views.generic import ListView, View, DetailView, UpdateView
-from django.db.models import Q, Sum, Count, Max, F
-from django.db import connection, IntegrityError
+from django.db.models import Q, Sum, Count
+from django.db import connection
 from collections import namedtuple
 from annoying.functions import get_object_or_None
 from endless_pagination.views import AjaxListView
@@ -96,7 +95,7 @@ class RetrieveView(DetailView):
                 if status == 'O_APV':
                     triplec_data = triplec_data.filter(status__icontains='O', apv_no__isnull=False).exclude(apv_no__exact='')
                 elif status == 'O':
-                    triplec_data = triplec_data.filter(status__icontains=status).exclude(confirmation__exact='')
+                    triplec_data = triplec_data.filter(status__icontains=status).exclude(Q(confirmation__isnull=True) | Q(confirmation=''))
                 elif status == 'Reverted':
                     triplec_data = triplec_data.filter(status='E').exclude(Q(confirmation__isnull=True) | Q(confirmation=''))
                 elif status == 'M':
@@ -605,12 +604,11 @@ def having_quota(request):
     return JsonResponse(data)
 
 
-# change year into year of transaction date and add validation for uniqueness
 def get_confirmation(year):
     try:
         record = TripleC.objects.exclude(confirmation__isnull=True).exclude(confirmation__exact='').order_by('-confirmation')[:1]
-        last_cs = str(record[0].confirmation)
-        if last_cs:
+        if record.exists():
+            last_cs = str(record[0].confirmation)
             # Get the maximum last six digits from the filtered record
             series = last_cs[-6:]
             confirmation_number = str(year) + str(series)
@@ -779,13 +777,12 @@ def transaction_posting(request):
 
             if not existing:
                 confirmation_numbers = list(dict.fromkeys(confirmation_numbers))
-                print 'confirmation_numbers', confirmation_numbers
                 success_quota = process_quota(request, confirmation_numbers)
                 if success_quota == 'success':
                     response = {
                         'result': True,
                         'confirmation_numbers': confirmation_numbers
-                        }
+                    }
                 else:
                     response = {
                         'result': False,
@@ -983,8 +980,9 @@ def print_cs(request):
             except Exception as e:
                 print 'triplec_id', triplec_id, e
 
-    grouped_list = defaultdict(list)
+    companyparameter = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
 
+    grouped_list = defaultdict(list)
     for item in data_list:
         grouped_list[
             item['confirmation']
@@ -1029,7 +1027,7 @@ def print_cs(request):
         tax = 0
         wtax = 0
         # RANK & FILE or default to 25% wtax
-        wtax_rate = 25
+        wtax_rate = companyparameter.ranknfile_percentage_tax
         if rate:
             ewt = percentage(float(rate), total)
             tax = ewt
@@ -1039,11 +1037,11 @@ def print_cs(request):
 
                 employeenumber = get_object_or_None(Employee, supplier=parameter[csno]['main'].supplier_id)
                 if employeenumber:
-                    withholding_tax = get_withholding_tax(employeenumber.code)
+                    withholding_tax = get_withholding_tax(employeenumber.code, companyparameter.base_url_201)
                     employee_level = withholding_tax[0].get('employee_level', None)
 
                     if employee_level and employee_level != "RANK & FILE":
-                        wtax_rate = 30
+                        wtax_rate = companyparameter.officer_percentage_tax
                         
                 if not parameter[csno]['main'].wtax:
                     save_wtax(csno, wtax_rate)
@@ -1071,19 +1069,20 @@ def print_cs(request):
         parameter[csno]['details'] = details
     
     info['logo'] = request.build_absolute_uri('/static/images/pdi.jpg')
-    info['parameter'] = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
+    info['parameter'] = companyparameter
     
     return render(request, 'triplec/process_transaction/print_cs.html', {'info': info, 'parameter': parameter})
 
 
-def get_withholding_tax(employeenumber):
-    base_url = 'http://45.77.32.35/api/employees'
+def get_withholding_tax(employeenumber, base_url):
+    endpoint = '/api/employees'
+    url = base_url + endpoint
     params = {
         'access_key': 'acf42e4acf8fe9f39e382e0a255d88ce1b59900b',
         'employeenumber': employeenumber
     }
 
-    response = requests.get(base_url, params=params)
+    response = requests.get(url, params=params)
     if response.status_code == 200:
         data = response.json()
         return data
@@ -1100,7 +1099,6 @@ def percentage(percent, whole):
 
 def save_wtax(csno, wtax_rate):
     TripleC.objects.filter(confirmation=csno).update(wtax=int(wtax_rate))
-
 
 
 @method_decorator(login_required, name='dispatch')
@@ -1263,7 +1261,7 @@ def apv_particulars(issue_dates, particulars_quota):
 
     formatted_dates = []
     for (month, year), day_list in date_groups.items():
-        day_str = ', '.join(str(day) for day in day_list)
+        day_str = ', '.join(str(day) for day in sorted(set(day_list)))
         formatted_dates.append("{} {}, {}".format(month, day_str, year))
 
     particulars = ', '.join(formatted_dates)
@@ -1457,7 +1455,7 @@ def goposttriplec(request):
                     else:
                         supplier = Supplier.objects.get(pk=triplec.supplier_id)
                         various_account = Triplecvariousaccount.objects
-
+                        duedate = add_days_to_date(pdate, 90)
                         main = Apmain.objects.create(
                             apnum = apnum,
                             apdate = pdate,
@@ -1472,7 +1470,7 @@ def goposttriplec(request):
                             vat_id = 8, # NA 8
                             vatcode = 'VATNA', # NA 8
                             vatrate = 0,
-                            duedate = pdate,
+                            duedate = duedate,
                             refno = triplec.confirmation,
                             currency_id = 1,
                             fxrate = 1,
@@ -1675,7 +1673,8 @@ def goposttriplec(request):
                                 wtax_rate = triplec.wtax
                             wtax = percentage(float(wtax_rate), float(amount))
                             tax = wtax
-                            coa_id = 315
+                            # wtax_id 315
+                            coa_id = companyparameter.coa_wtax_id
 
                         aptrade_amount = float(amount) - float(tax)
                         counter += 1
@@ -1717,7 +1716,7 @@ def goposttriplec(request):
                             modifyby_id = request.user.id,
                             modifydate = datetime.datetime.now()
                         )
-                        print 'teest', atc_id, ataxcode.code, ataxcode.rate
+                        # print 'teest', atc_id, ataxcode.code, ataxcode.rate
                         main.atax_id = atc_id
                         main.ataxcode = ataxcode.code
                         main.ataxrate = ataxcode.rate
@@ -1771,29 +1770,54 @@ def get_expc(expchart, id):
                 expc = various_account.get(pk=priority.various_account_id).chartexpcostofsale_id
                 return expc
 
-    account_id = Classification.objects.get(code=entry.type)    
+    class_account_id = Classification.objects.get(code=entry.type)
+    supplier_id = Supplier.objects.get(code=entry.code).id
+    various_account_id = Triplecsupplier.objects.get(supplier_id=supplier_id).various_account_id
 
     if entry.type == 'COL':
-        expc = various_account.get(pk=account_id.various_account_id).chartexpcostofsale_id
+        expc = various_account.get(pk=class_account_id.various_account_id).chartexpcostofsale_id
 
     elif entry.type == 'CON':
         if expchart.accountcode == '5100000000':
-            expc = various_account.get(pk=account_id.various_account_id).chartexpcostofsale_id
+            if entry.section_id == 29:
+                # 29:Comic Section
+                # Contributor:various_account2_id = CF-CARTOONS
+                expc = various_account.get(pk=class_account_id.various_account2_id).chartexpcostofsale_id
+            elif entry.section_id in [18, 33, 32, 12, 37, 1, 7, 40, 43, 30, 14, 3]:
+                # CF-CITY CORRESPONDENT
+                # 18, 33, 32, 12, 37, 1, 7, 40, 43:*lifestyle*, 30:motoring, 14:news, 3:business
+                expc = various_account.get(pk=class_account_id.various_account4_id).chartexpcostofsale_id
+            elif entry.subtype_id in [9, 17, 43, 47]:
+                # CF-EDITORS - get by type
+                # 9:Retainer's fee, 17:editing fee, 43:project director, 47:consultant
+                expc = various_account.get(pk=class_account_id.various_account3_id).chartexpcostofsale_id
+            elif entry.subtype_id in [10, 11, 13, 46, 38, 24, 49, 50]:
+                # Contributors Fee (a.k.a Advertorials)
+                # 10:article, 11:photo, 13:layout, 46:proof reading, 38:epa, 24:graphic design, 49:edfee, 50:arts
+                expc = various_account.get(pk=class_account_id.various_account_id).chartexpcostofsale_id
+            else:
+                # default
+                if various_account_id:
+                    expc = various_account.get(pk=various_account_id).chartexpcostofsale_id
         elif expchart.accountcode == '5200000000':
-            expc = various_account.get(pk=account_id.various_account_id).chartexpgenandadmin_id
+            expc = various_account.get(pk=class_account_id.various_account_id).chartexpgenandadmin_id
         else:
-            expc = various_account.get(pk=account_id.various_account_id).chartexpsellexp_id
+            expc = various_account.get(pk=class_account_id.various_account_id).chartexpsellexp_id
 
     elif entry.type == 'COR':
-        supplier_id = Supplier.objects.get(code=entry.code).id
-        various_account_id = Triplecsupplier.objects.get(supplier_id=supplier_id).various_account_id
         
-        if various_account_id:
-            expc = various_account.get(pk=various_account_id).chartexpcostofsale_id
+        if entry.subtype_id == 9:
+            # CF-EDITORS, 9:retainer's fee
+            expc = various_account.get(pk=class_account_id.various_account_id).chartexpcostofsale_id
+        elif entry.subtype_id in [10, 48]:
+            # CF-PROVINCIAL CORRESPONDENTS
+            # 10:article, 48:breaking news
+            expc = various_account.get(pk=class_account_id.various_account2_id).chartexpcostofsale_id
         else:
-            # city corres
-            expc = 614
-
+            if various_account_id:
+                expc = various_account.get(pk=various_account_id).chartexpcostofsale_id
+        
+    
     return expc
     
 
@@ -1815,6 +1839,13 @@ def namedtuplefetchall(cursor):
     desc = cursor.description
     nt_result = namedtuple('Result', [col[0] for col in desc])
     return [nt_result(*row) for row in cursor.fetchall()]
+
+
+def add_days_to_date(date_str, days):
+    date_format = "%Y-%m-%d"
+    input_date = dt.strptime(date_str, date_format)
+    new_date = input_date + timedelta(days=days)
+    return new_date.strftime(date_format)
 
 
 class QuotaView(AjaxListView):

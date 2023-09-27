@@ -50,7 +50,7 @@ class CreateView(CreateView):
 class UpdateView(UpdateView):
     model = Triplecclassification
     template_name = 'triplecclassification/edit.html'
-    fields = ['code', 'description', 'various_account', 'various_account2']
+    fields = ['code', 'description', 'various_account', 'various_account2', 'various_account3', 'various_account4']
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.has_perm('triplecclassification.change_triplecclassification'):

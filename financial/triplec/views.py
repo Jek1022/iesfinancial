@@ -1126,7 +1126,6 @@ class GeneratePDF(View):
 
         company = Companyparameter.objects.filter(status='A').first()
         datalist = []
-        parameter = {}
         
         if request.method == 'GET' and request.GET['blank'] != '1':
 
@@ -1140,30 +1139,32 @@ class GeneratePDF(View):
             report_title = request.GET['report_title']
             status = request.GET['status']
             grand_total = 0
-
+            
             filter_kwargs = {'isdeleted': 0}
 
-            if status in ('O', 'A'):
+            if status in ('O', 'E'):
                 filter_kwargs['issue_date__range' if status == 'O' else 'cms_issue_date__range'] = [dfrom, dto]
                 filter_kwargs['status'] = status
 
-            # free format - Regular
+            # Summary
             if report_type == 'R':
                 q = TripleC.objects.filter(**filter_kwargs)\
-                                .values('pk', 'code', 'author_name', 'subtype_id', 'amount')\
-                                .annotate(totalamount=Sum('amount'))\
-                                .annotate(totalitems=Sum('no_items'))\
-                                .order_by('code')
-
+                    .values('id', 'code', 'author_name', 'subtype_id', 'amount')\
+                    .annotate(totalamount=Sum('amount'))\
+                    .annotate(totalitems=Sum('no_items'))\
+                    .order_by('code')
+                
                 # subtype_id of 10 = Article
+                # Annotate the queryset to calculate the 'totalarticles' based on the 'subtype_id' field
                 q = q.annotate(totalarticles=Sum(
                     Case(
+                        # When 'type' is 10, assign 1 to the 'totalarticles' field
                         When(subtype_id=10, then=1),
                         default=0,
                         output_field=IntegerField(),
                     )
                 ))
-
+                
                 grand_total = q.aggregate(grand_total=Sum('totalamount'))['grand_total']
 
                 if type:
@@ -1181,7 +1182,7 @@ class GeneratePDF(View):
             elif report_type == 'Y':
                 # name, issue_date, section, title, amount
                 q = TripleC.objects.filter(**filter_kwargs) \
-                        .values('pk', 'issue_date', 'author_name', 'section__description', 'article_title', 'amount') \
+                        .values('id', 'issue_date', 'author_name', 'section__description', 'article_title', 'amount') \
                         .annotate(subtotal=Sum('amount')) \
                         .order_by('code')
 
@@ -1207,7 +1208,7 @@ class GeneratePDF(View):
                     datalist[author_name]['subtotal'] += transaction['subtotal']
                     grand_total += transaction['subtotal']
 
-                print 'hoy', datalist
+                # print 'hoy', datalist
             dates = 'AS OF ' + datetime.datetime.strptime(dfrom, '%Y-%m-%d').strftime('%b. %d, %Y')\
                 + ' TO ' + datetime.datetime.strptime(dto, '%Y-%m-%d').strftime('%b. %d, %Y')
 

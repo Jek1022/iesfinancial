@@ -19,7 +19,7 @@ from endless_pagination.views import AjaxListView
 from collections import defaultdict
 from chartofaccount.models import Chartofaccount
 from department.models import Department
-from designatedapprover.models import DesignatedApprover
+# from designatedapprover.models import DesignatedApprover
 from employee.models import Employee
 from triplecvariousaccount.models import Triplecvariousaccount
 from .models import TripleC
@@ -1465,7 +1465,7 @@ def goposttriplec(request):
                         various_account = Triplecvariousaccount.objects
                         duedate = add_days_to_date(pdate, 90)
 
-                        designatedapprover = DesignatedApprover.objects.get(pk=2).approver_id
+                        # designatedapprover = DesignatedApprover.objects.get(pk=2).approver_id
                         main = Apmain.objects.create(
                             apnum = apnum,
                             apdate = pdate,
@@ -1484,7 +1484,7 @@ def goposttriplec(request):
                             refno = triplec.confirmation,
                             currency_id = 1,
                             fxrate = 1,
-                            designatedapprover_id = designatedapprover, # Arlene Astapan
+                            designatedapprover_id = 225, # Arlene Astapan
                             approverremarks = 'For approval from Triple C Posting',
                             responsedate = datetime.datetime.now(),
                             apstatus = 'F',

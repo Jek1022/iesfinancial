@@ -19,6 +19,7 @@ from endless_pagination.views import AjaxListView
 from collections import defaultdict
 from chartofaccount.models import Chartofaccount
 from department.models import Department
+from designatedapprover.models import DesignatedApprover
 from employee.models import Employee
 from triplecvariousaccount.models import Triplecvariousaccount
 from .models import TripleC
@@ -1132,6 +1133,7 @@ class GeneratePDF(View):
             dfrom = request.GET['from']
             dto = request.GET['to']
 
+            author_code = request.GET['author']
             type = request.GET['type']
             bureau = request.GET['bureau']
             section = request.GET['section']
@@ -1164,8 +1166,9 @@ class GeneratePDF(View):
                         output_field=IntegerField(),
                     )
                 ))
-                
-                grand_total = q.aggregate(grand_total=Sum('totalamount'))['grand_total']
+
+                if author_code:
+                    q = q.filter(code=author_code)
 
                 if type:
                     q = q.filter(type=type)
@@ -1177,6 +1180,7 @@ class GeneratePDF(View):
                     q = q.filter(section=section)
 
                 datalist = q
+                grand_total = q.aggregate(grand_total=Sum('totalamount'))['grand_total']
 
             # Fixed format - Yearly
             elif report_type == 'Y':
@@ -1185,6 +1189,9 @@ class GeneratePDF(View):
                         .values('id', 'issue_date', 'author_name', 'section__description', 'article_title', 'amount') \
                         .annotate(subtotal=Sum('amount')) \
                         .order_by('code')
+                
+                if author_code:
+                    q = q.filter(code=author_code)
 
                 if type:
                     q = q.filter(type=type)
@@ -1457,6 +1464,8 @@ def goposttriplec(request):
                         supplier = Supplier.objects.get(pk=triplec.supplier_id)
                         various_account = Triplecvariousaccount.objects
                         duedate = add_days_to_date(pdate, 90)
+
+                        designatedapprover = DesignatedApprover.objects.get(pk=2).approver_id
                         main = Apmain.objects.create(
                             apnum = apnum,
                             apdate = pdate,
@@ -1475,7 +1484,7 @@ def goposttriplec(request):
                             refno = triplec.confirmation,
                             currency_id = 1,
                             fxrate = 1,
-                            designatedapprover_id = 225, # Arlene Astapan
+                            designatedapprover_id = designatedapprover, # Arlene Astapan
                             approverremarks = 'For approval from Triple C Posting',
                             responsedate = datetime.datetime.now(),
                             apstatus = 'F',

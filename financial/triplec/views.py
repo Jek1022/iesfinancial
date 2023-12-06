@@ -660,6 +660,7 @@ class ProcessTransactionView(ListView):
        context = super(ProcessTransactionView, self).get_context_data(**kwargs)
        context['triplec'] = TripleC.objects.all().filter(isdeleted=0).order_by('code')
        context['authors'] = Supplier.objects.all().filter(isdeleted=0, triplec=1)
+       context['classifications'] = Classification.objects.all().filter(isdeleted=0)
        
        return context
 
@@ -668,11 +669,10 @@ class ProcessTransactionView(ListView):
 class GenerateProcessTransaction(View):
     def get(self, request):
         try:
-            dfrom = request.GET['dfrom']
-            dto = request.GET['dto']
-            author_name = request.GET['author_name']
-            code = request.GET['code']
-            classification = request.GET['classification']
+            dfrom = request.GET['dfrom'] or ''
+            dto = request.GET['dto'] or ''
+            author_name = request.GET['author_name'] or ''
+            classification = request.GET['classification'] or ''
 
             if dfrom != '' and dto != '':
                 triplec_data = TripleC.objects.filter(issue_date__range=[dfrom, dto], status='E', isdeleted=0)\
@@ -691,10 +691,13 @@ class GenerateProcessTransaction(View):
                     'message': 'Transaction date is required'
                 })
             
-            triplec_data = triplec_data.annotate(total=Sum('amount'), transactions=Count('pk')).order_by('code')
-            
             if author_name != '':
                 triplec_data = triplec_data.filter(author_name=author_name)
+
+            if classification != '':
+                triplec_data = triplec_data.filter(type=classification)
+
+            triplec_data = triplec_data.annotate(total=Sum('amount'), transactions=Count('pk')).order_by('code')
             
             param = {}
             for key in range(len(triplec_data)):

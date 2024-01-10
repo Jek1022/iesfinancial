@@ -1,5 +1,6 @@
 import datetime
 from datetime import datetime as dt, timedelta
+from operator import itemgetter
 import requests
 import json
 import urllib2
@@ -13,7 +14,7 @@ from django.template.loader import render_to_string, get_template
 from django.views.generic import ListView, View, DetailView, UpdateView
 from django.db.models import Q, Sum, Count
 from django.db import connection
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 from annoying.functions import get_object_or_None
 from endless_pagination.views import AjaxListView
 from collections import defaultdict
@@ -966,7 +967,8 @@ def print_cs(request):
     is_batch = request.GET.get('batch')
     parameter = {}
     info = {}
-
+    companyparameter = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
+    
     data_list = []
 
     if is_batch:
@@ -984,24 +986,24 @@ def print_cs(request):
             except Exception as e:
                 print 'triplec_id', triplec_id, e
 
-    companyparameter = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
+    sorted_data_list = sorted(data_list, key=lambda x: x['author_name'])
+    grouped_dict = OrderedDict()
 
-    grouped_list = defaultdict(list)
-    for item in data_list:
-        grouped_list[
-            item['confirmation']
-        ].append(
-            [item['pk']]
-        )
-
-    for csno, ids in grouped_list.items():
+    for item in sorted_data_list:
+        confnum = item['confirmation']
+        if confnum not in grouped_dict:
+            grouped_dict[confnum] = []
+        grouped_dict[confnum].append(item['pk'])
+        
+    xnum = 0
+    for csno, ids in grouped_dict.items():
 
         csno = str(csno)
-        parameter[csno] = {}
+        parameter[xnum] = {}
         details = {}
         batch_cs = TripleC.objects.filter(confirmation=csno, status='O', isdeleted=0)
 
-        parameter[csno]['main'] = batch_cs.first()
+        parameter[xnum]['main'] = batch_cs.first()
 
         has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
         
@@ -1015,11 +1017,11 @@ def print_cs(request):
             quota_amount = transpo + transpo2 + cellcard
             with_additional = True
 
-            parameter[csno]['transportation_amount'] = transpo
-            parameter[csno]['transportation2_amount'] = transpo2
-            parameter[csno]['cellcard_amount'] = cellcard
+            parameter[xnum]['transportation_amount'] = transpo
+            parameter[xnum]['transportation2_amount'] = transpo2
+            parameter[xnum]['cellcard_amount'] = cellcard
         
-        atc_id = Supplier.objects.get(code=parameter[csno]['main'].code).atc_id
+        atc_id = Supplier.objects.get(code=parameter[xnum]['main'].code).atc_id
         rate = Ataxcode.objects.get(pk=atc_id).rate
 
         subtotal = batch_cs.aggregate(subtotal=Sum('amount'))
@@ -1037,9 +1039,9 @@ def print_cs(request):
             tax = ewt
         else:
             is_ewt = False
-            if parameter[csno]['main'].supplier_id is not None:
+            if parameter[xnum]['main'].supplier_id is not None:
 
-                employeenumber = get_object_or_None(Employee, supplier=parameter[csno]['main'].supplier_id)
+                employeenumber = get_object_or_None(Employee, supplier=parameter[xnum]['main'].supplier_id)
                 if employeenumber:
                     withholding_tax = get_withholding_tax(employeenumber.code, companyparameter.base_url_201)
                     employee_level = withholding_tax[0].get('employee_level', None)
@@ -1047,30 +1049,33 @@ def print_cs(request):
                     if employee_level and employee_level != "RANK & FILE":
                         wtax_rate = companyparameter.officer_percentage_tax
                         
-                if not parameter[csno]['main'].wtax:
-                    save_wtax(csno, wtax_rate)
+                if not parameter[xnum]['main'].wtax:
+                    save_wtax(xnum, wtax_rate)
 
             wtax = percentage(float(wtax_rate), total)
             tax = wtax
                 
         net = total - tax
         
-        parameter[csno]['size'] = batch_cs.aggregate(total_size=Sum('total_size'))
-        parameter[csno]['with_additional'] = with_additional
-        parameter[csno]['ataxrate'] = rate
-        parameter[csno]['wtax_rate'] = wtax_rate
-        parameter[csno]['subtotal'] = subtotal
-        parameter[csno]['total'] = total
-        parameter[csno]['is_ewt'] = is_ewt
-        parameter[csno]['ewt'] = ewt
-        parameter[csno]['wtax'] = wtax
-        parameter[csno]['net'] = net
-        
-        for id in ids:
-            index = str(id[0])
-            details[index] = TripleC.objects.get(pk=id[0])
+        parameter[xnum]['size'] = batch_cs.aggregate(total_size=Sum('total_size'))
+        parameter[xnum]['with_additional'] = with_additional
+        parameter[xnum]['ataxrate'] = rate
+        parameter[xnum]['wtax_rate'] = wtax_rate
+        parameter[xnum]['subtotal'] = subtotal
+        parameter[xnum]['total'] = total
+        parameter[xnum]['is_ewt'] = is_ewt
+        parameter[xnum]['ewt'] = ewt
+        parameter[xnum]['wtax'] = wtax
+        parameter[xnum]['net'] = net
 
-        parameter[csno]['details'] = details
+        trans_ids = []
+        for id in ids:
+            trans_ids.append(id)
+
+        details = TripleC.objects.filter(pk__in=trans_ids).order_by('issue_date')
+        parameter[xnum]['details'] = details
+
+        xnum += 1
     
     info['logo'] = request.build_absolute_uri('/static/images/pdi.jpg')
     info['parameter'] = companyparameter
@@ -1412,7 +1417,10 @@ def validate_autoap_check(data_list):
                                         if not rate:
                                             if rate != 0:
                                                 errors_list.append({'rate of ATC ID '+str(atc_id)+' does not exist in Ataxcode.'})
-                
+
+                                    companyparameter = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
+                                    if not companyparameter.coa_ewtax_id or not companyparameter.coa_wtax_id:
+                                        errors_list.append({'coa_ewtax_id or coa_wtax_id does not exist in Company Parameter.'})
         except Exception as e:
             print 'validation error: ', e
             errors_list.append({'Exception: '+ str(e)})
@@ -1454,7 +1462,7 @@ def goposttriplec(request):
             for csno, ids in grouped_list.items():
                 
                 apnum = get_apnum(pdate)
-                billingremarks = 'Test'
+                billingremarks = ''
                 
                 try:
                     total_trans += 1
@@ -1497,7 +1505,7 @@ def goposttriplec(request):
                             modifydate = datetime.datetime.now()
                         )
 
-                        counter = 1
+                        counter = 0
                         amount = 0
                         entries = []
 
@@ -1532,6 +1540,7 @@ def goposttriplec(request):
                                 date_apv = main.apdate,
                             )
 
+                            counter += 1
                             Apdetail.objects.create(
                                 apmain_id = main.id,
                                 ap_num = main.apnum,
@@ -1550,8 +1559,7 @@ def goposttriplec(request):
                                 modifydate = datetime.datetime.now()
                             )
                             amount += tc['sum_amount']
-                            counter += 1
-
+                            
                         has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
 
                         particulars_quota = ''
@@ -1570,7 +1578,7 @@ def goposttriplec(request):
                                         transpoexpc = transpo.chartexpgenandadmin_id
                                     else:
                                         transpoexpc = transpo.chartexpsellexp_id
-
+                                        
                                     counter += 1
                                     Apdetail.objects.create(
                                         apmain_id = main.id,
@@ -1603,7 +1611,7 @@ def goposttriplec(request):
                                         transpoexpc = transpo2.chartexpgenandadmin_id
                                     else:
                                         transpoexpc = transpo2.chartexpsellexp_id
-
+                                        
                                     counter += 1
                                     Apdetail.objects.create(
                                         apmain_id = main.id,
@@ -1636,7 +1644,7 @@ def goposttriplec(request):
                                         cellcardexpc = cellcard.chartexpgenandadmin_id
                                     else:
                                         cellcardexpc = cellcard.chartexpsellexp_id
-
+                                        
                                     counter += 1
                                     Apdetail.objects.create(
                                         apmain_id = main.id,
@@ -1690,8 +1698,8 @@ def goposttriplec(request):
                             coa_id = companyparameter.coa_wtax_id
 
                         aptrade_amount = float(amount) - float(tax)
-                        counter += 1
 
+                        counter += 1
                         # EWT / WTAX
                         Apdetail.objects.create(
                             apmain_id = main.id,
@@ -1747,11 +1755,21 @@ def goposttriplec(request):
                     exception = str(e)
                     
             if exception:
-                response = {'status': 'error', 'message': 'An exception occured: ('+ exception+') - Note: other transactions may have been successfully saved.'}
+                response = {'status': 'error', 'message': 'An exception occured: ('+ exception+') - Note: other transaction(s) may have been successfully saved ('+successful_trans+').'}
             elif already_posted > 0 and successful_trans > 0:
-                response = {'status': 'error', 'message': 'Successfully posted '+str(successful_trans)+' transactions. However, there are '+ str(already_posted)+ ' transactions have been already posted'}
+                if already_posted == 1 and successful_trans == 1:
+                    response = {'status': 'error', 'message': 'Successfully posted '+str(successful_trans)+' transaction. However, there is '+ str(already_posted)+ ' transaction have been already posted.'}
+                elif already_posted == 1 and successful_trans > 1:
+                    response = {'status': 'error', 'message': 'Successfully posted '+str(successful_trans)+' transaction. However, there are '+ str(already_posted)+ ' transactions have been already posted'}
+                elif already_posted > 1 and successful_trans == 1:
+                    response = {'status': 'error', 'message': 'Successfully posted '+str(successful_trans)+' transactions. However, there is '+ str(already_posted)+ ' transaction have been already posted'}
+                else:
+                    response = {'status': 'error', 'message': 'Successfully posted '+str(successful_trans)+' transactions. However, there are '+ str(already_posted)+ ' transactions have been already posted'}
             elif successful_trans == 0 or already_posted == total_trans:
-                response = {'status': 'error', 'message': 'All transactions have been posted and are not allowed for reposting.'}
+                if already_posted > 1:
+                    response = {'status': 'error', 'message': 'All transactions have been posted and are not allowed for reposting.'}
+                else:
+                    response = {'status': 'error', 'message': 'This transaction have been posted and is not allowed for reposting.'}
             else:
                 response = {'status': 'success'}
         else:
@@ -1829,7 +1847,6 @@ def get_expc(expchart, id):
         else:
             if various_account_id:
                 expc = various_account.get(pk=various_account_id).chartexpcostofsale_id
-        
     
     return expc
     
@@ -1839,7 +1856,7 @@ def lastAPNumber(param):
     ''' Create query '''
     cursor = connection.cursor()
 
-    query = "SELECT  SUBSTRING(apnum, 5) AS num FROM apmain ORDER BY id DESC LIMIT 1"
+    query = "SELECT SUBSTRING(apnum, 5) AS num FROM apmain ORDER BY id DESC LIMIT 1"
 
     cursor.execute(query)
     result = namedtuplefetchall(cursor)
@@ -1999,6 +2016,8 @@ def startprint(request):
     data_list = []
     
     if cookie_urlquery:
+        companyparameter = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')
+        
         urlquery = json.loads(urllib2.unquote(cookie_urlquery))
         for confirmation in urlquery:
             try:
@@ -2007,25 +2026,25 @@ def startprint(request):
                     data_list.append(TripleC.objects.values('pk', 'code', 'author_name', 'confirmation', 'date_posted').get(pk=id['pk'], status='O', isdeleted=0))
             except:
                 pass
-    
-        grouped_list = defaultdict(list)
 
-        for item in data_list:
-            grouped_list[
-                item['confirmation']
-            ].append(
-                [item['pk']]
-            )
+        sorted_data_list = sorted(data_list, key=lambda x: x['author_name'])
+        grouped_dict = OrderedDict()
 
-        for csno, ids in grouped_list.items():
+        for item in sorted_data_list:
+            conf = item['confirmation']
+            if conf not in grouped_dict:
+                grouped_dict[conf] = []
+            grouped_dict[conf].append(item['pk'])
+
+        xno = 0
+        for csno, ids in grouped_dict.items():
 
             csno = str(csno)
-            parameter[csno] = {}
+            parameter[xno] = {}
             details = {}
             batch_cs = TripleC.objects.filter(confirmation=csno, status='O', isdeleted=0)
 
-            parameter[csno]['main'] = batch_cs.first()
-
+            parameter[xno]['main'] = batch_cs.first()
             has_quota = get_object_or_None(Triplecquota, confirmation=csno, status='A', isdeleted=0)
             
             quota_amount = 0
@@ -2038,32 +2057,64 @@ def startprint(request):
                 quota_amount = transpo + transpo2 + cellcard
                 with_additional = True
 
-                parameter[csno]['transportation_amount'] = transpo
-                parameter[csno]['transportation2_amount'] = transpo2
-                parameter[csno]['cellcard_amount'] = cellcard
+                parameter[xno]['transportation_amount'] = transpo
+                parameter[xno]['transportation2_amount'] = transpo2
+                parameter[xno]['cellcard_amount'] = cellcard
             
-            atc_id = Supplier.objects.get(code=parameter[csno]['main'].code).atc_id
+            atc_id = Supplier.objects.get(code=parameter[xno]['main'].code).atc_id
             rate = Ataxcode.objects.get(pk=atc_id).rate
-
+            # print 'rate', rate, csno
             subtotal = batch_cs.aggregate(subtotal=Sum('amount'))
             subtotal = float(subtotal['subtotal'])
             total = subtotal + float(quota_amount)
-            ewt = percentage(float(rate), total)
-            net = total - ewt
 
-            parameter[csno]['size'] = batch_cs.aggregate(total_size=Sum('total_size'))
-            parameter[csno]['with_additional'] = with_additional
-            parameter[csno]['ataxrate'] = rate
-            parameter[csno]['subtotal'] = subtotal
-            parameter[csno]['total'] = total
-            parameter[csno]['ewt'] = ewt
-            parameter[csno]['net'] = net
+            ewt = 0
+            is_ewt = True
+            tax = 0
+            wtax = 0
+            # RANK & FILE or default to 25% wtax
+            wtax_rate = companyparameter.ranknfile_percentage_tax
+            if rate:
+                ewt = percentage(float(rate), total)
+                tax = ewt
+            else:
+                is_ewt = False
+                if parameter[xno]['main'].supplier_id is not None:
+
+                    employeenumber = get_object_or_None(Employee, supplier=parameter[xno]['main'].supplier_id)
+                    if employeenumber:
+                        withholding_tax = get_withholding_tax(employeenumber.code, companyparameter.base_url_201)
+                        employee_level = withholding_tax[0].get('employee_level', None)
+                        if employee_level and employee_level != "RANK & FILE":
+                            wtax_rate = companyparameter.officer_percentage_tax
+                            
+                    if not parameter[xno]['main'].wtax:
+                        save_wtax(xno, wtax_rate)
+
+                wtax = percentage(float(wtax_rate), total)
+                tax = wtax
+
+            net = total - tax
+
+            parameter[xno]['size'] = batch_cs.aggregate(total_size=Sum('total_size'))
+            parameter[xno]['with_additional'] = with_additional
+            parameter[xno]['ataxrate'] = rate
+            parameter[xno]['wtax_rate'] = wtax_rate
+            parameter[xno]['subtotal'] = subtotal
+            parameter[xno]['total'] = total
+            parameter[xno]['is_ewt'] = is_ewt
+            parameter[xno]['ewt'] = ewt
+            parameter[xno]['wtax'] = wtax
+            parameter[xno]['net'] = net
             
+            trans_ids = []
             for id in ids:
-                index = str(id[0])
-                details[index] = TripleC.objects.get(pk=id[0])
+                trans_ids.append(id)
+                
+            details = TripleC.objects.filter(pk__in=trans_ids).order_by('issue_date')
+            parameter[xno]['details'] = details
 
-            parameter[csno]['details'] = details
+            xno += 1
         
         info['logo'] = request.build_absolute_uri('/static/images/pdi.jpg')
         info['parameter'] = Companyparameter.objects.get(code='PDI', isdeleted=0, status='A')

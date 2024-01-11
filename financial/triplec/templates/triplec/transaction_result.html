@@ -1318,10 +1318,12 @@
                 },
                 success: function(response) {
                     if (response.result === true){
-                        console.log(response.triplecsupplier[0]);
-                        $('#select_bureau').val(response.triplecsupplier[0].bureau).change();
-                        $('#select_section').val(response.triplecsupplier[0].section).change();
-                        $('#select_rate_code').val(response.rate_code).change();
+                        
+                        if(response.triplecsupplier[0]){
+                            $('#select_bureau').val(response.triplecsupplier[0].bureau).change();
+                            $('#select_section').val(response.triplecsupplier[0].section).change();
+                            $('#select_rate_code').val(response.rate_code).change();
+                        }
                     } else {
                         alert(response.message);
                     }
@@ -1330,7 +1332,6 @@
                     alert('Connection error.');
                 }
             });
-            
         }
 
         // revert transaction status as Ready for Posting
@@ -1924,6 +1925,26 @@
             var num = parseInt($('#input_no_of_ccc').val()) || 0;
 
             return num;
+        }
+
+        // auto compute amount for photo based on number of items and rate
+        $("#input_no_of_items, #select_rate_code").on('change paste keyup input', function(){
+            if($('#select_subtype').val() === '11'){
+                photo_amount_computation();
+            }
+        });
+
+        function photo_amount_computation(){
+            const type = $('#select_subtype').val() || '';
+            const items = parseInt($('#input_no_of_items').val() || 0);
+            const rate = parseFloat($('#select_rate_code option:selected').attr('data-amount')) || 0;
+            
+            if(items == 0 || rate === 0 || type === ''){
+                return false;
+            }
+
+            const multiplied_amount = rate * items;
+            $('#input_amount').val(multiplied_amount.toFixed(2));
         }
 
         // custom alert messages

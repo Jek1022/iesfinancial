@@ -1318,6 +1318,7 @@
                 },
                 success: function(response) {
                     if (response.result === true){
+                        console.log(response.triplecsupplier[0]);
                         $('#select_bureau').val(response.triplecsupplier[0].bureau).change();
                         $('#select_section').val(response.triplecsupplier[0].section).change();
                         $('#select_rate_code').val(response.rate_code).change();

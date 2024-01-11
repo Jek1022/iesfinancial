@@ -76,7 +76,7 @@
 <script type="text/javascript">
 $(function(){
     $('#generate').click(function(){
-
+        $(this).text('Loading transactions...');
         var date_from = $('#dfrom').val();
         var date_to = $('#dto').val();
         var author_name = $('select#author_name').val();
@@ -98,9 +98,11 @@ $(function(){
                 } else {
                     alert(response.message);
                 }
+                $('#generate').text('Generate');
             },
             error: function(response) {
                 console.log(response);
+                alert('An internal error occured.');
             }
         });
     });

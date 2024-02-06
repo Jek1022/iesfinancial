@@ -246,7 +246,8 @@ def savedata(record,issue_date):
             cms_no_of_characters=int(record['NumberofCharacters'])
         )
         return True
-    except:
+    except Exception as e:
+        print 'error: ' + str(e)
         return False
 
 

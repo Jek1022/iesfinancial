@@ -167,53 +167,50 @@ def fileprocess(request):
 @csrf_exempt
 def upload(request):
     if request.method == 'POST':
-        if request.FILES['data_file'] \
-                and request.FILES['data_file'].name.endswith('.xls') \
-                    or request.FILES['data_file'].name.endswith('.xlsx'):
+        if request.FILES['data_file'].name.endswith('.xls') or request.FILES['data_file'].name.endswith('.xlsx'):
             if request.FILES['data_file']._size < float(upload_size) * 1024 * 1024:
+                records = fileprocess(request)
+                records_count = len(records)
                 
-                try:
-                    records = fileprocess(request)
-                    records_count = len(records)
+                successcount = 0
+                existscount = 0
+                failedcount = 0
+                faileddata = []
+                successrecords = []
+                
+                for record in records:
+                    issue_date = pandas.to_datetime(record['Issue Date'], unit='ms')
                     
-                    successcount = 0
-                    existscount = 0
-                    failedcount = 0
-                    faileddata = []
-                    successrecords = []
-                    
-                    for record in records:
-                        issue_date = pandas.to_datetime(record['Issue Date'], unit='ms')
-                        
-                        save = savedata(record,issue_date)
-                        if save:
-                            successrecords.append([record])
-                            successcount += 1
-                        else:
-                            failedcount += 1
-                            faileddata.append([issue_date, record['Article ID'], record['Article Title'], record['Number Of words'], record['NumberofCharacters'], errorsavingdata, textwarning])
-                    
-                    if successcount == records_count:
-                        result = 1 
-                    elif records_count == existscount:
-                        result = 2
-                    elif records_count == failedcount:
-                        result = 3
+                    save = savedata(record,issue_date)
+                    if save:
+                        successrecords.append([record])
+                        successcount += 1
                     else:
-                        result = 4
-                    
-                    return JsonResponse({
-                        'result': result,
-                        'success_count': successcount,
-                        'records_count': records_count,
-                        'failed_data': faileddata,
-                        'successrecords': successrecords
-                    })
+                        failedcount += 1
+                        faileddata.append([issue_date, record['Article ID'], record['Article Title'], record['Number Of words'], record['NumberofCharacters'], errorsavingdata, textwarning])
                 
-                except:
-                    return JsonResponse({
-                        'result': 3
-                    })
+                if successcount == records_count:
+                    result = 1 
+                elif records_count == existscount:
+                    result = 2
+                elif records_count == failedcount:
+                    result = 3
+                else:
+                    result = 'default'
+                
+                return JsonResponse({
+                    'result': result,
+                    'success_count': successcount,
+                    'records_count': records_count,
+                    'failed_data': faileddata,
+                    'successrecords': successrecords
+                })
+            return JsonResponse({
+                'result': 5
+            })   
+        return JsonResponse({
+            'result': 4
+        })
     else:
         context = {}
         return render(request, 'triplec/upload.html', context)

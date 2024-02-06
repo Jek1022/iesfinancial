@@ -455,7 +455,7 @@
                     <div class="modal-body" style="overflow:hidden;">
                         <div class="row" id="fileUploadInput">
                             <div class="form-group col-md-12">
-                                <label for="data_file" class="control-label">XLS or XLSX File</label>
+                                <label for="data_file" class="control-label">XLS File</label>
                             </div>
                             <div class="form-group col-md-12">
                                 <input type="file" name="data_file" id="data_file" class="form-control input-sm" required>
@@ -560,6 +560,9 @@
                 type: 'POST',
                 data: formData,
                 async: false,
+                cache: false,
+                contentType: false,
+                processData: false,
                 success: function (data) {
                     $('#fileUploadInput').fadeOut(300);
                     $('#fileUploadProcessing').fadeOut(300);
@@ -595,10 +598,7 @@
                         default:
                             customAlert($('#upload-file-error'));
                     }
-                },
-                cache: false,
-                contentType: false,
-                processData: false
+                }
             });
 	        
 			return false;

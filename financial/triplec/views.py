@@ -167,8 +167,9 @@ def fileprocess(request):
 @csrf_exempt
 def upload(request):
     if request.method == 'POST':
-        if request.FILES['data_file'].name.endswith('.xls'):
-            if request.FILES['data_file']._size < float(upload_size) * 1024 * 1024:
+        doc = request.FILES
+        if doc['data_file'].name.endswith('.xls'):
+            if doc['data_file']._size < float(upload_size) * 1024 * 1024:
                 records = fileprocess(request)
                 records_count = len(records)
                 

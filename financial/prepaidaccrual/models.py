@@ -102,37 +102,37 @@ class PrepaidExpenseScheduleDetail(models.Model):
         return dict(PrepaidExpenseScheduleDetail.STATUS_CHOICES)[self.status]
     
 
-class AccruedExpense(models.Model):
-    item_counter = models.IntegerField(default=1)
-    sl = models.OneToOneField(Subledger, null=True, related_name='accruedexpense_sl')
-    main_id = models.IntegerField()
-    CODE_CHOICES = (
-        ('D', 'Debit'),
-        ('C', 'Credit')
-    )
-    code = models.CharField(max_length=1, choices=CODE_CHOICES, default='')
-    amount = models.DecimalField(max_digits=18, decimal_places=2)
-    balance = models.DecimalField(max_digits=18, decimal_places=2, default=0.00)
-    STATUS_CHOICES = (
-        ('A', 'Active'),
-        ('I', 'Inactive')
-    )
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='A')
-    enterdate = models.DateTimeField(auto_now_add=True)
-    modifydate = models.DateTimeField(auto_now_add=True)
-    modifyby = models.ForeignKey(User, default=1, related_name='accruedexpense_modify')
-    enterby = models.ForeignKey(User, default=1, related_name='accruedexpense_enter')
+# class AccruedExpense(models.Model):
+#     item_counter = models.IntegerField(default=1)
+#     sl = models.OneToOneField(Subledger, null=True, related_name='accruedexpense_sl')
+#     main_id = models.IntegerField()
+#     CODE_CHOICES = (
+#         ('D', 'Debit'),
+#         ('C', 'Credit')
+#     )
+#     code = models.CharField(max_length=1, choices=CODE_CHOICES, default='')
+#     amount = models.DecimalField(max_digits=18, decimal_places=2)
+#     balance = models.DecimalField(max_digits=18, decimal_places=2, default=0.00)
+#     STATUS_CHOICES = (
+#         ('A', 'Active'),
+#         ('I', 'Inactive')
+#     )
+#     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='A')
+#     enterdate = models.DateTimeField(auto_now_add=True)
+#     modifydate = models.DateTimeField(auto_now_add=True)
+#     modifyby = models.ForeignKey(User, default=1, related_name='accruedexpense_modify')
+#     enterby = models.ForeignKey(User, default=1, related_name='accruedexpense_enter')
 
-    class Meta:
-        db_table = 'accruedexpense'
-        ordering = ['-pk']
-        permissions = (("view_accruedexpense", "Can view accrued expense"))
+#     class Meta:
+#         db_table = 'accruedexpense'
+#         ordering = ['-pk']
+#         permissions = (("view_accruedexpense", "Can view accrued expense"))
     
-    def __str__(self):
-        return self.pk
+#     def __str__(self):
+#         return self.pk
 
-    def __unicode__(self):
-        return self.pk
+#     def __unicode__(self):
+#         return self.pk
 
-    def status_verbose(self):
-        return dict(AccruedExpense.STATUS_CHOICES)[self.status]
+#     def status_verbose(self):
+#         return dict(AccruedExpense.STATUS_CHOICES)[self.status]

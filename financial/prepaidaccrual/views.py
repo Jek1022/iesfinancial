@@ -49,7 +49,7 @@ class IndexView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.has_perm('prepaidaccrual.view_prepaidexpenseschedule'):
             raise Http404
-        return super(ListView, self).dispatch(request, *args, **kwargs)
+        return super(TemplateView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(TemplateView, self).get_context_data(**kwargs)

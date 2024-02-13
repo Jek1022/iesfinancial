@@ -4,39 +4,31 @@ from decimal import Decimal
 import json
 from dateutil.relativedelta import relativedelta
 from django.db import connection
-from django.shortcuts import render
 from django.views.generic import View, ListView, TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.http import HttpResponseRedirect, JsonResponse, Http404, HttpResponse
+from django.http import JsonResponse, Http404, HttpResponse
 from branch.models import Branch
 from department.models import Department
-from mrstype.models import Mrstype
-from financial.utils import Render
-from django.utils import timezone
-from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from companyparameter.models import Companyparameter
-from accountspayable.models import Apmain, Apdetail
+from accountspayable.models import Apmain
 from checkvoucher.models import Cvmain
 from journalvoucher.models import Jvdetail, Jvmain
 from officialreceipt.models import Ormain
 from subledger.models import Subledger
-from customer.models import Customer
 from chartofaccount.models import Chartofaccount
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from django.db.models import Q
 from django.template.loader import render_to_string
-from django.db.models import Count
-import pandas as pd
 import io
 import xlsxwriter
 import datetime
-from datetime import timedelta
 
 from supplier.models import Supplier
-from .models import AccruedExpense, PrepaidExpenseSchedule, PrepaidExpenseScheduleDetail
+from .models import PrepaidExpenseSchedule, PrepaidExpenseScheduleDetail
+
 
 transactions = {
     '1': 'Prepaid Expenses',
@@ -49,9 +41,15 @@ report_types = {
     '4': 'YTD Schedule'
 }
 
+
 @method_decorator(login_required, name='dispatch')
 class IndexView(TemplateView):
     template_name = 'prepaidaccrual/index.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('prepaidaccrual.view_prepaidexpenseschedule'):
+            raise Http404
+        return super(ListView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(TemplateView, self).get_context_data(**kwargs)
@@ -177,7 +175,6 @@ def transgenerate(request):
     # 2 - accrued
     elif transaction == '2':
         if report == '1':
-            print 'chartofaccount', chartofaccount
             data = querySubledgerAccrued(dto, dfrom, transaction, payeecode, payeename, classification)
 
             tdebit = 0
@@ -244,7 +241,6 @@ def transgenerate(request):
             viewhtml = render_to_string('prepaidaccrual/transaction_result_subledger_per_payee.html', context)
 
         elif report == '3':
-            print 'schedule 2'
 
             start_date = dt.strptime(dfrom, "%Y-%m-%d")
             end_date = dt.strptime(dto, "%Y-%m-%d")
@@ -273,7 +269,6 @@ def transgenerate(request):
             context['branches'] = Branch.objects.values('id', 'code', 'description').filter(isdeleted=0)
             
             viewhtml = render_to_string('prepaidaccrual/accruedexpenses/transaction_result_schedule.html', context)
-
 
     data = {
         'status': 'success',
@@ -1092,7 +1087,6 @@ def tagaccruedexpense(request):
             }
         else:
             if main_balance_code == 'Credit':
-                fake_computed_balance = Decimal(main_amount) - Decimal(total)
 
                 main_exp = Subledger.objects.filter(isdeleted=0, id=main_id).first()
                 main_exp.document_reftype = main_document_type

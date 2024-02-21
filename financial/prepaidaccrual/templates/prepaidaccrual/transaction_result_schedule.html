@@ -99,7 +99,16 @@
         {% else %}
         <br>
             {% if transaction == '1' %}
-                <span>No Prepaid Expense Schedule data found. {% if import_count %}<a href="{% url 'prepaidaccrual:importprepaidschedule' %}?from={{ dfrom }}&to={{ dto }}" target="_blank">Import {{ import_count }} transactions for manual entry here.</a> {% endif %}</span>
+                <span>No Prepaid Expense Schedule data found. 
+                    
+                        <a href="{% url 'prepaidaccrual:importprepaidschedule' %}?from={{ dfrom }}&to={{ dto }}" target="_blank">
+                            {% if import_count > 1 %}
+                                Import {{ import_count }} transactions for manual entry here.
+                            {% else %}
+                                Import {{ import_count }} transaction for manual entry here.
+                            {% endif %}
+                        </a> 
+                    </span>
             {% elif transaction == '2' %}
                 <span>No Accrued Expense Schedule data found. </span>
             {% endif %}
@@ -364,7 +373,7 @@
                         <div class="form-group col-md-12">
                             <div class="form-group col-md-6">
                                 <div class="col-md-4">
-                                    <label class="control-label" for="jvdate">JV Date:</label>
+                                    <label class="control-label" for="jvdate"><b>JV Date:</b></label>
                                 </div>
                                 <div class="form-group col-md-8">
                                     <input type="text" class="form-control datepickerto" id="jvdate" style="width:150px;" placeholder="JV Date">
@@ -591,8 +600,8 @@
         $('#post_transaction').click(function(e){
             e.preventDefault();
 
+            const issue_date = $('#dto').val();
             var ids = [];
-            
             $('tr.transaction_row').each(function () {
                 if ($(this).find('input[type="checkbox"]').is(':checked')) {
                     var pk = $(this).data('id');
@@ -600,7 +609,7 @@
                     ids.push(pk);
                 }
             });
-            console.log('ids', ids);
+            
             if(ids.length){
                 if (confirm("Confirm posting the selected transactions?")) {
 
@@ -614,6 +623,7 @@
                             'csrfmiddlewaretoken': "{{ csrf_token }}",
                             'ids': ids,
                             'postdate': postdate,
+                            'issue_date': issue_date
                         },
                         success: function(response) {
                             if(response.result == 'success'){

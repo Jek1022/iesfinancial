@@ -1415,33 +1415,34 @@ def lastJVNumber(param):
     return result[0]
 
 
+def get_jvnum(pdate):
+    jvnumlast = lastJVNumber('true')
+    latestjvnum = str(jvnumlast[0])
+    jvnum = pdate[:4]
+    last = str(int(latestjvnum) + 1)
+    zero_addon = 6 - len(last)
+    for num in range(0, zero_addon):
+        jvnum += '0'
+    jvnum += last
+
+    return jvnum
+
+
 @csrf_exempt
 def gopostprepaid(request):
     try:
         if request.method == 'POST':
-            from django.db.models import CharField
-            from django.db.models.functions import Length
-
-            CharField.register_lookup(Length, 'length')
 
             ids = request.POST.getlist('ids[]')
             pdate = request.POST['postdate']
-            print 'ids', ids
+            issue_date = request.POST['issue_date']
+            
             data = PrepaidExpenseScheduleDetail.objects.filter(pk__in=ids, status='A')
             if data:
 
-                jvnumlast = lastJVNumber('true')
-                latestjvnum = str(jvnumlast[0])
-                jvnum = pdate[:4]
-                last = str(int(latestjvnum) + 1)
-                zero_addon = 6 - len(last)
-                for num in range(0, zero_addon):
-                    jvnum += '0'
-                jvnum += last
-
-                print 'hoy', jvnum
+                jvnum = get_jvnum(pdate)
                 
-                date = dt.strptime(pdate, "%Y-%m-%d")
+                date = dt.strptime(issue_date, "%Y-%m-%d")
                 amortization_month = date.strftime('%b %Y')
 
                 jvmain = Jvmain.objects.create(
@@ -1457,9 +1458,9 @@ def gopostprepaid(request):
                     fxrate = 1,
                     designatedapprover_id = 225, # Arlene Astapan
                     actualapprover_id = 225, # Arlene Astapan
-                    approverremarks = 'Auto approved from Prepaid Expenses Posting',
+                    approverremarks = '',
                     responsedate = datetime.datetime.now(),
-                    jvstatus = 'A',
+                    jvstatus = 'F',
                     enterby_id = request.user.id,
                     enterdate = datetime.datetime.now(),
                     modifyby_id = request.user.id,
@@ -1535,7 +1536,7 @@ def gopostprepaid(request):
             else:
                 response = {
                     'result': 'failed',
-                    'message': 'Unable to collect resource data'
+                    'message': 'No data found available for posting.'
                 }
         else:
             response = {
